@@ -1,38 +1,33 @@
 # Setoran Tahfidz
 
-**Setoran Tahfidz** adalah aplikasi pencatat setoran hafalan Al-Qur'an untuk
-santri, yang berjalan sepenuhnya **offline** — semua data disimpan di
-`localStorage` perangkat, tidak ada backend/server, dan tidak ada koneksi
-internet yang dibutuhkan.
+**Setoran Tahfidz** membantu santri mencatat setoran hafalan Al-Qur'an.
+Aplikasi berjalan secara offline dan menyimpan data di `localStorage`
+perangkat, tanpa backend atau koneksi internet.
 
-Repo ini membungkus aplikasi web single-page tersebut (`www/index.html`)
-menjadi aplikasi Android native menggunakan [Capacitor](https://capacitorjs.com/),
-siap dibangun sebagai APK (untuk testing) maupun App Bundle/AAB (untuk rilis
-ke Google Play Store).
+Aplikasi web-nya ada di `www/index.html` dan dibungkus menjadi aplikasi
+Android dengan [Capacitor](https://capacitorjs.com/). Proyek ini bisa
+dibangun menjadi APK untuk pengujian atau AAB untuk Google Play Store.
 
 - **Nama tampilan:** Setoran Tahfidz
 - **Application ID:** `id.tahfidz.setoran`
 - **Web dir:** `www/`
 - **Native project:** `android/`
 
-## 1. Menjalankan di Browser (tanpa Android)
+## Menjalankan di browser
 
-Karena aplikasi ini adalah satu file HTML statis, Anda bisa langsung
-membukanya di browser tanpa build tool apa pun:
+`www/index.html` bisa dibuka langsung di browser:
 
 ```powershell
-# Cukup buka file-nya langsung
 start www\index.html
 ```
 
-Atau jalankan lewat server statis sederhana (opsional, untuk menghindari
-batasan file:// di beberapa browser):
+Jika browser membatasi akses melalui `file://`, jalankan server lokal:
 
 ```powershell
 npx serve www
 ```
 
-## 2. Struktur Proyek
+## Struktur proyek
 
 ```
 www/index.html          # Aplikasi web (HTML+CSS+JS inline, self-contained)
@@ -44,10 +39,10 @@ release-signing/         # Panduan membuat upload keystore & signing config (REA
 PRIVACY_POLICY.md        # Kebijakan privasi (dibutuhkan untuk Play Store)
 ```
 
-## 3. Setup Awal (sekali saja, sudah dilakukan di repo ini)
+## Setup awal
 
-Langkah-langkah ini sudah dijalankan dan hasilnya sudah ada di repo, dicatat
-di sini untuk referensi/jika ingin mengulang dari nol:
+Perintah berikut sudah dijalankan untuk menyiapkan proyek. Jalankan lagi
+jika ingin mengulang setup:
 
 ```powershell
 npm install
@@ -56,23 +51,23 @@ npx cap add android
 npx capacitor-assets generate --android   # dari resources/icon.png & resources/splash.png
 ```
 
-## 4. Membuka Proyek di Android Studio
+## Membuka proyek di Android Studio
 
-1. Install [Android Studio](https://developer.android.com/studio) (sudah
-   termasuk Android SDK dan JDK yang kompatibel).
-2. Buka folder `android/` di Android Studio (**File → Open**, pilih folder
-   `android`, bukan folder root repo).
+1. Install [Android Studio](https://developer.android.com/studio), termasuk
+   Android SDK dan JDK yang kompatibel.
+2. Di Android Studio, pilih **File → Open** lalu buka folder `android/`.
 3. Tunggu proses Gradle sync selesai.
-4. Klik **Run ▶** untuk menjalankan di emulator/perangkat, atau gunakan menu
-   **Build** untuk membuat APK/AAB (lihat bagian 5 & 6).
+4. Klik **Run ▶** untuk menjalankan aplikasi di emulator atau perangkat.
+   Gunakan menu **Build** untuk membuat APK atau AAB.
 
-Jika Anda mengubah `www/index.html`, jalankan `npx cap sync android` agar
-perubahan tersalin ke `android/app/src/main/assets/public`.
+Setelah mengubah `www/index.html`, jalankan `npx cap sync android` agar
+perubahannya disalin ke `android/app/src/main/assets/public`.
 
-## 5. Build Debug APK (baris perintah)
+## Membuat Debug APK
 
-Dibutuhkan: JDK 21 dan Android SDK (build-tools + platform sesuai
-`android/variables.gradle`, saat ini `compileSdk`/`targetSdk` 36, `minSdk` 24).
+Gunakan JDK 21 dan Android SDK dengan build-tools serta platform yang sesuai
+`android/variables.gradle` (saat ini `compileSdk`/`targetSdk` 36 dan
+`minSdk` 24).
 
 ```powershell
 cd android
@@ -82,15 +77,14 @@ $env:JAVA_HOME = "<path ke JDK 21>"
 
 Output: `android/app/build/outputs/apk/debug/app-debug.apk`
 
-Build ini **sudah diverifikasi berhasil** di lingkungan pengembangan proyek
-ini (JDK Temurin 21, Android SDK build-tools 35/36).
+Build ini telah berhasil dijalankan di lingkungan pengembangan proyek dengan
+JDK Temurin 21 dan Android SDK build-tools 35/36.
 
-## 6. Build Release AAB (untuk Play Store)
+## Membuat Release AAB
 
-Play Store mewajibkan **Android App Bundle (.aab)** yang ditandatangani
-dengan upload key Anda sendiri. Lihat **`release-signing/README.md`** untuk
-langkah lengkap membuat keystore dan `android/keystore.properties`. Setelah
-itu:
+Google Play mewajibkan **Android App Bundle (.aab)** yang ditandatangani
+dengan upload key milik Anda. Ikuti petunjuk di `release-signing/README.md`
+untuk membuat keystore dan `android/keystore.properties`, lalu jalankan:
 
 ```powershell
 cd android
@@ -99,78 +93,65 @@ cd android
 
 Output: `android/app/build/outputs/bundle/release/app-release.aab`
 
-> Tidak ada keystore asli yang disertakan di repo ini (dan memang tidak boleh
-> di-commit). Anda wajib membuat keystore sendiri secara pribadi.
+> Keystore tidak disertakan di repo dan jangan di-commit. Buat keystore
+> sendiri dan simpan dengan aman.
 
-## 7. Checklist Submit ke Google Play Store
+## Rilis ke Google Play Store
 
-Ikuti langkah-langkah berikut secara berurutan:
+Ikuti langkah berikut untuk menyiapkan aplikasi:
 
-1. **Buat akun Google Play Console** — daftar sebagai developer di
-   [play.google.com/console](https://play.google.com/console/), bayar biaya
-   pendaftaran satu kali sebesar **USD 25**, verifikasi identitas.
-2. **Buat aplikasi baru** di Play Console → **Create app**, isi nama
-   "Setoran Tahfidz", bahasa default Indonesia, kategori (misal:
-   Pendidikan/Education), pernyataan gratis (Free).
-3. **Lengkapi Store Listing:**
-   - Deskripsi singkat (short description, maks 80 karakter) dalam Bahasa
-     Indonesia.
-   - Deskripsi lengkap (full description, maks 4000 karakter) dalam Bahasa
-     Indonesia — jelaskan fitur pencatatan setoran hafalan, penyimpanan
-     lokal/offline, tanpa iklan, tanpa akun.
-   - Minimal **2 screenshot ponsel** (rasio 16:9 atau portrait, PNG/JPEG,
-     min. 320px, maks. 3840px sisi terpanjang) — ambil dari aplikasi yang
-     berjalan di emulator/perangkat.
-   - **Feature graphic** 1024x500 px (banner promosi di halaman listing).
-   - Ikon aplikasi 512x512 (untuk listing; ikon adaptif Android sudah
-     tersedia otomatis dari build, tapi Play Console meminta upload
-     terpisah 512x512 — export dari `assets-src/icon-1024.png`, resize ke
-     512x512).
-4. **Content Rating Questionnaire** — isi kuesioner rating konten (aplikasi
-   edukasi tanpa konten kekerasan/dewasa, jawab sesuai kondisi sebenarnya)
-   untuk mendapatkan rating usia.
-5. **Data Safety form** — isi bahwa aplikasi **tidak mengumpulkan dan tidak
-   membagikan data pengguna apa pun**; semua data hanya disimpan lokal di
-   perangkat (`localStorage`), tidak ada transmisi data ke server manapun.
-   Gunakan `PRIVACY_POLICY.md` di repo ini sebagai referensi jawaban.
-6. **Privacy Policy URL** — publikasikan isi `PRIVACY_POLICY.md` di suatu
-   halaman web publik (misalnya GitHub Pages dari repo ini, atau hosting
-   statis lain), lalu masukkan URL tersebut di Play Console → App content →
-   Privacy Policy.
-7. **Pilih release track** — mulai dari **Internal testing** (Play Console →
-   Release → Testing → Internal testing → Create new release), tambahkan
-   penguji (email Anda sendiri/tim), ini memungkinkan pengujian cepat tanpa
-   review penuh.
-8. **Upload AAB** — unggah `app-release.aab` hasil `bundleRelease` yang sudah
-   ditandatangani ke release track yang dipilih.
-9. **Submit for review** — lengkapi rollout, isi release notes, lalu kirim
-   untuk ditinjau oleh Google. Setelah lolos internal testing dan Anda puas
-   dengan hasilnya, promosikan release ke **Production** track (juga
-   melalui proses review Google).
+1. Buat akun developer di [Google Play Console](https://play.google.com/console/).
+   Biaya pendaftaran satu kali sebesar **USD 25** dan verifikasi identitas
+   berlaku.
+2. Pilih **Create app**, lalu isi nama "Setoran Tahfidz", bahasa Indonesia,
+   kategori (misalnya Pendidikan/Education), dan status gratis (Free).
+3. Lengkapi Store Listing:
+   - Deskripsi singkat maksimal 80 karakter dan deskripsi lengkap maksimal
+     4000 karakter, dalam Bahasa Indonesia. Jelaskan pencatatan setoran,
+     penyimpanan lokal/offline, serta bahwa aplikasi tidak memakai iklan
+     atau akun.
+   - Minimal **2 screenshot ponsel** dalam format PNG/JPEG, rasio 16:9 atau
+     portrait, sisi terpanjang 320–3840 px. Ambil screenshot dari emulator
+     atau perangkat.
+   - **Feature graphic** berukuran 1024x500 px.
+   - Ikon listing berukuran 512x512 px. Ekspor `assets-src/icon-1024.png`
+     lalu ubah ukurannya; ikon adaptif hasil build tidak menggantikan ikon
+     listing ini.
+4. Isi **Content Rating Questionnaire** sesuai kondisi aplikasi untuk
+   mendapatkan rating usia.
+5. Isi **Data Safety form** sesuai perilaku aplikasi: data tidak dikumpulkan
+   atau dibagikan dan hanya tersimpan di perangkat (`localStorage`), tanpa
+   dikirim ke server. Gunakan `PRIVACY_POLICY.md` sebagai referensi.
+6. Publikasikan `PRIVACY_POLICY.md` di halaman web publik, misalnya GitHub
+   Pages atau hosting statis lain. Masukkan URL-nya di **App content →
+   Privacy Policy**.
+7. Mulai dari **Internal testing** melalui **Release → Testing → Internal
+   testing → Create new release**, lalu tambahkan email penguji.
+8. Unggah `app-release.aab` hasil `bundleRelease` yang sudah ditandatangani.
+9. Lengkapi rollout dan release notes, lalu kirim untuk ditinjau Google.
+   Setelah pengujian internal, Anda bisa mempromosikan rilis ke **Production**;
+   rilis ini juga perlu ditinjau Google.
 
-### Yang TIDAK bisa dilakukan agen ini
-Pembuatan akun Play Console, verifikasi identitas developer, pembayaran
-biaya pendaftaran, pengambilan screenshot dari perangkat/emulator asli, dan
-persetujuan akhir submission adalah langkah yang **membutuhkan aksi manual
-dari Anda (pemilik akun)** dan tidak dapat diotomatisasi oleh agen coding.
+Pembuatan akun, verifikasi identitas, pembayaran, screenshot dari perangkat,
+dan persetujuan rilis harus dilakukan sendiri melalui akun Google Play Console.
 
-## 8. Ikon & Splash Screen
+## Ikon dan splash screen
 
-Ikon dan splash screen adalah placeholder yang dibuat secara programatik
-(latar ungu plum `#5b2a6b` dengan motif buku terbuka + tanda centang emas,
-dan monogram "ST") menggunakan `assets-src/generate_icon.py` (Python + Pillow)
-dan diproses lewat `@capacitor/assets` menjadi seluruh resolusi mipmap
-Android (ldpi–xxxhdpi) plus adaptive icon (`ic_launcher_foreground` /
-`ic_launcher_background`) dan splash screen semua densitas/orientasi.
-Anda bebas mengganti `resources/icon.png`, `resources/icon-foreground.png`,
-`resources/icon-background.png`, dan `resources/splash.png` dengan desain
-final, lalu jalankan ulang:
+Ikon dan splash screen saat ini masih placeholder: latar ungu plum
+(`#5b2a6b`), motif buku terbuka, tanda centang emas, dan monogram "ST".
+File dibuat oleh `assets-src/generate_icon.py` (Python + Pillow), lalu
+`@capacitor/assets` menghasilkan ikon mipmap ldpi–xxxhdpi, adaptive icon,
+serta splash screen untuk berbagai densitas dan orientasi.
+
+Untuk memakai desain sendiri, ganti `resources/icon.png`,
+`resources/icon-foreground.png`, `resources/icon-background.png`, dan
+`resources/splash.png`, lalu jalankan:
 
 ```powershell
 npx capacitor-assets generate --android
 ```
 
-## 9. Izin Aplikasi
+## Izin aplikasi
 
-Aplikasi ini **tidak meminta izin khusus apa pun** — sepenuhnya offline,
-tidak ada `INTERNET` atau permission lain di `AndroidManifest.xml`.
+Aplikasi ini tidak meminta izin khusus. Karena berjalan offline,
+`AndroidManifest.xml` tidak berisi izin `INTERNET` atau izin lainnya.
