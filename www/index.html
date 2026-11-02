@@ -1311,9 +1311,16 @@
   var AC_SURAH_ONLY = SURAHS;
   var AC_TAHSIN = TAHSIN_BOOKS.concat(SURAHS);
 
-  function acLastSegment(value) {
-    var parts = value.split(/[,\n]/);
-    return parts[parts.length - 1].replace(/^\s+/, "");
+  function segmentStart(text) {
+    // Posisi awal "segmen" (nama surah) yang sedang diketik: setelah pemisah
+    // entri TERAKHIR sebelum teks ini — koma, baris baru, atau " - " (spasi-
+    // strip-spasi) yang biasa dipakai memisahkan beberapa surah dalam satu
+    // baris/kolom (mis. "Al-Kafirun - An-Nas"). Dihitung ulang tiap kali, jadi
+    // tidak bergantung pada "state" sebelumnya — setiap surah baru yang mulai
+    // diketik di manapun dalam kolom akan tetap memicu rekomendasi.
+    var re = /[,\n]|\s+-\s+/g, lastEnd = 0, m;
+    while ((m = re.exec(text))) lastEnd = m.index + m[0].length;
+    return lastEnd;
   }
 
   function attachAutocomplete(textareaId, list) {
@@ -1324,7 +1331,9 @@
     ta.insertAdjacentElement("afterend", box);
 
     function render() {
-      var seg = acLastSegment(ta.value);
+      var caret = typeof ta.selectionStart === "number" ? ta.selectionStart : ta.value.length;
+      var before = ta.value.slice(0, caret);
+      var seg = before.slice(segmentStart(before)).replace(/^\s+/, "");
       if (!seg || !settings.suggest) { box.innerHTML = ""; box.classList.remove("show"); return; }
       var segLow = seg.toLowerCase();
       function hit(x) {
@@ -1343,17 +1352,22 @@
         item.type = "button";
         item.className = "ac-item";
         var label = m.ar ? (m.name + ' <span class="ac-ar" dir="rtl">' + m.ar + '</span>') : m.name;
-        item.innerHTML = "<span>" + label + "</span>" + (m.ayat ? '<i>' + m.ayat + ' ayat</i>' : "");
+        item.innerHTML = "<span>" + label + "</span>";
         item.addEventListener("mousedown", function (ev) {
           ev.preventDefault();
           var value = ta.value;
-          var idx = Math.max(value.lastIndexOf(","), value.lastIndexOf("\n"));
-          var prefix = idx >= 0 ? value.slice(0, idx + 1).replace(/\s+$/, "") + " " : "";
+          var caretNow = typeof ta.selectionStart === "number" ? ta.selectionStart : value.length;
+          var beforeNow = value.slice(0, caretNow);
+          var afterNow = value.slice(caretNow);
+          var start = segmentStart(beforeNow);
+          var prefix = beforeNow.slice(0, start).replace(/\s+$/, "");
+          if (prefix) prefix += " ";
           var chosenName = (typedArabic && m.ar) ? m.ar : m.name;
-          var insertText = m.ayat ? (chosenName + " ayat ") : (chosenName + " ");
-          ta.value = prefix + insertText;
+          var insertText = chosenName + " ";
+          ta.value = prefix + insertText + afterNow;
+          var newCaret = (prefix + insertText).length;
           ta.focus();
-          ta.selectionStart = ta.selectionEnd = ta.value.length;
+          ta.selectionStart = ta.selectionEnd = newCaret;
           box.innerHTML = ""; box.classList.remove("show");
           ta.dispatchEvent(new Event("input", { bubbles: true }));
         });
@@ -1364,6 +1378,10 @@
 
     ta.addEventListener("input", render);
     ta.addEventListener("focus", render);
+    ta.addEventListener("click", render);
+    ta.addEventListener("keyup", function (e) {
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].indexOf(e.key) >= 0) render();
+    });
     ta.addEventListener("blur", function () {
       setTimeout(function () { box.innerHTML = ""; box.classList.remove("show"); }, 150);
     });
