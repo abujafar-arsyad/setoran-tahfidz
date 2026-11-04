@@ -161,7 +161,18 @@
     margin-bottom: 5px;
     text-transform: none;
   }
-  input[type="text"], input[type="date"], textarea {
+  .rng-row { border: 1px solid var(--line); border-radius: 12px; padding: 8px; margin-bottom: 8px; position: relative; }
+  .rng-line { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .rng-line .rng-lbl { width: 52px; font-size: 12px; font-weight: 600; color: var(--ink-soft); flex: none; }
+  .rng-line input.rs { flex: 1; min-width: 0; }
+  .rng-line input.ra { width: 84px; flex: none; }
+  .rng-info { font-size: 12.5px; color: var(--ink-soft); min-height: 16px; padding-right: 34px; }
+  .rng-info.err { color: var(--danger); font-weight: 600; }
+  .rng-info.ok { color: var(--good); font-weight: 600; }
+  .rng-del { position: absolute; right: 6px; bottom: 6px; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--danger); background: transparent; color: var(--danger); font-size: 15px; cursor: pointer; }
+  .rng-add { margin-bottom: 10px; }
+  .rng-free { margin-top: 2px; font-weight: 500 !important; }
+  input[type="text"], input[type="date"], input[type="number"], textarea {
     width: 100%;
     padding: 11px 12px;
     border-radius: 10px;
@@ -505,16 +516,26 @@
             <div id="entryStatusBadge" style="margin-top:6px; font-size:12.5px; font-weight:600;"></div>
           </div>
           <div class="field">
-            <label for="fTahsin">📗 Tahsin</label>
+            <label>📗 Tahsin — rentang ayat (surah)</label>
+            <div class="rng" id="rngTahsin"></div>
+            <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahsin">+ Tambah rentang</button>
+            <label for="fTahsin" class="rng-free">Iqro / catatan lain / teks bebas (tidak dibaca sistem)</label>
             <textarea id="fTahsin" placeholder="Iqro 3 halaman 12" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
           </div>
+          <datalist id="surahList"></datalist>
           <div class="field">
-            <label for="fTahfidz">📘 Tahfidz</label>
-            <textarea id="fTahfidz" placeholder="Al-Baqarah ayat 1-5" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+            <label>📘 Tahfidz — rentang ayat</label>
+            <div class="rng" id="rngTahfidz"></div>
+            <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahfidz">+ Tambah rentang</button>
+            <label for="fTahfidz" class="rng-free">Catatan lain / teks bebas (opsional)</label>
+            <textarea id="fTahfidz" placeholder="Teks lama atau catatan tambahan" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
           </div>
           <div class="field">
-            <label for="fMurojaah">🔁 Murojaah</label>
-            <textarea id="fMurojaah" placeholder="An-Naba, An-Nazi'at" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+            <label>🔁 Murojaah — rentang ayat</label>
+            <div class="rng" id="rngMurojaah"></div>
+            <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Murojaah">+ Tambah rentang</button>
+            <label for="fMurojaah" class="rng-free">Catatan lain / teks bebas (opsional)</label>
+            <textarea id="fMurojaah" placeholder="Teks lama atau catatan tambahan" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
           </div>
           <div class="field">
             <label for="fKeterangan">📝 Keterangan</label>
@@ -1298,14 +1319,100 @@
     loadEntryIntoForm();
   }
 
+  // ---------------- Rentang ayat terstruktur (Tahsin / Tahfidz / Murojaah) ----------------
+
+  var saveOk = false;
+
+  function rngNum(v) { v = String(v).trim(); return /^\d+$/.test(v) ? +v : NaN; }
+
+  function rngEval(row) {
+    var q = function (c) { return row.querySelector("." + c); };
+    var s1 = q("rs1").value.trim(), a1 = q("ra1").value.trim(), s2 = q("rs2").value.trim(), a2 = q("ra2").value.trim();
+    if (!s1 && !a1 && !s2 && !a2) return { empty: true };
+    var i1 = s1 ? pgSurahIndex(s1) : -1;
+    var i2 = s2 ? pgSurahIndex(s2) : i1;
+    if (s1 && i1 < 0) return { msg: "Surah awal belum dikenali" };
+    if (s2 && i2 < 0) return { msg: "Surah akhir belum dikenali" };
+    if (i1 < 0) return { msg: "Pilih surah awal" };
+    if (!a1) return { msg: "Isi ayat awal" };
+    var n1 = rngNum(a1), n2 = a2 ? rngNum(a2) : n1;
+    var r = pgRangeCheck(i1, n1, i2, n2);
+    if (!r.ok) return { msg: r.msg };
+    return { ok: true, count: r.count, row: { i1: i1, a1: n1, i2: i2, a2: n2 } };
+  }
+
+  function rngRefresh(row) {
+    var info = row.querySelector(".rng-info");
+    var i1 = pgSurahIndex(row.querySelector(".rs1").value), i2 = pgSurahIndex(row.querySelector(".rs2").value);
+    row.querySelector(".ra1").max = i1 >= 0 ? SURAHS[i1].ayat : "";
+    row.querySelector(".ra2").max = i2 >= 0 ? SURAHS[i2].ayat : "";
+    row.querySelector(".ra1").placeholder = i1 >= 0 ? "1–" + SURAHS[i1].ayat : "Ayat";
+    row.querySelector(".ra2").placeholder = i2 >= 0 ? "1–" + SURAHS[i2].ayat : "Ayat";
+    var r = rngEval(row);
+    info.className = "rng-info";
+    if (r.empty) info.textContent = "";
+    else if (r.ok) { info.classList.add("ok"); info.textContent = pgFormatRange(r.row.i1, r.row.a1, r.row.i2, r.row.a2) + " = " + r.count + " ayat"; }
+    else { info.classList.add("err"); info.textContent = r.msg; }
+  }
+
+  function rngAddRow(cat, v) {
+    var row = document.createElement("div");
+    row.className = "rng-row";
+    row.innerHTML =
+      '<div class="rng-line"><span class="rng-lbl">Mulai</span><input type="text" class="rs rs1" list="surahList" placeholder="Surah" autocomplete="off" autocorrect="off" spellcheck="false">' +
+      '<input type="number" class="ra ra1" inputmode="numeric" min="1" step="1" placeholder="Ayat"></div>' +
+      '<div class="rng-line"><span class="rng-lbl">Sampai</span><input type="text" class="rs rs2" list="surahList" placeholder="Surah" autocomplete="off" autocorrect="off" spellcheck="false">' +
+      '<input type="number" class="ra ra2" inputmode="numeric" min="1" step="1" placeholder="Ayat"></div>' +
+      '<div class="rng-info"></div><button type="button" class="rng-del" aria-label="Hapus rentang">✕</button>';
+    var q = function (c) { return row.querySelector("." + c); };
+    if (v) { q("rs1").value = SURAHS[v.i1].name; q("ra1").value = v.a1; q("rs2").value = SURAHS[v.i2].name; q("ra2").value = v.a2; }
+    function canon(inp) { var i = pgSurahIndex(inp.value); if (i >= 0) inp.value = SURAHS[i].name; }
+    q("rs1").addEventListener("change", function () {
+      canon(q("rs1"));
+      if (!q("rs2").value.trim() && pgSurahIndex(q("rs1").value) >= 0) q("rs2").value = q("rs1").value;
+      rngRefresh(row);
+    });
+    q("rs2").addEventListener("change", function () { canon(q("rs2")); rngRefresh(row); });
+    ["rs1", "rs2", "ra1", "ra2"].forEach(function (c) { q(c).addEventListener("input", function () { rngRefresh(row); }); });
+    row.querySelector(".rng-del").addEventListener("click", function () { row.remove(); });
+    document.getElementById("rng" + cat).appendChild(row);
+    rngRefresh(row);
+    return row;
+  }
+
+  function rngLoad(cat, text) {
+    var box = document.getElementById("rng" + cat);
+    box.innerHTML = "";
+    var p = pgRowsFromText(text);
+    p.rows.forEach(function (r) { rngAddRow(cat, r); });
+    if (!p.rows.length) rngAddRow(cat);
+    document.getElementById("f" + cat).value = p.rest;
+  }
+
+  // -> {text} atau {error, row}
+  function rngCollect(cat) {
+    var rows = [], rowsEls = document.getElementById("rng" + cat).querySelectorAll(".rng-row");
+    for (var k = 0; k < rowsEls.length; k++) {
+      var r = rngEval(rowsEls[k]);
+      if (r.empty) continue;
+      if (!r.ok) { rngRefresh(rowsEls[k]); return { error: cat + ": " + r.msg, row: rowsEls[k] }; }
+      rows.push(r.row);
+    }
+    return { text: pgTextFromRows(rows, document.getElementById("f" + cat).value) };
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll(".rng-add"), function (b) {
+    b.addEventListener("click", function () { rngAddRow(b.getAttribute("data-cat")).querySelector(".rs1").focus(); });
+  });
+
   function loadEntryIntoForm() {
     var s = getSelectedStudent();
     if (!s) return;
     var dateStr = document.getElementById("entryDate").value || todayStr();
     var e = getEntry(s.id, dateStr) || {};
-    document.getElementById("fTahsin").value = e.tahsin || "";
-    document.getElementById("fTahfidz").value = e.tahfidz || "";
-    document.getElementById("fMurojaah").value = e.murojaah || "";
+    rngLoad("Tahsin", e.tahsin || "");
+    rngLoad("Tahfidz", e.tahfidz || "");
+    rngLoad("Murojaah", e.murojaah || "");
     document.getElementById("fKeterangan").value = e.keterangan || "";
     syncChips("fKeterangan");
     var badge = document.getElementById("entryStatusBadge");
@@ -1326,13 +1433,22 @@
     var s = getSelectedStudent();
     if (!s) return;
     var dateStr = document.getElementById("entryDate").value || todayStr();
+    var cols = {};
+    var cats = ["Tahsin", "Tahfidz", "Murojaah"];
+    for (var c = 0; c < cats.length; c++) {
+      var res = rngCollect(cats[c]);
+      if (res.error) { showToast(res.error); res.row.scrollIntoView({ block: "center" }); return; }
+      cols[cats[c]] = res.text;
+    }
     setEntry(s.id, dateStr, {
-      tahsin: document.getElementById("fTahsin").value.trim(),
-      tahfidz: document.getElementById("fTahfidz").value.trim(),
-      murojaah: document.getElementById("fMurojaah").value.trim(),
+      tahsin: cols.Tahsin,
+      tahfidz: cols.Tahfidz,
+      murojaah: cols.Murojaah,
       keterangan: document.getElementById("fKeterangan").value.trim()
     });
     saveData();
+    saveOk = true;
+    loadEntryIntoForm();
     renderLaporanTab();
     showToast("Setoran disimpan");
   });
@@ -1369,6 +1485,15 @@
     ["Quraisy",4,"قريش"],["Al-Ma'un",7,"الماعون"],["Al-Kausar",3,"الكوثر"],["Al-Kafirun",6,"الكافرون"],["An-Nasr",3,"النصر"],
     ["Al-Masad",5,"المسد"],["Al-Ikhlas",4,"الإخلاص"],["Al-Falaq",5,"الفلق"],["An-Nas",6,"الناس"],
   ].map(function (x) { return { name: x[0], ayat: x[1], ar: x[2] }; });
+
+  (function () {
+    var dl = document.getElementById("surahList");
+    SURAHS.forEach(function (s) {
+      var o = document.createElement("option");
+      o.value = s.name; if (s.ar) o.label = s.ar;
+      dl.appendChild(o);
+    });
+  })();
 
   var TAHSIN_BOOKS = [
     "Iqro 1","Iqro 2","Iqro 3","Iqro 4","Iqro 5","Iqro 6",
@@ -1921,8 +2046,9 @@
   });
 
   document.getElementById("btnSaveNext").addEventListener("click", function () {
+    saveOk = false;
     document.getElementById("btnSave").click();
-    if (data.students.length < 2) return;
+    if (!saveOk || data.students.length < 2) return;
     var i = data.students.findIndex(function (x) { return x.id === data.selectedStudentId; });
     data.selectedStudentId = data.students[(i + 1) % data.students.length].id;
     saveData();
@@ -2327,6 +2453,12 @@
     segs.forEach(function (seg) {
       seg = seg.trim();
       if (!seg) return;
+      if (/→|=>/.test(seg)) {
+        var ar = pgParseArrow(seg);
+        if (ar) { Array.prototype.push.apply(out.ranges, ar); last = ar[ar.length - 1].i; }
+        else out.bad.push(seg);
+        return;
+      }
       var nums = [];
       var rest = seg.replace(/(\d+)\s*(?:-|s\/d|s\.d\.?|sd|sampai|hingga)\s*(\d+)|(\d+)/gi, function (m, a, b, c) {
         if (c !== undefined) nums.push([+c, +c]); else nums.push([+a, +b]);
@@ -2366,6 +2498,76 @@
       last = names[names.length - 1];
     });
     return out;
+  }
+
+  // ---- Rentang terstruktur: surah awal + ayat awal -> surah akhir + ayat akhir ----
+  // Format kanonik di teks: "Al-Baqarah 1-30" (satu surah), "Al-Baqarah 5" (satu ayat),
+  // "Al-Baqarah 200 → Ali 'Imran 23" (lintas surah); beberapa rentang dipisah "; ".
+  function pgSurahIndex(name) {
+    var k = pgKeyOfPiece(String(name || "").replace(/\s+/g, " ").trim());
+    return pgLookup(k, false) >= 0 ? pgLookup(k, false) : pgLookup(k, true);
+  }
+
+  // Validasi + hitung: i1,a1 -> i2,b2 (inklusif). Hasil {ok, msg, count, ranges:[{i,a,b}]}
+  function pgRangeCheck(i1, a1, i2, a2) {
+    function isInt(n) { return typeof n === "number" && isFinite(n) && Math.floor(n) === n; }
+    if (!(i1 >= 0 && i1 < SURAHS.length) || !(i2 >= 0 && i2 < SURAHS.length)) return { ok: false, msg: "Surah belum dikenali" };
+    if (!isInt(a1) || !isInt(a2)) return { ok: false, msg: "Isi nomor ayat (angka bulat)" };
+    if (a1 < 1 || a1 > SURAHS[i1].ayat) return { ok: false, msg: SURAHS[i1].name + " hanya punya ayat 1–" + SURAHS[i1].ayat };
+    if (a2 < 1 || a2 > SURAHS[i2].ayat) return { ok: false, msg: SURAHS[i2].name + " hanya punya ayat 1–" + SURAHS[i2].ayat };
+    if (i2 < i1 || (i2 === i1 && a2 < a1)) return { ok: false, msg: "Akhir tidak boleh sebelum awal" };
+    var ranges = [], count = 0;
+    for (var i = i1; i <= i2; i++) {
+      var a = i === i1 ? a1 : 1, b = i === i2 ? a2 : SURAHS[i].ayat;
+      ranges.push({ i: i, a: a, b: b });
+      count += b - a + 1;
+    }
+    return { ok: true, count: count, ranges: ranges };
+  }
+
+  function pgFormatRange(i1, a1, i2, a2) {
+    if (i1 === i2) return SURAHS[i1].name + " " + (a1 === a2 ? a1 : a1 + "-" + a2);
+    return SURAHS[i1].name + " " + a1 + " → " + SURAHS[i2].name + " " + a2;
+  }
+
+  // "Nama 12" -> {i, n} atau null
+  function pgParseEndpoint(str) {
+    var m = /^(.*?)[\s:]*(\d+)\s*$/.exec(String(str).trim());
+    if (!m) return null;
+    var name = m[1].split(/\s+/).filter(function (w) { return w && !PG_SKIP.test(w.toLowerCase().replace(/[^a-z]/g, "")); }).join(" ");
+    var i = pgSurahIndex(name);
+    return i >= 0 ? { i: i, n: +m[2] } : null;
+  }
+
+  function pgParseArrow(seg) {
+    var parts = seg.split(/→|=>/);
+    if (parts.length !== 2) return null;
+    var p = pgParseEndpoint(parts[0]), q = pgParseEndpoint(parts[1]);
+    if (!p || !q) return null;
+    var r = pgRangeCheck(p.i, p.n, q.i, q.n);
+    return r.ok ? r.ranges : null;
+  }
+
+  // Teks kanonik -> {rows:[{i1,a1,i2,a2}], rest:"teks lain"}; potongan yang bukan kanonik/valid tetap di rest.
+  function pgRowsFromText(text) {
+    var rows = [], rest = [];
+    String(text || "").split(/;\s*/).forEach(function (piece) {
+      var t = piece.trim();
+      if (!t) return;
+      var m = /^(.+?) (\d+)(?:-(\d+))?$/.exec(t), n = /^(.+?) (\d+) → (.+?) (\d+)$/.exec(t), row = null;
+      function exact(name) { for (var i = 0; i < SURAHS.length; i++) if (SURAHS[i].name === name) return i; return -1; }
+      if (n) { var x = exact(n[1]), y = exact(n[3]); if (x >= 0 && y >= 0) row = { i1: x, a1: +n[2], i2: y, a2: +n[4] }; }
+      else if (m) { var z = exact(m[1]); if (z >= 0) row = { i1: z, a1: +m[2], i2: z, a2: m[3] !== undefined ? +m[3] : +m[2] }; }
+      if (row && pgRangeCheck(row.i1, row.a1, row.i2, row.a2).ok && pgFormatRange(row.i1, row.a1, row.i2, row.a2) === t) rows.push(row);
+      else rest.push(t);
+    });
+    return { rows: rows, rest: rest.join("; ") };
+  }
+
+  function pgTextFromRows(rows, rest) {
+    var parts = rows.map(function (r) { return pgFormatRange(r.i1, r.a1, r.i2, r.a2); });
+    if (rest && String(rest).trim()) parts.push(String(rest).trim());
+    return parts.join("; ");
   }
 
   // Seluruh catatan satu santri -> angka-angka untuk diagram.
@@ -2585,7 +2787,7 @@
       var emptyP = document.createElement("p");
       emptyP.className = "pg-note";
       emptyP.style.margin = "0";
-      emptyP.textContent = isTahfidz ? "Belum ada catatan tahfidz yang bisa dibaca. Tulis di kolom Tahfidz, mis. \"Al-Baqarah ayat 1-5\"." : "Belum ada catatan murojaah yang bisa dibaca.";
+      emptyP.textContent = isTahfidz ? "Belum ada catatan tahfidz yang bisa dibaca. Isi rentang ayat di kolom Tahfidz pada tab Catat." : "Belum ada catatan murojaah yang bisa dibaca.";
       list.appendChild(emptyP);
     }
     var LIMIT = 10;
@@ -2617,7 +2819,7 @@
     more.textContent = pgState.all ? "Tampilkan lebih sedikit" : "Tampilkan semua (" + an.perSurah.length + " surah)";
 
     document.getElementById("pgNote").textContent =
-      "Dihitung dari teks di kolom " + (isTahfidz ? "Tahfidz" : "Murojaah") + ", mis. \"Al-Baqarah ayat 1-5\". " +
+      "Dihitung dari rentang ayat di kolom " + (isTahfidz ? "Tahfidz" : "Murojaah") + " (teks lama juga dibaca; Tahsin/Iqro tidak ikut dihitung). " +
       "Surah tanpa nomor ayat dihitung satu surah penuh. " +
       (isTahfidz ? "Ayat yang disetor ulang tidak menambah total hafalan. Hafalan sebelum memakai aplikasi ini tidak ikut terhitung." : "Murojaah menghitung semua ayat yang diulang, termasuk yang sama.");
   }

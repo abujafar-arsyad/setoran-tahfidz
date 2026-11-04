@@ -15,10 +15,10 @@ dibangun menjadi APK untuk pengujian atau AAB untuk Google Play Store.
 
 ## Fitur
 
-- **Catat setoran harian:** tahsin, tahfidz, murojaah, dan keterangan (Izin, Sakit, Ghoib), dengan navigasi per tanggal.
+- **Catat setoran harian:** tahsin, tahfidz, murojaah, dan keterangan (Izin, Sakit, Ghoib), dengan navigasi per tanggal. Rentang ayat diisi per baris (bisa lebih dari satu) dan divalidasi dengan jumlah ayat tiap surah; catatan Iqro tetap berupa teks bebas dan tidak dibaca Progres.
 - **Kelola santri:** tambah, ganti nama, dan hapus santri.
 - **Laporan bulanan:** tabel per bulan dengan total, bisa diunduh sebagai gambar dan diberi watermark lembaga.
-- **Progres:** diagram perkembangan hafalan per santri, dibaca dari teks setoran (misalnya "Al-Mulk 1-30"): total ayat dan surah tuntas, hafalan baru per minggu atau bulan, serta total dari waktu ke waktu. Penulisan ayat yang di luar jumlah ayat surah tidak dihitung dan ditandai.
+- **Progres:** diagram perkembangan hafalan per santri, dibaca dari rentang ayat terstruktur (surah + ayat awal sampai surah + ayat akhir, bisa lintas surah, mis. Al-Baqarah 200 → Ali 'Imran 23; teks lama tetap terbaca): total ayat dan surah tuntas, hafalan baru per minggu atau bulan, serta total dari waktu ke waktu. Penulisan ayat yang di luar jumlah ayat surah tidak dihitung dan ditandai.
 - **Setelan:** mode terang, gelap, atau otomatis; lima warna tema; ukuran teks; saran nama surah; pengingat cadangan.
 - **Cadangan data:** ekspor dan impor data sebagai file JSON.
 - **Offline:** data tersimpan di perangkat dan aplikasi tidak butuh koneksi internet.
