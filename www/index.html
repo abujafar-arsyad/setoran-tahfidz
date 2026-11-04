@@ -488,7 +488,6 @@
   .pg-surah .pg-track { height: 9px; }
   .pg-surah.done .pg-fill { background: var(--good); }
   .pg-surah.done .pg-cnt { color: var(--good); font-weight: 700; }
-  .pg-dl { margin-top: 10px; }
   .pg-note { font-size: 12.5px; line-height: 1.6; color: var(--ink-soft); margin: 10px 0 0; }
   .pg-warn { border: 1px dashed var(--gold); border-radius: 12px; padding: 10px 12px; font-size: 12.5px; line-height: 1.6; color: var(--ink-soft); margin-bottom: 12px; }
   .pg-warn b { color: var(--gold); }
@@ -612,25 +611,22 @@
             <button type="button" role="radio" data-v="month" aria-checked="true">Bulanan</button>
           </div>
           <div id="pgBarChart"></div>
-          <button type="button" class="btn btn-ghost btn-small pg-dl" data-part="bar">⬇️ Unduh gambar</button>
         </div>
         <div class="card">
           <h2 id="pgLineTitle">Total hafalan dari waktu ke waktu</h2>
           <div id="pgLineChart"></div>
-          <button type="button" class="btn btn-ghost btn-small pg-dl" data-part="line">⬇️ Unduh gambar</button>
         </div>
         <div class="card">
           <h2 id="pgJuzTitle">Progres per juz</h2>
           <div id="pgJuzGrid" class="pg-juz"></div>
           <p class="pg-note" id="pgJuzNote"></p>
-          <button type="button" class="btn btn-ghost btn-small pg-dl" data-part="juz">⬇️ Unduh gambar</button>
         </div>
         <div class="card">
           <h2>Progres per surah</h2>
           <div id="pgSurahList"></div>
           <button type="button" class="btn btn-ghost" id="pgMore" style="width:100%; display:none;">Tampilkan semua surah</button>
         </div>
-        <button type="button" class="btn btn-ghost pg-dl" data-part="all" style="width:100%; margin-top:12px;">⬇️ Unduh seluruh laporan progres (gambar)</button>
+        <button type="button" class="btn btn-ghost" id="pgDownload" style="width:100%; margin-top:12px;">⬇️ Unduh Progres</button>
         <p class="pg-note" id="pgNote"></p>
       </div>
     </section>
@@ -2754,26 +2750,34 @@
     ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
   }
 
-  function pgExport(part) {
-    if (!pgLast) return;
-    var L = pgLast, C = pgThemeColors(), W = 1080, PAD = 48, CW = W - PAD * 2;
-    var FF = "sans-serif";
+  var pgExportBusy = false;
+  function pgExport() {
+    if (!pgLast || pgExportBusy) return;
+    var C = pgThemeColors(), W = 1080, PAD = 48, CW = W - PAD * 2, FF = "sans-serif";
     var now = new Date();
     var tgl = now.getDate() + " " + BULAN_ID[now.getMonth()] + " " + now.getFullYear();
     var stamp = pgYmd(now);
-    var sections = part === "all" ? ["summary", "bar", "line", "juz"] : [part];
-    var titles = { bar: document.getElementById("pgBarTitle").textContent, line: document.getElementById("pgLineTitle").textContent, juz: document.getElementById("pgJuzTitle").textContent, summary: "Ringkasan" };
+    var s = getSelectedStudent();
+    if (!s) return;
+    var perMonth = pgState.period === "month";
     var chartH = Math.round(CW * 196 / 340);
-    var juzRows = 10, juzCellH = 92, juzGap = 14;
-    var heights = { summary: 230, bar: chartH, line: chartH, juz: juzRows * (juzCellH + juzGap) - juzGap };
-    var HEAD = 150, SEC_TITLE = 56, SEC_GAP = 36, FOOT = 60;
-    var H = HEAD + FOOT;
-    sections.forEach(function (k) { H += SEC_TITLE + heights[k] + SEC_GAP; });
+    var cols = 5, juzGap = 12, juzCellH = 84, juzRows = 6, juzH = juzRows * (juzCellH + juzGap) - juzGap;
+    var SUMH = 230, HEAD = 150, BLOCK_HEAD = 84, TITLE = 52, GAP = 28, FOOT = 60;
+    var metrics = [["tahsin", "Tahsin"], ["tahfidz", "Tahfidz"], ["murojaah", "Muroja'ah"]];
+    var blocks = metrics.map(function (m) {
+      var an = pgAnalyze(data.entries[s.id], m[0]);
+      var buckets = pgBuckets(an.daily, pgState.period, 12);
+      return { key: m[0], name: m[1], an: an, buckets: buckets, jst: pgJuzStats(an.covered) };
+    });
+    var blockH = BLOCK_HEAD + (TITLE + SUMH + GAP) + 2 * (TITLE + chartH + GAP) + (TITLE + juzH + GAP);
+    var H = HEAD + blocks.length * blockH + FOOT;
     var need = [];
-    if (sections.indexOf("bar") >= 0) need.push(pgSvgToImage(pgBarSvg(L.buckets, "bar"), C).then(function (i) { return ["bar", i]; }));
-    if (sections.indexOf("line") >= 0) need.push(pgSvgToImage(pgLineSvg(L.buckets, "line"), C).then(function (i) { return ["line", i]; }));
-    Promise.all(need).then(function (pairs) {
-      var imgs = {}; pairs.forEach(function (p) { imgs[p[0]] = p[1]; });
+    blocks.forEach(function (b) {
+      need.push(pgSvgToImage(pgBarSvg(b.buckets, "bar"), C).then(function (i) { b.bar = i; }));
+      need.push(pgSvgToImage(pgLineSvg(b.buckets, "line"), C).then(function (i) { b.line = i; }));
+    });
+    pgExportBusy = true;
+    Promise.all(need).then(function () {
       var canvas = document.createElement("canvas");
       canvas.width = W; canvas.height = H;
       var ctx = canvas.getContext("2d");
@@ -2781,58 +2785,68 @@
       ctx.fillStyle = C.plum; ctx.fillRect(0, 0, W, 8);
       ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
       ctx.fillStyle = C.plum; ctx.font = "bold 44px " + FF;
-      ctx.fillText("Progres " + L.mName + " — " + L.name, PAD, 80, CW);
+      ctx.fillText("Progres — " + s.name, PAD, 80, CW);
       ctx.fillStyle = C.soft; ctx.font = "26px " + FF;
-      ctx.fillText("Setoran Tahfidz · dibuat " + tgl, PAD, 122, CW);
+      ctx.fillText("Tahsin · Tahfidz · Muroja'ah  |  Setoran Tahfidz · dibuat " + tgl, PAD, 122, CW);
       var y = HEAD;
-      sections.forEach(function (k) {
+      blocks.forEach(function (b) {
+        var an = b.an;
+        ctx.fillStyle = C.plum; pgRoundRect(ctx, PAD, y, CW, 60, 14); ctx.fill();
+        ctx.fillStyle = C.paper; ctx.font = "bold 34px " + FF; ctx.textAlign = "left";
+        ctx.fillText(b.name, PAD + 22, y + 42, CW - 44);
+        y += BLOCK_HEAD;
+
+        var pct = an.unique / QURAN_AYAT * 100;
+        ctx.fillStyle = C.plum; ctx.font = "bold 30px " + FF; ctx.fillText("Ringkasan", PAD, y + 34, CW);
+        var sy = y + TITLE;
+        ctx.fillStyle = C.ink; ctx.font = "28px " + FF;
+        ctx.fillText(pgFmt(an.unique) + " dari " + pgFmt(QURAN_AYAT) + " ayat (" + pgFmt(Math.round(pct * 10) / 10) + "%)", PAD, sy + 28, CW);
+        pgRoundRect(ctx, PAD, sy + 48, CW, 22, 11); ctx.fillStyle = C.tint; ctx.fill();
+        if (an.unique > 0) { pgRoundRect(ctx, PAD, sy + 48, Math.max(CW * pct / 100, 22), 22, 11); ctx.fillStyle = C.plum; ctx.fill(); }
+        var avg = an.daily.length ? an.total / an.daily.length : 0;
+        [[pgFmt(an.surahDone), "Surah tuntas"], [pgFmt(an.total), "Ayat tercatat (total)"], [pgFmt(avg), "Ayat / hari setoran"]].forEach(function (st, i) {
+          var cw = (CW - 32) / 3, x = PAD + i * (cw + 16);
+          pgRoundRect(ctx, x, sy + 96, cw, 120, 16); ctx.fillStyle = C.card; ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.stroke();
+          ctx.fillStyle = C.plum; ctx.font = "bold 44px " + FF; ctx.fillText(st[0], x + 18, sy + 150, cw - 30);
+          ctx.fillStyle = C.soft; ctx.font = "22px " + FF; ctx.fillText(st[1], x + 18, sy + 190, cw - 30);
+        });
+        y += TITLE + SUMH + GAP;
+
+        [["bar", b.name + " per " + (perMonth ? "bulan" : "pekan") + " (ayat)"], ["line", "Total " + b.name + " dari waktu ke waktu (ayat)"]].forEach(function (c) {
+          ctx.fillStyle = C.plum; ctx.font = "bold 30px " + FF; ctx.textAlign = "left";
+          ctx.fillText(c[1], PAD, y + 34, CW);
+          ctx.drawImage(b[c[0]], PAD, y + TITLE, CW, chartH);
+          y += TITLE + chartH + GAP;
+        });
+
         ctx.fillStyle = C.plum; ctx.font = "bold 30px " + FF; ctx.textAlign = "left";
-        ctx.fillText(titles[k], PAD, y + 34, CW);
-        y += SEC_TITLE;
-        if (k === "summary") {
-          var pct = L.an.unique / QURAN_AYAT * 100;
-          ctx.fillStyle = C.ink; ctx.font = "28px " + FF;
-          ctx.fillText(pgFmt(L.an.unique) + " dari " + pgFmt(QURAN_AYAT) + " ayat (" + pgFmt(Math.round(pct * 10) / 10) + "%)", PAD, y + 28, CW);
-          pgRoundRect(ctx, PAD, y + 48, CW, 22, 11); ctx.fillStyle = C.tint; ctx.fill();
-          if (L.an.unique > 0) { pgRoundRect(ctx, PAD, y + 48, Math.max(CW * pct / 100, 22), 22, 11); ctx.fillStyle = C.plum; ctx.fill(); }
-          var avg = L.an.daily.length ? L.an.total / L.an.daily.length : 0;
-          [[pgFmt(L.an.surahDone), "Surah tuntas"], [pgFmt(L.an.total), "Ayat tercatat (total)"], [pgFmt(avg), "Ayat / hari setoran"]].forEach(function (st, i) {
-            var cw = (CW - 32) / 3, x = PAD + i * (cw + 16);
-            pgRoundRect(ctx, x, y + 96, cw, 120, 16); ctx.fillStyle = C.card; ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.stroke();
-            ctx.fillStyle = C.plum; ctx.font = "bold 44px " + FF; ctx.fillText(st[0], x + 18, y + 150, cw - 30);
-            ctx.fillStyle = C.soft; ctx.font = "22px " + FF; ctx.fillText(st[1], x + 18, y + 190, cw - 30);
-          });
-        } else if (k === "bar" || k === "line") {
-          ctx.drawImage(imgs[k], PAD, y, CW, chartH);
-        } else if (k === "juz") {
-          var cw2 = (CW - 32) / 3;
-          L.jst.forEach(function (j, i) {
-            var x = PAD + (i % 3) * (cw2 + 16), cy = y + Math.floor(i / 3) * (juzCellH + juzGap), done = j.cnt === j.total;
-            pgRoundRect(ctx, x, cy, cw2, juzCellH, 14); ctx.fillStyle = C.card; ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.stroke();
-            ctx.fillStyle = C.ink; ctx.font = "bold 26px " + FF; ctx.textAlign = "left"; ctx.fillText("Juz " + j.juz, x + 16, cy + 34);
-            ctx.fillStyle = done ? C.good : C.soft; ctx.textAlign = "right";
-            ctx.fillText(done ? "✓" : Math.floor(j.cnt / j.total * 100) + "%", x + cw2 - 16, cy + 34);
-            ctx.textAlign = "left";
-            pgRoundRect(ctx, x + 16, cy + 46, cw2 - 32, 10, 5); ctx.fillStyle = C.tint; ctx.fill();
-            if (j.cnt > 0) { pgRoundRect(ctx, x + 16, cy + 46, Math.max((cw2 - 32) * j.cnt / j.total, 10), 10, 5); ctx.fillStyle = done ? C.good : C.plum; ctx.fill(); }
-            ctx.fillStyle = C.soft; ctx.font = "20px " + FF; ctx.fillText(j.cnt + " / " + j.total + " ayat", x + 16, cy + 82, cw2 - 32);
-          });
-        }
-        y += heights[k] + SEC_GAP;
+        ctx.fillText("Progres per juz — " + b.name, PAD, y + 34, CW);
+        var cw2 = (CW - juzGap * (cols - 1)) / cols, jy = y + TITLE;
+        b.jst.forEach(function (j, i) {
+          var x = PAD + (i % cols) * (cw2 + juzGap), cy = jy + Math.floor(i / cols) * (juzCellH + juzGap), done = j.cnt === j.total;
+          pgRoundRect(ctx, x, cy, cw2, juzCellH, 12); ctx.fillStyle = C.card; ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.stroke();
+          ctx.fillStyle = C.ink; ctx.font = "bold 22px " + FF; ctx.textAlign = "left"; ctx.fillText("Juz " + j.juz, x + 12, cy + 28);
+          ctx.fillStyle = done ? C.good : C.soft; ctx.textAlign = "right";
+          ctx.fillText(done ? "✓" : Math.floor(j.cnt / j.total * 100) + "%", x + cw2 - 12, cy + 28);
+          ctx.textAlign = "left";
+          pgRoundRect(ctx, x + 12, cy + 38, cw2 - 24, 8, 4); ctx.fillStyle = C.tint; ctx.fill();
+          if (j.cnt > 0) { pgRoundRect(ctx, x + 12, cy + 38, Math.max((cw2 - 24) * j.cnt / j.total, 8), 8, 4); ctx.fillStyle = done ? C.good : C.plum; ctx.fill(); }
+          ctx.fillStyle = C.soft; ctx.font = "17px " + FF; ctx.fillText(j.cnt + "/" + j.total, x + 12, cy + 70, cw2 - 24);
+        });
+        y += TITLE + juzH + GAP;
       });
       ctx.fillStyle = C.soft; ctx.font = "20px " + FF; ctx.textAlign = "left";
-      ctx.fillText("Dihitung dari rentang ayat yang dicatat; catatan Iqro tidak ikut dihitung.", PAD, H - 24, CW);
-      var filename = "progres_" + L.name.replace(/\s+/g, "_") + "_" + L.label + "_" + (part === "all" ? "lengkap" : part) + "_" + stamp + ".png";
-      if (isNativeApp()) { exportImageNative(canvas, filename); return; }
-      canvas.toBlob(function (blob) { saveFile(blob, filename); }, "image/png");
+      ctx.fillText("Dihitung dari rentang ayat yang dicatat; catatan Iqro tidak ikut dihitung. Juz mengikuti Mushaf Madinah (Hafs).", PAD, H - 24, CW);
+      var filename = "progres_" + s.name.replace(/\s+/g, "_") + "_" + stamp + ".png";
+      if (isNativeApp()) { exportImageNative(canvas, filename); pgExportBusy = false; return; }
+      canvas.toBlob(function (blob) { pgExportBusy = false; saveFile(blob, filename); }, "image/png");
     }).catch(function (err) {
+      pgExportBusy = false;
       alert("Gagal membuat gambar: " + (err && err.message ? err.message : err));
     });
   }
 
-  Array.prototype.forEach.call(document.querySelectorAll(".pg-dl"), function (b) {
-    b.addEventListener("click", function () { pgExport(b.getAttribute("data-part")); });
-  });
+  document.getElementById("pgDownload").addEventListener("click", function () { pgExport(); });
 
   function pgFmt(n) { return String(Math.round(n * 10) / 10).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
   function pgNiceStep(x) {
