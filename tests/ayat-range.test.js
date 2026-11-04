@@ -8,8 +8,8 @@ const surahSrc = html.slice(html.indexOf("var SURAHS = ["), html.indexOf("var dl
 const pureSrc = html.slice(html.indexOf("// PG-PURE-BEGIN"), html.indexOf("// PG-PURE-END"));
 const pad2 = (n) => String(n).padStart(2, "0");
 const api = new Function("pad2", surahSrc + "\n" + pureSrc +
-  "\nreturn {SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats};")(pad2);
-const { SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats } = api;
+  "\nreturn {SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf,   pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText};")(pad2);
+  const { SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText } = api;
 
 const idx = (n) => pgSurahIndex(n);
 const BAQ = idx("Al-Baqarah"), IMR = idx("Ali 'Imran"), NIS = idx("An-Nisa"), NAS = idx("An-Nas"), FAT = idx("Al-Fatihah");
@@ -208,6 +208,50 @@ t("Tahsin metric: structured ranges counted (unique, per juz, timeline); Iqro ne
   assert.strictEqual(st.reduce((s, x) => s + x.cnt, 0), 298);
   assert.strictEqual(pgAnalyze({ d: { tahsin: "Iqro 3 halaman 12" } }, "tahsin").unique, 0);
   assert.strictEqual(pgAnalyze({ "2026-01-01": { tahsin: "Iqro 3 halaman 12" } }, "tahsin").bad.length, 0);
+});
+
+// ---- Regresi: dropdown surah, lintas surah independen, tampilan Tahsin ----
+t("saran surah: ketik 'L' menampilkan pilihan yang bisa dipilih; hasil terpilih dikenali", () => {
+  const s = pgSuggestSurah("L", 8);
+  assert.ok(s.length > 0);
+  s.forEach((i) => assert.strictEqual(pgSurahIndex(SURAHS[i].name), i));
+  assert.ok(pgSuggestSurah("Lu", 8).map((i) => SURAHS[i].name).includes("Luqman"));
+  assert.deepStrictEqual(pgSuggestSurah("", 8), []);
+  assert.strictEqual(SURAHS[pgSuggestSurah("ma'id")[0]].name, "Al-Ma'idah");
+  assert.strictEqual(SURAHS[pgSuggestSurah("المائدة")[0]].name, "Al-Ma'idah");
+});
+t("lintas surah bebas: Al-Ma'idah -> surah mana pun setelahnya, batas ayat dijaga", () => {
+  const MAI = idx("Al-Ma'idah"), ANA = idx("Al-An'am"), NAH = idx("An-Nahl");
+  assert.strictEqual(pgRangeCheck(MAI, 120, ANA, 1).count, 2);
+  assert.strictEqual(pgRangeCheck(MAI, 1, NAH, 128).count, SURAHS.slice(MAI, NAH + 1).reduce((a, x) => a + x.ayat, 0));
+  assert.ok(!pgRangeCheck(MAI, 121, ANA, 1).ok);
+  assert.ok(!pgRangeCheck(MAI, 1, ANA, 166).ok);
+  assert.ok(!pgRangeCheck(ANA, 1, MAI, 1).ok);
+});
+t("teks lintas surah lama dimuat kembali sebagai baris terstruktur dan tampil kanonik", () => {
+  const back = pgRowsFromText("Al-Fatihah 1 - Al-Baqarah 30; Iqro 3");
+  assert.deepStrictEqual(back.rows, [{ i1: FAT, a1: 1, i2: BAQ, a2: 30 }]);
+  assert.strictEqual(back.rest, "Iqro 3");
+  assert.strictEqual(pgDisplayText("Al-Fatihah 1 - Al-Baqarah 30"), "Al-Fatihah 1 \u2192 Al-Baqarah 30");
+  assert.strictEqual(pgDisplayText("Al-Baqarah 1-30; Iqro 3"), "Al-Baqarah 1-30; Iqro 3");
+  assert.strictEqual(pgDisplayText("Al-Kafirun - An-Nas"), "Al-Kafirun - An-Nas");
+});
+t("Tahsin: simpan -> muat -> tampil -> progres konsisten dengan Tahfidz", () => {
+  const rows = [{ i1: BAQ, a1: 200, i2: IMR, a2: 23 }];
+  const saved = pgTextFromRows(rows, "Iqro 3 halaman 12");
+  assert.deepStrictEqual(pgRowsFromText(saved).rows, rows);
+  assert.strictEqual(pgDisplayText(saved), saved);
+  const a = pgAnalyze({ "2026-01-01": { tahsin: saved } }, "tahsin");
+  const b = pgAnalyze({ "2026-01-01": { tahfidz: saved } }, "tahfidz");
+  assert.strictEqual(a.unique, 110); assert.strictEqual(a.total, b.total);
+  assert.deepStrictEqual(pgJuzStats(a.covered), pgJuzStats(b.covered));
+});
+t("UI: dropdown memakai panel kustom (bukan datalist), dengan click/keyboard", () => {
+  assert.ok(!/class="rs rs[12]"[^>]*list=/.test(html));
+  ["ArrowDown", "ArrowUp", "Enter", "Escape"].forEach((k) => assert.ok(html.includes('"' + k + '"'), k));
+  assert.ok(html.includes('rsPanel.addEventListener("click"'));
+  assert.ok(html.includes('rsPanel.addEventListener("mousedown"'));
+  assert.ok(html.includes("rs2Touched"));
 });
 
 console.log(n + " tests passed");

@@ -171,6 +171,12 @@
   .rng-info.ok { color: var(--good); font-weight: 600; }
   .rng-del { position: absolute; right: 6px; bottom: 6px; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--danger); background: transparent; color: var(--danger); font-size: 15px; cursor: pointer; }
   .rng-add { margin-bottom: 10px; }
+  .rs-panel { position: fixed; z-index: 1000; max-height: 260px; overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.28); touch-action: pan-y; }
+  .rs-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 14px; min-height: 44px; cursor: pointer; border-bottom: 1px solid var(--line); color: var(--ink); font-size: 14px; -webkit-tap-highlight-color: transparent; }
+  .rs-item:last-child { border-bottom: none; }
+  .rs-item small { color: var(--ink-soft); }
+  .rs-item.on, .rs-item:active { background: var(--plum-tint); }
+  .rs-item .ac-ar { color: var(--plum); font-size: 15px; font-weight: 600; }
   .rng-free { margin-top: 2px; font-weight: 500 !important; }
   input[type="text"], input[type="date"], input[type="number"], textarea {
     width: 100%;
@@ -1369,26 +1375,121 @@
     else { info.classList.add("err"); info.textContent = r.msg; }
   }
 
+  var rsPanel = null, rsActive = null, rsHideTimer = null, rsIdx = -1, rsItems = [];
+
+  function rsEnsurePanel() {
+    if (rsPanel) return rsPanel;
+    rsPanel = document.createElement("div");
+    rsPanel.className = "rs-panel";
+    rsPanel.setAttribute("role", "listbox");
+    rsPanel.style.display = "none";
+    document.body.appendChild(rsPanel);
+    // Cegah input kehilangan fokus saat panel disentuh; pemilihan dilakukan di "click" (andal untuk sentuh & mouse).
+    rsPanel.addEventListener("mousedown", function (e) { e.preventDefault(); });
+    rsPanel.addEventListener("touchstart", function () { clearTimeout(rsHideTimer); }, { passive: true });
+    rsPanel.addEventListener("click", function (e) {
+      var el = e.target.closest ? e.target.closest(".rs-item") : null;
+      if (el && rsActive) rsPick(+el.getAttribute("data-i"));
+    });
+    window.addEventListener("scroll", function (e) { if (rsPanel && e.target !== rsPanel) rsHide(); }, true);
+    return rsPanel;
+  }
+
+  function rsHide() {
+    clearTimeout(rsHideTimer);
+    if (rsPanel) rsPanel.style.display = "none";
+    rsItems = []; rsIdx = -1;
+  }
+
+  function rsHighlight(n) {
+    rsIdx = n;
+    Array.prototype.forEach.call(rsPanel.children, function (c, k) {
+      var on = k === n;
+      c.classList.toggle("on", on);
+      c.setAttribute("aria-selected", on ? "true" : "false");
+      if (on && c.scrollIntoView) c.scrollIntoView({ block: "nearest" });
+    });
+  }
+
+  function rsShow(inp) {
+    var list = pgSuggestSurah(inp.value, 8);
+    if (!list.length || (list.length === 1 && SURAHS[list[0]].name === inp.value.trim())) { rsHide(); return; }
+    var p = rsEnsurePanel();
+    rsActive = inp; rsItems = list;
+    p.innerHTML = "";
+    list.forEach(function (i) {
+      var it = document.createElement("div");
+      it.className = "rs-item";
+      it.setAttribute("role", "option");
+      it.setAttribute("data-i", i);
+      it.innerHTML = "<span>" + (i + 1) + ". " + SURAHS[i].name + " <small>(" + SURAHS[i].ayat + " ayat)</small></span><span class=\"ac-ar\" dir=\"rtl\">" + SURAHS[i].ar + "</span>";
+      p.appendChild(it);
+    });
+    var r = inp.getBoundingClientRect();
+    p.style.left = r.left + "px";
+    p.style.width = Math.max(r.width, 200) + "px";
+    var below = window.innerHeight - r.bottom;
+    if (below < 200 && r.top > below) { p.style.top = "auto"; p.style.bottom = (window.innerHeight - r.top + 2) + "px"; }
+    else { p.style.bottom = "auto"; p.style.top = (r.bottom + 2) + "px"; }
+    p.style.display = "block";
+    rsHighlight(-1);
+  }
+
+  function rsPick(k) {
+    var inp = rsActive;
+    if (!inp || rsItems[k] === undefined) return;
+    inp.value = SURAHS[rsItems[k]].name;
+    rsHide();
+    inp.dispatchEvent(new Event("change", { bubbles: true }));
+    var row = inp.closest(".rng-row");
+    var next = row && row.querySelector(inp.classList.contains("rs1") ? ".ra1" : ".ra2");
+    if (next) next.focus();
+  }
+
+  function rsAttach(inp) {
+    inp.addEventListener("input", function () { rsActive = inp; rsShow(inp); });
+    inp.addEventListener("focus", function () { rsActive = inp; if (inp.value.trim()) rsShow(inp); });
+    inp.addEventListener("blur", function () { clearTimeout(rsHideTimer); rsHideTimer = setTimeout(rsHide, 250); });
+    inp.addEventListener("keydown", function (e) {
+      var open = rsPanel && rsPanel.style.display !== "none" && rsItems.length;
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        if (!open) { rsShow(inp); if (!rsItems.length) return; }
+        e.preventDefault();
+        rsHighlight(e.key === "ArrowDown" ? (rsIdx + 1) % rsItems.length : (rsIdx <= 0 ? rsItems.length - 1 : rsIdx - 1));
+      } else if (e.key === "Enter" && open) {
+        e.preventDefault();
+        rsPick(rsIdx >= 0 ? rsIdx : 0);
+      } else if (e.key === "Escape" && open) {
+        e.preventDefault(); rsHide();
+      }
+    });
+  }
+
   function rngAddRow(cat, v) {
     var row = document.createElement("div");
     row.className = "rng-row";
     row.innerHTML =
-      '<div class="rng-line"><span class="rng-lbl">Mulai</span><input type="text" class="rs rs1" list="surahList" placeholder="Surah" autocomplete="off" autocorrect="off" spellcheck="false">' +
+      '<div class="rng-line"><span class="rng-lbl">Mulai</span><input type="text" class="rs rs1" placeholder="Surah" autocomplete="off" autocorrect="off" spellcheck="false" role="combobox" aria-autocomplete="list">' +
       '<input type="number" class="ra ra1" inputmode="numeric" min="1" step="1" placeholder="Ayat"></div>' +
-      '<div class="rng-line"><span class="rng-lbl">Sampai</span><input type="text" class="rs rs2" list="surahList" placeholder="Surah" autocomplete="off" autocorrect="off" spellcheck="false">' +
+      '<div class="rng-line"><span class="rng-lbl">Sampai</span><input type="text" class="rs rs2" placeholder="Surah" autocomplete="off" autocorrect="off" spellcheck="false" role="combobox" aria-autocomplete="list">' +
       '<input type="number" class="ra ra2" inputmode="numeric" min="1" step="1" placeholder="Ayat"></div>' +
       '<div class="rng-info"></div><button type="button" class="rng-del" aria-label="Hapus rentang">✕</button>';
     var q = function (c) { return row.querySelector("." + c); };
     if (v) { q("rs1").value = SURAHS[v.i1].name; q("ra1").value = v.a1; q("rs2").value = SURAHS[v.i2].name; q("ra2").value = v.a2; }
     function canon(inp) { var i = pgSurahIndex(inp.value); if (i >= 0) inp.value = SURAHS[i].name; }
+    var rs2Touched = !!v;
     q("rs1").addEventListener("change", function () {
       canon(q("rs1"));
-      if (!q("rs2").value.trim() && pgSurahIndex(q("rs1").value) >= 0) q("rs2").value = q("rs1").value;
+      var i1 = pgSurahIndex(q("rs1").value);
+      // Surah akhir mengikuti surah awal sampai pengguna memilihnya sendiri; keduanya bebas dipilih terpisah.
+      if (i1 >= 0 && (!q("rs2").value.trim() || !rs2Touched)) q("rs2").value = SURAHS[i1].name;
       rngRefresh(row);
     });
-    q("rs2").addEventListener("change", function () { canon(q("rs2")); rngRefresh(row); });
+    q("rs2").addEventListener("input", function () { rs2Touched = true; });
+    q("rs2").addEventListener("change", function () { rs2Touched = true; canon(q("rs2")); rngRefresh(row); });
+    rsAttach(q("rs1")); rsAttach(q("rs2"));
     ["rs1", "rs2", "ra1", "ra2"].forEach(function (c) { q(c).addEventListener("input", function () { rngRefresh(row); }); });
-    row.querySelector(".rng-del").addEventListener("click", function () { row.remove(); });
+    row.querySelector(".rng-del").addEventListener("click", function () { rsHide(); row.remove(); });
     document.getElementById("rng" + cat).appendChild(row);
     rngRefresh(row);
     return row;
@@ -1650,6 +1751,7 @@
       ["tahsin", "tahfidz", "murojaah", "keterangan"].forEach(function (key) {
         var td = document.createElement("td");
         var val = e ? e[key] : "";
+        if (val && key !== "keterangan") val = pgDisplayText(val);
         var span = document.createElement("span");
         span.className = val ? "cell-text" : "cell-text cell-empty";
         span.textContent = val || "—";
@@ -1921,6 +2023,7 @@
         if (!e) continue;
         for (var c = 0; c < 4; c++) {
           var val = e[keys[c]];
+          if (val && c < 3) val = pgDisplayText(val);
           if (!val) continue;
           drawFitted(ctx, val, TPL.colX[c] * S, TPL.colX[c + 1] * S, top, bottom, S, {});
         }
@@ -2111,9 +2214,9 @@
         var e = getEntry(s.id, y + "-" + pad2(m0 + 1) + "-" + pad2(d));
         if (!isFilled(e)) continue;
         var parts = [];
-        if (e.tahsin) parts.push("Tahsin: " + e.tahsin);
-        if (e.tahfidz) parts.push("Tahfidz: " + e.tahfidz);
-        if (e.murojaah) parts.push("Murojaah: " + e.murojaah);
+        if (e.tahsin) parts.push("Tahsin: " + pgDisplayText(e.tahsin));
+        if (e.tahfidz) parts.push("Tahfidz: " + pgDisplayText(e.tahfidz));
+        if (e.murojaah) parts.push("Murojaah: " + pgDisplayText(e.murojaah));
         if (e.keterangan) parts.push(e.keterangan);
         lines.push(d + " " + BULAN_ID[m0].slice(0, 3) + ": " + parts.join("; "));
       }
@@ -2582,9 +2685,41 @@
       if (n) { var x = exact(n[1]), y = exact(n[3]); if (x >= 0 && y >= 0) row = { i1: x, a1: +n[2], i2: y, a2: +n[4] }; }
       else if (m) { var z = exact(m[1]); if (z >= 0) row = { i1: z, a1: +m[2], i2: z, a2: m[3] !== undefined ? +m[3] : +m[2] }; }
       if (row && pgRangeCheck(row.i1, row.a1, row.i2, row.a2).ok && pgFormatRange(row.i1, row.a1, row.i2, row.a2) === t) rows.push(row);
+      else if (!row && (row = pgLegacyRow(t))) rows.push(row);
       else rest.push(t);
     });
     return { rows: rows, rest: rest.join("; ") };
+  }
+
+  // Teks lama "Al-Fatihah 1 - Al-Baqarah 30" / "... s/d ..." -> baris terstruktur; null bila bukan satu rentang lintas surah yang valid.
+  function pgLegacyRow(t) {
+    var m = /^(.*?\d)\s*(?:→|=>|-|–|—|s\/d|s\.d\.?|sd|sampai|hingga)\s*(\D.*\d)\s*$/i.exec(String(t).trim());
+    if (!m) return null;
+    var p = pgParseEndpoint(m[1]), q = pgParseEndpoint(m[2]);
+    if (!p || !q || p.i === q.i) return null;
+    return pgRangeCheck(p.i, p.n, q.i, q.n).ok ? { i1: p.i, a1: p.n, i2: q.i, a2: q.n } : null;
+  }
+
+  // Teks untuk ditampilkan (Laporan/ekspor): rentang lintas surah lama ditulis dalam format kanonik yang sama dengan Catat.
+  function pgDisplayText(text) {
+    return String(text || "").split(/;\s*/).map(function (piece) {
+      var r = pgLegacyRow(piece);
+      return r ? pgFormatRange(r.i1, r.a1, r.i2, r.a2) : piece;
+    }).join("; ");
+  }
+
+  // Saran nama surah untuk kolom rentang: awalan dulu, lalu yang mengandung; Latin atau Arab.
+  function pgSuggestSurah(q, max) {
+    q = String(q || "").trim();
+    if (!q) return [];
+    var low = q.toLowerCase(), nl = pgNormLatin(q), starts = [], has = [];
+    SURAHS.forEach(function (s, i) {
+      var name = s.name.toLowerCase(), nn = pgNormLatin(s.name);
+      var p = name.indexOf(low), pn = nl ? nn.indexOf(nl) : -1, pa = s.ar ? s.ar.indexOf(q) : -1;
+      if (p === 0 || pn === 0 || pa === 0) starts.push(i);
+      else if (p > 0 || pn > 0 || pa > 0) has.push(i);
+    });
+    return starts.concat(has).slice(0, max || 8);
   }
 
   function pgTextFromRows(rows, rest) {
