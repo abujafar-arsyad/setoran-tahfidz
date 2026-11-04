@@ -488,6 +488,7 @@
   .pg-surah .pg-track { height: 9px; }
   .pg-surah.done .pg-fill { background: var(--good); }
   .pg-surah.done .pg-cnt { color: var(--good); font-weight: 700; }
+  .pg-dl { margin-top: 10px; }
   .pg-note { font-size: 12.5px; line-height: 1.6; color: var(--ink-soft); margin: 10px 0 0; }
   .pg-warn { border: 1px dashed var(--gold); border-radius: 12px; padding: 10px 12px; font-size: 12.5px; line-height: 1.6; color: var(--ink-soft); margin-bottom: 12px; }
   .pg-warn b { color: var(--gold); }
@@ -598,6 +599,7 @@
       </div>
       <div id="progresBody">
         <div class="pg-seg" role="radiogroup" aria-label="Jenis setoran" id="pgMetric">
+          <button type="button" role="radio" data-v="tahsin" aria-checked="false">Tahsin</button>
           <button type="button" role="radio" data-v="tahfidz" aria-checked="true">Tahfidz</button>
           <button type="button" role="radio" data-v="murojaah" aria-checked="false">Murojaah</button>
         </div>
@@ -610,21 +612,25 @@
             <button type="button" role="radio" data-v="month" aria-checked="true">Bulanan</button>
           </div>
           <div id="pgBarChart"></div>
+          <button type="button" class="btn btn-ghost btn-small pg-dl" data-part="bar">⬇️ Unduh gambar</button>
         </div>
         <div class="card">
           <h2 id="pgLineTitle">Total hafalan dari waktu ke waktu</h2>
           <div id="pgLineChart"></div>
+          <button type="button" class="btn btn-ghost btn-small pg-dl" data-part="line">⬇️ Unduh gambar</button>
         </div>
         <div class="card">
           <h2 id="pgJuzTitle">Progres per juz</h2>
           <div id="pgJuzGrid" class="pg-juz"></div>
           <p class="pg-note" id="pgJuzNote"></p>
+          <button type="button" class="btn btn-ghost btn-small pg-dl" data-part="juz">⬇️ Unduh gambar</button>
         </div>
         <div class="card">
           <h2>Progres per surah</h2>
           <div id="pgSurahList"></div>
           <button type="button" class="btn btn-ghost" id="pgMore" style="width:100%; display:none;">Tampilkan semua surah</button>
         </div>
+        <button type="button" class="btn btn-ghost pg-dl" data-part="all" style="width:100%; margin-top:12px;">⬇️ Unduh seluruh laporan progres (gambar)</button>
         <p class="pg-note" id="pgNote"></p>
       </div>
     </section>
@@ -2460,17 +2466,24 @@
       .replace(/[۰-۹]/g, function (c) { return String(c.charCodeAt(0) - 0x6F0); })
       .replace(/\([^)]*\)|\[[^\]]*\]/g, " ")
       .replace(/[–—]/g, "-");
-    var segs = t.split(/[,;\n\r|+]+|\s+-\s+(?=[^\d\s])|\s+&\s+|\s+dan\s+/i);
+    // Rentang lintas surah ("Al-Fatihah 1 - Al-Baqarah 30", "... → ...") harus dikenali sebelum " - " dipakai
+    // sebagai pemisah antar-surah; kalau tidak, rentang terpecah dan hanya angka tunggal yang terbaca.
+    var segs = [];
+    t.split(/[,;\n\r|+]+/).forEach(function (piece) {
+      if (pgParseCross(piece)) segs.push(piece);
+      else Array.prototype.push.apply(segs, piece.split(/\s+-\s+(?=[^\d\s])|\s+&\s+|\s+dan\s+/i));
+    });
     var last = -1;
     segs.forEach(function (seg) {
       seg = seg.trim();
       if (!seg) return;
-      if (/→|=>/.test(seg)) {
-        var ar = pgParseArrow(seg);
-        if (ar) { Array.prototype.push.apply(out.ranges, ar); last = ar[ar.length - 1].i; }
+      var cr = pgParseCross(seg);
+      if (cr) {
+        if (cr.ranges) { Array.prototype.push.apply(out.ranges, cr.ranges); last = cr.ranges[cr.ranges.length - 1].i; }
         else out.bad.push(seg);
         return;
       }
+      if (/→|=>/.test(seg)) { out.bad.push(seg); return; }
       var nums = [];
       var rest = seg.replace(/(\d+)\s*(?:-|s\/d|s\.d\.?|sd|sampai|hingga)\s*(\d+)|(\d+)/gi, function (m, a, b, c) {
         if (c !== undefined) nums.push([+c, +c]); else nums.push([+a, +b]);
@@ -2551,13 +2564,15 @@
     return i >= 0 ? { i: i, n: +m[2] } : null;
   }
 
-  function pgParseArrow(seg) {
-    var parts = seg.split(/→|=>/);
-    if (parts.length !== 2) return null;
-    var p = pgParseEndpoint(parts[0]), q = pgParseEndpoint(parts[1]);
+  // "Surah N <pemisah> Surah M" (pemisah: → => - – s/d sampai hingga). null = bukan rentang lintas surah;
+  // {ranges} = valid dan terhitung per surah; {} = terbaca tapi tidak valid (dilaporkan, tidak dihitung).
+  function pgParseCross(seg) {
+    var m = /^(.*?\d)\s*(?:→|=>|-|–|—|s\/d|s\.d\.?|sd|sampai|hingga)\s*(\D.*\d)\s*$/i.exec(String(seg).replace(/[–—]/g, "-").trim());
+    if (!m) return null;
+    var p = pgParseEndpoint(m[1]), q = pgParseEndpoint(m[2]);
     if (!p || !q) return null;
     var r = pgRangeCheck(p.i, p.n, q.i, q.n);
-    return r.ok ? r.ranges : null;
+    return r.ok ? { ranges: r.ranges } : {};
   }
 
   // Teks kanonik -> {rows:[{i1,a1,i2,a2}], rest:"teks lain"}; potongan yang bukan kanonik/valid tetap di rest.
@@ -2613,6 +2628,14 @@
     return res;
   }
 
+  // Tahsin bercampur catatan buku (Iqro/Tilawati/Qiroati/Ummi, halaman, tajwid): potongan itu dibuang
+  // sebelum dibaca sebagai ayat, supaya nomor halaman tidak pernah dianggap ayat dan tidak jadi peringatan.
+  var PG_NONQURAN = /iqro|iqra|tilawati|qiroati|qiraati|ummi|jilid|halaman|\bhal\b|tajwid|gharib|musykilat|juz\s*['\u2019`]?\s*amma/i;
+  function pgTahsinText(text) {
+    return String(text || "").split(/[;\n\r,|+]+/).map(function (s) { return s.trim(); })
+      .filter(function (s) { return s && !PG_NONQURAN.test(s); }).join("; ");
+  }
+
   // Seluruh catatan satu santri -> angka-angka untuk diagram.
   // value: tahfidz = ayat BARU (unik, pengulangan tidak menambah); murojaah = ayat yang diulang hari itu.
   function pgAnalyze(ents, field) {
@@ -2623,6 +2646,8 @@
     var res = { daily: [], bad: [], covered: covered, lastSeen: lastSeen };
     dates.forEach(function (d) {
       var e = ents[d], txt = e && e[field];
+      if (!txt) return;
+      if (field === "tahsin") txt = pgTahsinText(txt);
       if (!txt) return;
       var p = pgParseText(txt);
       p.bad.forEach(function (s) { res.bad.push({ date: d, text: s }); });
@@ -2701,6 +2726,113 @@
 
   // ---- tampilan ----
   var pgState = { metric: "tahfidz", period: "month", all: false };
+  var pgLast = null;
+
+  // ---- unduh diagram sebagai gambar PNG (warna mengikuti tema aktif) ----
+  function pgThemeColors() {
+    var cs = getComputedStyle(document.documentElement);
+    function v(n, d) { return cs.getPropertyValue(n).trim() || d; }
+    return { paper: v("--paper", "#ffffff"), card: v("--card", "#ffffff"), ink: v("--ink", "#222222"), soft: v("--ink-soft", "#666666"),
+      line: v("--line", "#dddddd"), plum: v("--plum", "#5b2a86"), gold: v("--gold", "#b8860b"), good: v("--good", "#2e7d32"), tint: v("--plum-tint", "#eee") };
+  }
+
+  function pgSvgToImage(svgStr, C) {
+    var style = "text{fill:" + C.soft + ";font-size:10px;font-family:sans-serif}.pg-grid{stroke:" + C.line + ";stroke-width:1}.pg-bar{fill:" + C.plum +
+      "}.pg-lineStroke{fill:none;stroke:" + C.gold + ";stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}.pg-area{fill:" + C.gold +
+      ";opacity:.14}.pg-dot{fill:" + C.gold + "}.pg-val{fill:" + C.ink + ";font-weight:700;font-size:10px}";
+    var xml = svgStr.replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" ').replace(/>/, "><style>" + style + "</style>");
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      img.onload = function () { resolve(img); };
+      img.onerror = function () { reject(new Error("Gagal membuat gambar diagram")); };
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(xml);
+    });
+  }
+
+  function pgRoundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+
+  function pgExport(part) {
+    if (!pgLast) return;
+    var L = pgLast, C = pgThemeColors(), W = 1080, PAD = 48, CW = W - PAD * 2;
+    var FF = "sans-serif";
+    var now = new Date();
+    var tgl = now.getDate() + " " + BULAN_ID[now.getMonth()] + " " + now.getFullYear();
+    var stamp = pgYmd(now);
+    var sections = part === "all" ? ["summary", "bar", "line", "juz"] : [part];
+    var titles = { bar: document.getElementById("pgBarTitle").textContent, line: document.getElementById("pgLineTitle").textContent, juz: document.getElementById("pgJuzTitle").textContent, summary: "Ringkasan" };
+    var chartH = Math.round(CW * 196 / 340);
+    var juzRows = 10, juzCellH = 92, juzGap = 14;
+    var heights = { summary: 230, bar: chartH, line: chartH, juz: juzRows * (juzCellH + juzGap) - juzGap };
+    var HEAD = 150, SEC_TITLE = 56, SEC_GAP = 36, FOOT = 60;
+    var H = HEAD + FOOT;
+    sections.forEach(function (k) { H += SEC_TITLE + heights[k] + SEC_GAP; });
+    var need = [];
+    if (sections.indexOf("bar") >= 0) need.push(pgSvgToImage(pgBarSvg(L.buckets, "bar"), C).then(function (i) { return ["bar", i]; }));
+    if (sections.indexOf("line") >= 0) need.push(pgSvgToImage(pgLineSvg(L.buckets, "line"), C).then(function (i) { return ["line", i]; }));
+    Promise.all(need).then(function (pairs) {
+      var imgs = {}; pairs.forEach(function (p) { imgs[p[0]] = p[1]; });
+      var canvas = document.createElement("canvas");
+      canvas.width = W; canvas.height = H;
+      var ctx = canvas.getContext("2d");
+      ctx.fillStyle = C.paper; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = C.plum; ctx.fillRect(0, 0, W, 8);
+      ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
+      ctx.fillStyle = C.plum; ctx.font = "bold 44px " + FF;
+      ctx.fillText("Progres " + L.mName + " — " + L.name, PAD, 80, CW);
+      ctx.fillStyle = C.soft; ctx.font = "26px " + FF;
+      ctx.fillText("Setoran Tahfidz · dibuat " + tgl, PAD, 122, CW);
+      var y = HEAD;
+      sections.forEach(function (k) {
+        ctx.fillStyle = C.plum; ctx.font = "bold 30px " + FF; ctx.textAlign = "left";
+        ctx.fillText(titles[k], PAD, y + 34, CW);
+        y += SEC_TITLE;
+        if (k === "summary") {
+          var pct = L.an.unique / QURAN_AYAT * 100;
+          ctx.fillStyle = C.ink; ctx.font = "28px " + FF;
+          ctx.fillText(pgFmt(L.an.unique) + " dari " + pgFmt(QURAN_AYAT) + " ayat (" + pgFmt(Math.round(pct * 10) / 10) + "%)", PAD, y + 28, CW);
+          pgRoundRect(ctx, PAD, y + 48, CW, 22, 11); ctx.fillStyle = C.tint; ctx.fill();
+          if (L.an.unique > 0) { pgRoundRect(ctx, PAD, y + 48, Math.max(CW * pct / 100, 22), 22, 11); ctx.fillStyle = C.plum; ctx.fill(); }
+          var avg = L.an.daily.length ? L.an.total / L.an.daily.length : 0;
+          [[pgFmt(L.an.surahDone), "Surah tuntas"], [pgFmt(L.an.total), "Ayat tercatat (total)"], [pgFmt(avg), "Ayat / hari setoran"]].forEach(function (st, i) {
+            var cw = (CW - 32) / 3, x = PAD + i * (cw + 16);
+            pgRoundRect(ctx, x, y + 96, cw, 120, 16); ctx.fillStyle = C.card; ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = C.plum; ctx.font = "bold 44px " + FF; ctx.fillText(st[0], x + 18, y + 150, cw - 30);
+            ctx.fillStyle = C.soft; ctx.font = "22px " + FF; ctx.fillText(st[1], x + 18, y + 190, cw - 30);
+          });
+        } else if (k === "bar" || k === "line") {
+          ctx.drawImage(imgs[k], PAD, y, CW, chartH);
+        } else if (k === "juz") {
+          var cw2 = (CW - 32) / 3;
+          L.jst.forEach(function (j, i) {
+            var x = PAD + (i % 3) * (cw2 + 16), cy = y + Math.floor(i / 3) * (juzCellH + juzGap), done = j.cnt === j.total;
+            pgRoundRect(ctx, x, cy, cw2, juzCellH, 14); ctx.fillStyle = C.card; ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = C.ink; ctx.font = "bold 26px " + FF; ctx.textAlign = "left"; ctx.fillText("Juz " + j.juz, x + 16, cy + 34);
+            ctx.fillStyle = done ? C.good : C.soft; ctx.textAlign = "right";
+            ctx.fillText(done ? "✓" : Math.floor(j.cnt / j.total * 100) + "%", x + cw2 - 16, cy + 34);
+            ctx.textAlign = "left";
+            pgRoundRect(ctx, x + 16, cy + 46, cw2 - 32, 10, 5); ctx.fillStyle = C.tint; ctx.fill();
+            if (j.cnt > 0) { pgRoundRect(ctx, x + 16, cy + 46, Math.max((cw2 - 32) * j.cnt / j.total, 10), 10, 5); ctx.fillStyle = done ? C.good : C.plum; ctx.fill(); }
+            ctx.fillStyle = C.soft; ctx.font = "20px " + FF; ctx.fillText(j.cnt + " / " + j.total + " ayat", x + 16, cy + 82, cw2 - 32);
+          });
+        }
+        y += heights[k] + SEC_GAP;
+      });
+      ctx.fillStyle = C.soft; ctx.font = "20px " + FF; ctx.textAlign = "left";
+      ctx.fillText("Dihitung dari rentang ayat yang dicatat; catatan Iqro tidak ikut dihitung.", PAD, H - 24, CW);
+      var filename = "progres_" + L.name.replace(/\s+/g, "_") + "_" + L.label + "_" + (part === "all" ? "lengkap" : part) + "_" + stamp + ".png";
+      if (isNativeApp()) { exportImageNative(canvas, filename); return; }
+      canvas.toBlob(function (blob) { saveFile(blob, filename); }, "image/png");
+    }).catch(function (err) {
+      alert("Gagal membuat gambar: " + (err && err.message ? err.message : err));
+    });
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll(".pg-dl"), function (b) {
+    b.addEventListener("click", function () { pgExport(b.getAttribute("data-part")); });
+  });
 
   function pgFmt(n) { return String(Math.round(n * 10) / 10).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
   function pgNiceStep(x) {
@@ -2778,7 +2910,8 @@
     document.getElementById("progresBody").style.display = s ? "block" : "none";
     if (!s) return;
 
-    var isTahfidz = pgState.metric === "tahfidz";
+    var isTahfidz = pgState.metric === "tahfidz", isTahsin = pgState.metric === "tahsin";
+    var mName = isTahsin ? "Tahsin" : isTahfidz ? "Tahfidz" : "Murojaah";
     var an = pgAnalyze(data.entries[s.id], pgState.metric);
     var perMonth = pgState.period === "month";
     var buckets = pgBuckets(an.daily, pgState.period, 12);
@@ -2808,18 +2941,18 @@
     var avg = an.daily.length ? an.total / an.daily.length : 0;
     var sum = document.getElementById("pgSummary");
     sum.innerHTML =
-      '<div class="pg-total"><div class="pg-line"><span>' + (isTahfidz ? "Hafalan tercatat" : "Pernah dimurojaah") + '</span><span><b>' + pgFmt(an.unique) + '</b> dari ' + pgFmt(QURAN_AYAT) + ' ayat (' + pctTxt + ')</span></div>' +
+      '<div class="pg-total"><div class="pg-line"><span>' + (isTahsin ? "Tahsin tercatat" : isTahfidz ? "Hafalan tercatat" : "Pernah dimurojaah") + '</span><span><b>' + pgFmt(an.unique) + '</b> dari ' + pgFmt(QURAN_AYAT) + ' ayat (' + pctTxt + ')</span></div>' +
       '<div class="pg-track"><div class="pg-fill" style="width:' + Math.min(100, Math.max(pct, an.unique ? 0.5 : 0)) + '%"></div></div></div>' +
       '<div class="pg-stats" style="margin-bottom:0">' +
       '<div class="pg-stat"><b>' + pgFmt(an.surahDone) + '</b><span>Surah tuntas</span></div>' +
       '<div class="pg-stat"><b>' + pgFmt(an.daily.length) + '</b><span>Hari ada setoran</span></div>' +
-      '<div class="pg-stat"><b>' + pgFmt(an.total) + '</b><span>' + (isTahfidz ? "Ayat baru (total)" : "Ayat diulang (total)") + '</span></div>' +
-      '<div class="pg-stat"><b>' + pgFmt(avg) + '</b><span>' + (isTahfidz ? "Ayat baru / hari setoran" : "Ayat / hari murojaah") + '</span></div></div>';
+      '<div class="pg-stat"><b>' + pgFmt(an.total) + '</b><span>' + (isTahsin ? "Ayat tahsin (total)" : isTahfidz ? "Ayat baru (total)" : "Ayat diulang (total)") + '</span></div>' +
+      '<div class="pg-stat"><b>' + pgFmt(avg) + '</b><span>' + (isTahsin ? "Ayat / hari tahsin" : isTahfidz ? "Ayat baru / hari setoran" : "Ayat / hari murojaah") + '</span></div></div>';
 
     // diagram
-    var unitName = isTahfidz ? "Hafalan baru" : "Murojaah";
+    var unitName = isTahsin ? "Tahsin" : isTahfidz ? "Hafalan baru" : "Murojaah";
     document.getElementById("pgBarTitle").textContent = unitName + " per " + (perMonth ? "bulan" : "pekan") + " (ayat)";
-    document.getElementById("pgLineTitle").textContent = isTahfidz ? "Total hafalan dari waktu ke waktu (ayat)" : "Total murojaah dari waktu ke waktu (ayat)";
+    document.getElementById("pgLineTitle").textContent = isTahsin ? "Total tahsin dari waktu ke waktu (ayat)" : isTahfidz ? "Total hafalan dari waktu ke waktu (ayat)" : "Total murojaah dari waktu ke waktu (ayat)";
     document.getElementById("pgBarChart").innerHTML = pgBarSvg(buckets, "Diagram batang " + unitName.toLowerCase() + " per " + (perMonth ? "bulan" : "pekan") + " selama 12 " + (perMonth ? "bulan" : "pekan") + " terakhir");
     document.getElementById("pgLineChart").innerHTML = pgLineSvg(buckets, "Diagram garis total " + unitName.toLowerCase() + " dari waktu ke waktu");
 
@@ -2843,10 +2976,10 @@
       cell.appendChild(h); cell.appendChild(tr); cell.appendChild(c);
       jgrid.appendChild(cell);
     });
-    document.getElementById("pgJuzTitle").textContent = "Progres per juz — " + (isTahfidz ? "hafalan" : "murojaah");
+    document.getElementById("pgJuzTitle").textContent = "Progres per juz — " + (isTahsin ? "tahsin" : isTahfidz ? "hafalan" : "murojaah");
     document.getElementById("pgJuzNote").textContent = jdone + " juz tuntas, " + jstart + " juz sedang berjalan. " +
-      "Mengukur ayat unik yang tercatat di tiap juz (" + (isTahfidz ? "hafalan baru" : "yang pernah dimurojaah") +
-      "), dari seluruh riwayat; rentang lintas surah/juz dipecah per ayat. Juz mengikuti Mushaf Madinah (Hafs) dan bisa dimulai di tengah surah. Catatan Tahsin/Iqro tidak ikut dihitung.";
+      "Mengukur ayat unik yang tercatat di tiap juz (" + (isTahsin ? "yang pernah ditahsin" : isTahfidz ? "hafalan baru" : "yang pernah dimurojaah") +
+      "), dari seluruh riwayat; rentang lintas surah/juz dipecah per ayat. Juz mengikuti Mushaf Madinah (Hafs) dan bisa dimulai di tengah surah. Catatan Iqro/buku tidak ikut dihitung.";
 
     // per surah
     var list = document.getElementById("pgSurahList");
@@ -2855,7 +2988,7 @@
       var emptyP = document.createElement("p");
       emptyP.className = "pg-note";
       emptyP.style.margin = "0";
-      emptyP.textContent = isTahfidz ? "Belum ada catatan tahfidz yang bisa dibaca. Isi rentang ayat di kolom Tahfidz pada tab Catat." : "Belum ada catatan murojaah yang bisa dibaca.";
+      emptyP.textContent = "Belum ada catatan " + mName.toLowerCase() + " yang bisa dibaca. Isi rentang ayat di kolom " + mName + " pada tab Catat.";
       list.appendChild(emptyP);
     }
     var LIMIT = 10;
@@ -2886,10 +3019,11 @@
     more.style.display = an.perSurah.length > LIMIT ? "" : "none";
     more.textContent = pgState.all ? "Tampilkan lebih sedikit" : "Tampilkan semua (" + an.perSurah.length + " surah)";
 
+    pgLast = { name: s.name, mName: mName, an: an, buckets: buckets, jst: jst, perMonth: perMonth, label: pgState.metric };
     document.getElementById("pgNote").textContent =
-      "Dihitung dari rentang ayat di kolom " + (isTahfidz ? "Tahfidz" : "Murojaah") + " (teks lama juga dibaca; Tahsin/Iqro tidak ikut dihitung). " +
+      "Dihitung dari rentang ayat di kolom " + mName + " (teks lama juga dibaca; catatan Iqro/buku dan nomor halamannya tidak pernah dibaca sebagai ayat). " +
       "Surah tanpa nomor ayat dihitung satu surah penuh. " +
-      (isTahfidz ? "Ayat yang disetor ulang tidak menambah total hafalan. Hafalan sebelum memakai aplikasi ini tidak ikut terhitung." : "Murojaah menghitung semua ayat yang diulang, termasuk yang sama.");
+      (isTahsin ? "Tahsin menghitung ayat unik; ayat yang sama tidak menambah total." : isTahfidz ? "Ayat yang disetor ulang tidak menambah total hafalan. Hafalan sebelum memakai aplikasi ini tidak ikut terhitung." : "Murojaah menghitung semua ayat yang diulang, termasuk yang sama.");
   }
 
   document.getElementById("pgMetric").addEventListener("click", function (e) {

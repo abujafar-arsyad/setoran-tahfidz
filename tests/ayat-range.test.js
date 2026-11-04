@@ -159,4 +159,55 @@ t("full Qur'an covers every juz", () => {
   pgJuzStats(cov).forEach((x) => assert.strictEqual(x.cnt, x.total));
 });
 
+// ---- Regresi v1.0.8: rentang lintas surah berformat " - " ----
+// Catatan: "Ali 'Imran 6 - Al-An'am 7" melewati An-Nisa (176) dan Al-Ma'idah (120): 195 + 176 + 120 + 7 = 498, bukan 202.
+t("regresi: 3 rentang lintas surah (' - ') terhitung 37, 261, 498; unik 796; juz & grafik konsisten", () => {
+  const ents = {
+    "2026-01-01": { tahsin: "Al-Fatihah 1 - Al-Baqarah 30", tahfidz: "Al-Fatihah 1 - Al-Baqarah 30", murojaah: "Al-Fatihah 1 - Al-Baqarah 30" },
+    "2026-01-02": { tahsin: "Al-Baqarah 31 - Ali 'Imran 5", tahfidz: "Al-Baqarah 31 - Ali 'Imran 5", murojaah: "Al-Baqarah 31 - Ali 'Imran 5" },
+    "2026-01-03": { tahsin: "Ali 'Imran 6 - Al-An'am 7", tahfidz: "Ali 'Imran 6 - Al-An'am 7", murojaah: "Ali 'Imran 6 - Al-An'am 7" }
+  };
+  ["tahfidz", "murojaah"].forEach((f) => {
+    const an = pgAnalyze(ents, f);
+    assert.deepStrictEqual(an.bad, []);
+    assert.deepStrictEqual(an.daily.map((d) => d.value), [37, 261, 498]);
+    assert.strictEqual(an.total, 796); assert.strictEqual(an.unique, 796);
+    const st = pgJuzStats(an.covered);
+    assert.deepStrictEqual(st.slice(0, 8).map((x) => x.cnt), [148, 111, 126, 131, 124, 110, 46, 0]);
+    assert.strictEqual(st.reduce((s, x) => s + x.cnt, 0), an.unique);
+    assert.strictEqual(an.perSurah.reduce((s, x) => s + x.cnt, 0), an.unique);
+  });
+  const only = (a, b) => pgParseText(a).ranges.reduce((s, r) => s + r.b - r.a + 1, 0);
+  assert.strictEqual(only("Al-Fatihah 1 - Al-Baqarah 30"), 37);
+  assert.strictEqual(only("Al-Baqarah 31 - Ali 'Imran 5"), 261);
+  assert.strictEqual(only("Ali 'Imran 6 - Al-An'am 7"), 498);
+});t("variasi pemisah lintas surah dan pemisah antar-surah tetap bekerja", () => {
+  const sum = (s) => pgParseText(s).ranges.reduce((a, r) => a + r.b - r.a + 1, 0);
+  ["Al-Fatihah 1 - Al-Baqarah 30", "Al-Fatihah 1 – Al-Baqarah 30", "Al-Fatihah 1 → Al-Baqarah 30", "Al-Fatihah ayat 1 s/d Al-Baqarah ayat 30", "al fatihah 1 sampai baqoroh 30"]
+    .forEach((s) => assert.strictEqual(sum(s), 37, s));
+  assert.strictEqual(sum("Al-Kafirun - An-Nas"), 6 + 6);
+  assert.strictEqual(sum("Al-Baqarah 1-30"), 30);
+  assert.strictEqual(sum("Al-Baqarah 1-30 - An-Nas"), 36);
+  assert.strictEqual(pgParseText("Ali 'Imran 5 - Al-Baqarah 3").bad.length, 1);
+  assert.strictEqual(pgParseText("Al-Baqarah 1 - Ali 'Imran 201").ranges.length, 0);
+});
+
+t("Tahsin metric: structured ranges counted (unique, per juz, timeline); Iqro never read nor warned", () => {
+  const ents = {
+    "2026-01-01": { tahsin: "Al-Fatihah 1 - Al-Baqarah 30; Iqro 3 halaman 12" },
+    "2026-01-02": { tahsin: "Iqro 4 halaman 253\nAl-Baqarah 31 → Ali 'Imran 5" },
+    "2026-01-03": { tahsin: "Tilawati 2 hal 40, Ummi 3" },
+    "2026-01-04": { tahsin: "Al-Fatihah 1-7; Juz 'Amma" }
+  };
+  const an = pgAnalyze(ents, "tahsin");
+  assert.deepStrictEqual(an.bad, []);
+  assert.deepStrictEqual(an.daily.map((d) => d.value), [37, 261, 0]);
+  assert.strictEqual(an.unique, 298);
+  const st = pgJuzStats(an.covered);
+  assert.deepStrictEqual([st[0].cnt, st[1].cnt, st[2].cnt, st[3].cnt], [148, 111, 39, 0]);
+  assert.strictEqual(st.reduce((s, x) => s + x.cnt, 0), 298);
+  assert.strictEqual(pgAnalyze({ d: { tahsin: "Iqro 3 halaman 12" } }, "tahsin").unique, 0);
+  assert.strictEqual(pgAnalyze({ "2026-01-01": { tahsin: "Iqro 3 halaman 12" } }, "tahsin").bad.length, 0);
+});
+
 console.log(n + " tests passed");
