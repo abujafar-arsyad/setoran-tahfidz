@@ -13,6 +13,30 @@ dibangun menjadi APK untuk pengujian atau AAB untuk Google Play Store.
 - **Web dir:** `www/`
 - **Native project:** `android/`
 
+## Fitur
+
+- **Catat setoran harian:** tahsin, tahfidz, murojaah, dan keterangan (Izin, Sakit, Ghoib), dengan navigasi per tanggal.
+- **Kelola santri:** tambah, ganti nama, dan hapus santri.
+- **Laporan bulanan:** tabel per bulan dengan total, bisa diunduh sebagai gambar dan diberi watermark lembaga.
+- **Setelan:** mode terang, gelap, atau otomatis; lima warna tema; ukuran teks; saran nama surah; pengingat cadangan.
+- **Cadangan data:** ekspor dan impor data sebagai file JSON.
+- **Offline:** data tersimpan di perangkat dan aplikasi tidak butuh koneksi internet.
+
+## Tangkapan layar
+
+Semua nama dan catatan pada gambar ini fiktif.
+
+| Catat | Santri | Laporan | Setelan |
+| --- | --- | --- | --- |
+| <img src="docs/screenshots/catat.png" alt="Halaman Catat: form setoran harian" width="200"> | <img src="docs/screenshots/santri.png" alt="Halaman Santri: daftar santri" width="200"> | <img src="docs/screenshots/laporan.png" alt="Halaman Laporan: tabel bulanan" width="200"> | <img src="docs/screenshots/setelan.png" alt="Halaman Setelan: tampilan dan lembaga" width="200"> |
+
+## Tentang proyek
+
+- **Pemilik:** Abu Ja'far Putra Arsad
+- **Peran saya:** Saya menentukan fitur dan menguji aplikasi ini. Kode ditulis dengan bantuan AI.
+- **Status:** Uji coba. Aplikasi tersedia sebagai APK debug dan belum dirilis ke Google Play.
+- **Privasi:** aplikasi tidak mengumpulkan data pengguna. Lihat [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
+
 ## Menjalankan di browser
 
 `www/index.html` bisa dibuka langsung di browser:

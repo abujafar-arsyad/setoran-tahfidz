@@ -1,6 +1,6 @@
 # Kebijakan Privasi — Setoran Tahfidz
 
-*Berlaku sejak: (isi tanggal rilis pertama)*
+*Berlaku sejak: 4 November 2026*
 
 **Setoran Tahfidz** adalah aplikasi pencatat hafalan Al-Qur'an yang berjalan
 sepenuhnya secara **offline** di perangkat Anda.
