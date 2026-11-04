@@ -8,8 +8,8 @@ const surahSrc = html.slice(html.indexOf("var SURAHS = ["), html.indexOf("var dl
 const pureSrc = html.slice(html.indexOf("// PG-PURE-BEGIN"), html.indexOf("// PG-PURE-END"));
 const pad2 = (n) => String(n).padStart(2, "0");
 const api = new Function("pad2", surahSrc + "\n" + pureSrc +
-  "\nreturn {SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf,   pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText};")(pad2);
-  const { SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText } = api;
+  "\nreturn {SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf,   pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow};")(pad2);
+  const { SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow } = api;
 
 const idx = (n) => pgSurahIndex(n);
 const BAQ = idx("Al-Baqarah"), IMR = idx("Ali 'Imran"), NIS = idx("An-Nisa"), NAS = idx("An-Nas"), FAT = idx("Al-Fatihah");
@@ -185,7 +185,7 @@ t("regresi: 3 rentang lintas surah (' - ') terhitung 37, 261, 498; unik 796; juz
   const sum = (s) => pgParseText(s).ranges.reduce((a, r) => a + r.b - r.a + 1, 0);
   ["Al-Fatihah 1 - Al-Baqarah 30", "Al-Fatihah 1 – Al-Baqarah 30", "Al-Fatihah 1 → Al-Baqarah 30", "Al-Fatihah ayat 1 s/d Al-Baqarah ayat 30", "al fatihah 1 sampai baqoroh 30"]
     .forEach((s) => assert.strictEqual(sum(s), 37, s));
-  assert.strictEqual(sum("Al-Kafirun - An-Nas"), 6 + 6);
+  assert.strictEqual(sum("Al-Kafirun - An-Nas"), 6 + 3 + 5 + 4 + 5 + 6);
   assert.strictEqual(sum("Al-Baqarah 1-30"), 30);
   assert.strictEqual(sum("Al-Baqarah 1-30 - An-Nas"), 36);
   assert.strictEqual(pgParseText("Ali 'Imran 5 - Al-Baqarah 3").bad.length, 1);
@@ -266,4 +266,59 @@ t("dialog edit Laporan memakai komponen rentang yang sama dengan Catat", () => {
   assert.ok(html.includes("rngCollect(mcats[q], true)"));
 });
 
+// ---- Surah tanpa nomor ayat = satu surah penuh (jumlah ayat terverifikasi) ----
+t("surah tanpa nomor ayat dihitung penuh: Al-Fatihah = 1-7, Al-Falaq = 1-5, An-Nas = 1-6", () => {
+  const one = (s) => pgParseText(s).ranges;
+  assert.deepStrictEqual(one("Al-Fatihah"), [{ i: FAT, a: 1, b: 7 }]);
+  assert.deepStrictEqual(one("Al-Falaq"), [{ i: idx("Al-Falaq"), a: 1, b: 5 }]);
+  assert.deepStrictEqual(one("An-Nas"), [{ i: NAS, a: 1, b: 6 }]);
+  assert.deepStrictEqual(one("Al-Baqarah"), [{ i: BAQ, a: 1, b: 286 }]);
+  assert.strictEqual(pgParseText("Al-Fatihah").bad.length, 0);
+});
+t("rentang surah tanpa nomor: Al-Falaq - An-Nas = 5 + 6 = 11 ayat (semua pemisah)", () => {
+  const sum = (s) => pgParseText(s).ranges.reduce((a, r) => a + r.b - r.a + 1, 0);
+  ["Al-Falaq - An-Nas", "Al-Falaq – An-Nas", "Al-Falaq → An-Nas", "Al-Falaq s/d An-Nas", "al falaq sampai an nas", "Al-Falaq hingga An-Nas"]
+    .forEach((s) => assert.strictEqual(sum(s), 11, s));
+  assert.deepStrictEqual(pgParseText("Al-Falaq - An-Nas").ranges, [{ i: idx("Al-Falaq"), a: 1, b: 5 }, { i: NAS, a: 1, b: 6 }]);
+});
+t("rentang tanpa nomor melewati surah di antaranya", () => {
+  const sum = (s) => pgParseText(s).ranges.reduce((a, r) => a + r.b - r.a + 1, 0);
+  assert.strictEqual(sum("Al-Fatihah - Al-Baqarah"), 7 + 286);
+  assert.strictEqual(sum("Al-Ikhlas - An-Nas"), 4 + 5 + 6);
+  assert.strictEqual(sum("Al-Fatihah - An-Nas"), 6236);
+  assert.strictEqual(pgParseText("An-Nas - Al-Falaq").bad.length, 1);
+});
+t("ujung tanpa nomor di satu sisi: awal = ayat 1, akhir = ayat terakhir", () => {
+  const sum = (s) => pgParseText(s).ranges.reduce((a, r) => a + r.b - r.a + 1, 0);
+  assert.strictEqual(sum("Al-Falaq 2 - An-Nas"), 4 + 6);
+  assert.strictEqual(sum("Al-Falaq - An-Nas 3"), 5 + 3);
+  assert.strictEqual(sum("Al-Baqarah 286 - Ali 'Imran"), 1 + 200);
+});
+t("ujung bernomor eksplisit dipertahankan", () => {
+  const sum = (s) => pgParseText(s).ranges.reduce((a, r) => a + r.b - r.a + 1, 0);
+  assert.strictEqual(sum("Al-Falaq 2 - An-Nas 3"), 4 + 3);
+  assert.strictEqual(sum("Al-Falaq 2-4"), 3);
+  assert.strictEqual(sum("Al-Falaq 3"), 1);
+  assert.strictEqual(pgParseText("Al-Falaq 6 - An-Nas").bad.length, 1);
+  assert.strictEqual(pgParseText("Al-Falaq 6 - An-Nas").ranges.length, 0);
+  assert.strictEqual(pgParseText("Al-Falaq 1-3, 5").bad.length, 0);
+});
+t("progres: surah tanpa nomor ikut terhitung dan Iqro tetap dikecualikan", () => {
+  const an = pgAnalyze({ "2026-01-01": { tahfidz: "Al-Falaq - An-Nas; Al-Fatihah", tahsin: "Iqro 3 halaman 12" } }, "tahfidz");
+  assert.deepStrictEqual(an.bad, []); assert.strictEqual(an.unique, 5 + 6 + 7);
+  assert.strictEqual(pgAnalyze({ "2026-01-01": { tahsin: "Iqro 3 halaman 12" } }, "tahsin").unique, 0);
+});
+t("input terstruktur (Catat/Laporan): ayat kosong = surah penuh", () => {
+  const FAL = idx("Al-Falaq"), chk = (r) => pgRangeCheck(r.i1, r.a1, r.i2, r.a2);
+  const full = pgResolveRow(FAT, null, FAT, null);
+  assert.deepStrictEqual(full, { i1: FAT, a1: 1, i2: FAT, a2: 7 }); assert.strictEqual(chk(full).count, 7);
+  const rng = pgResolveRow(FAL, null, NAS, null);
+  assert.deepStrictEqual(rng, { i1: FAL, a1: 1, i2: NAS, a2: 6 }); assert.strictEqual(chk(rng).count, 11);
+  assert.deepStrictEqual(pgResolveRow(FAL, 2, NAS, null), { i1: FAL, a1: 2, i2: NAS, a2: 6 });
+  assert.deepStrictEqual(pgResolveRow(FAL, null, NAS, 3), { i1: FAL, a1: 1, i2: NAS, a2: 3 });
+  assert.deepStrictEqual(pgResolveRow(FAL, 2, NAS, 3), { i1: FAL, a1: 2, i2: NAS, a2: 3 });
+  assert.deepStrictEqual(pgResolveRow(FAL, 2, FAL, null), { i1: FAL, a1: 2, i2: FAL, a2: 2 });
+  assert.deepStrictEqual(pgResolveRow(FAL, null, FAL, 3), { i1: FAL, a1: 1, i2: FAL, a2: 3 });
+  assert.strictEqual(pgFormatRange(FAL, 1, NAS, 6), "Al-Falaq 1 \u2192 An-Nas 6");
+});
 console.log(n + " tests passed");

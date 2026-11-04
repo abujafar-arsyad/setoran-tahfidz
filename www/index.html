@@ -1372,11 +1372,10 @@
     if (s1 && i1 < 0) return { msg: "Surah awal belum dikenali" };
     if (s2 && i2 < 0) return { msg: "Surah akhir belum dikenali" };
     if (i1 < 0) return { msg: "Pilih surah awal" };
-    if (!a1) return { msg: "Isi ayat awal" };
-    var n1 = rngNum(a1), n2 = a2 ? rngNum(a2) : n1;
-    var r = pgRangeCheck(i1, n1, i2, n2);
+    var w = pgResolveRow(i1, a1 ? rngNum(a1) : null, i2, a2 ? rngNum(a2) : null);
+    var r = pgRangeCheck(w.i1, w.a1, w.i2, w.a2);
     if (!r.ok) return { msg: r.msg };
-    return { ok: true, count: r.count, row: { i1: i1, a1: n1, i2: i2, a2: n2 } };
+    return { ok: true, count: r.count, row: w };
   }
 
   function rngRefresh(row) {
@@ -1384,8 +1383,8 @@
     var i1 = pgSurahIndex(row.querySelector(".rs1").value), i2 = pgSurahIndex(row.querySelector(".rs2").value);
     row.querySelector(".ra1").max = i1 >= 0 ? SURAHS[i1].ayat : "";
     row.querySelector(".ra2").max = i2 >= 0 ? SURAHS[i2].ayat : "";
-    row.querySelector(".ra1").placeholder = i1 >= 0 ? "1–" + SURAHS[i1].ayat : "Ayat";
-    row.querySelector(".ra2").placeholder = i2 >= 0 ? "1–" + SURAHS[i2].ayat : "Ayat";
+    row.querySelector(".ra1").placeholder = i1 >= 0 ? "1–" + SURAHS[i1].ayat : "Ayat (kosong=1)";
+    row.querySelector(".ra2").placeholder = i2 >= 0 ? "1–" + SURAHS[i2].ayat : "Ayat (kosong=akhir)";
     var r = rngEval(row);
     info.className = "rng-info";
     if (r.empty) info.textContent = "";
@@ -2681,26 +2680,49 @@
     return SURAHS[i1].name + " " + a1 + " → " + SURAHS[i2].name + " " + a2;
   }
 
-  // "Nama 12" -> {i, n} atau null
+  // "Nama 12" -> {i, n}; "Nama" tanpa nomor -> {i, n: null}; null jika nama tidak dikenali / ada angka lain.
   function pgParseEndpoint(str) {
-    var m = /^(.*?)[\s:]*(\d+)\s*$/.exec(String(str).trim());
+    var m = /^([^\d]*?)[\s:]*(\d+)?\s*$/.exec(String(str).trim());
     if (!m) return null;
     var name = m[1].split(/\s+/).filter(function (w) { return w && !PG_SKIP.test(w.toLowerCase().replace(/[^a-z]/g, "")); }).join(" ");
+    if (!name) return null;
     var i = pgSurahIndex(name);
-    return i >= 0 ? { i: i, n: +m[2] } : null;
+    return i >= 0 ? { i: i, n: m[2] !== undefined ? +m[2] : null } : null;
   }
 
-  // "Surah N <pemisah> Surah M" (pemisah: → => - – s/d sampai hingga). null = bukan rentang lintas surah;
-  // {ranges} = valid dan terhitung per surah; {} = terbaca tapi tidak valid (dilaporkan, tidak dihitung).
-  function pgParseCross(seg) {
-    var m = /^(.*?\d)\s*(?:→|=>|-|–|—|s\/d|s\.d\.?|sd|sampai|hingga)\s*(\D.*\d)\s*$/i.exec(String(seg).replace(/[–—]/g, "-").trim());
-    if (!m) return null;
-    var p = pgParseEndpoint(m[1]), q = pgParseEndpoint(m[2]);
-    if (!p || !q) return null;
-    var r = pgRangeCheck(p.i, p.n, q.i, q.n);
+  // Ujung tanpa nomor: awal = ayat 1, akhir = ayat terakhir surah (jumlah ayat terverifikasi).
+  function pgCrossFromEnds(p, q) {
+    var r = pgRangeCheck(p.i, p.n === null ? 1 : p.n, q.i, q.n === null ? SURAHS[q.i].ayat : q.n);
     return r.ok ? { ranges: r.ranges } : {};
   }
 
+  // "Surah [N] <pemisah> Surah [M]" (pemisah: → => - – s/d sampai hingga; "-" dan kata perlu spasi di kiri-kanan,
+  // atau menempel pada nomor ayat). Nomor boleh dihilangkan: surah tanpa nomor = satu surah penuh, sehingga
+  // "Al-Falaq - An-Nas" = Al-Falaq 1 sampai An-Nas ayat terakhir. null = bukan rentang lintas surah;
+  // {ranges} = valid dan terhitung per surah; {} = terbaca tapi tidak valid (dilaporkan, tidak dihitung).
+  function pgParseCross(seg) {
+    var t = String(seg).replace(/[–—]/g, "-").trim();
+    var re = /\s*(?:→|=>)\s*|\s+(?:-|s\/d|s\.d\.?|sd|sampai|hingga)\s+/gi, m;
+    while ((m = re.exec(t))) {
+      var p = pgParseEndpoint(t.slice(0, m.index)), q = pgParseEndpoint(t.slice(m.index + m[0].length));
+      if (p && q) return pgCrossFromEnds(p, q);
+    }
+    var d = /^(.*?\d)\s*(?:-|s\/d|s\.d\.?|sd|sampai|hingga)\s*(\D.*)$/i.exec(t);
+    if (d) {
+      var p2 = pgParseEndpoint(d[1]), q2 = pgParseEndpoint(d[2]);
+      if (p2 && q2) return pgCrossFromEnds(p2, q2);
+    }
+    return null;
+  }
+
+  // Baris terstruktur: ayat kosong -> surah penuh. Awal kosong = 1; akhir kosong = ayat terakhir bila akhir
+  // surah berbeda atau awal juga kosong, selain itu satu ayat (mis. "Al-Falaq 2" = ayat 2 saja).
+  function pgResolveRow(i1, a1, i2, a2) {
+    var s1 = a1 === null || a1 === undefined || a1 === "", s2 = a2 === null || a2 === undefined || a2 === "";
+    var n1 = s1 ? 1 : a1;
+    var n2 = !s2 ? a2 : ((i2 !== i1 || s1) && i2 >= 0 && i2 < SURAHS.length ? SURAHS[i2].ayat : n1);
+    return { i1: i1, a1: n1, i2: i2, a2: n2 };
+  }
   // Teks kanonik -> {rows:[{i1,a1,i2,a2}], rest:"teks lain"}; potongan yang bukan kanonik/valid tetap di rest.
   function pgRowsFromText(text) {
     var rows = [], rest = [];
