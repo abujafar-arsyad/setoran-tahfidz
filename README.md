@@ -36,6 +36,7 @@ Semua nama dan catatan pada gambar ini fiktif.
 - **Peran saya:** Saya menentukan fitur dan menguji aplikasi ini. Kode ditulis dengan bantuan AI.
 - **Status:** Uji coba. Aplikasi tersedia sebagai APK debug dan belum dirilis ke Google Play.
 - **Privasi:** aplikasi tidak mengumpulkan data pengguna. Lihat [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
+- **Lisensi:** [MIT](LICENSE)
 
 ## Menjalankan di browser
 
