@@ -8,8 +8,8 @@ const surahSrc = html.slice(html.indexOf("var SURAHS = ["), html.indexOf("var dl
 const pureSrc = html.slice(html.indexOf("// PG-PURE-BEGIN"), html.indexOf("// PG-PURE-END"));
 const pad2 = (n) => String(n).padStart(2, "0");
 const api = new Function("pad2", surahSrc + "\n" + pureSrc +
-  "\nreturn {SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex};")(pad2);
-const { SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex } = api;
+  "\nreturn {SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats};")(pad2);
+const { SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats } = api;
 
 const idx = (n) => pgSurahIndex(n);
 const BAQ = idx("Al-Baqarah"), IMR = idx("Ali 'Imran"), NIS = idx("An-Nisa"), NAS = idx("An-Nas"), FAT = idx("Al-Fatihah");
@@ -120,6 +120,43 @@ t("Iqro text stays free text in Tahsin (never a row)", () => {
   assert.strictEqual(pgRowsFromText("Iqro 3 halaman 12").rows.length, 0);
   const an = pgAnalyze({ "2026-01-01": { tahsin: "Iqro 3 halaman 12" } }, "tahfidz");
   assert.strictEqual(an.total, 0);
+});
+
+// ---- Juz (Mushaf Madinah/Hafs; dicocokkan dengan api.alquran.cloud/v1/juz/N) ----
+const JUZ_SIZES = [148,111,126,131,124,110,149,142,159,127,151,170,154,227,185,269,190,202,339,171,178,169,357,175,246,195,399,137,431,564];
+t("juz sizes match reference and sum to 6236", () => {
+  const st = pgJuzStats(SURAHS.map((s) => new Uint8Array(s.ayat + 1)));
+  assert.deepStrictEqual(st.map((x) => x.total), JUZ_SIZES);
+  assert.strictEqual(st.reduce((s, x) => s + x.total, 0), 6236);
+});
+t("juz boundaries", () => {
+  assert.strictEqual(pgJuzOf(FAT, 1), 1);
+  assert.strictEqual(pgJuzOf(BAQ, 141), 1); assert.strictEqual(pgJuzOf(BAQ, 142), 2);
+  assert.strictEqual(pgJuzOf(BAQ, 252), 2); assert.strictEqual(pgJuzOf(BAQ, 253), 3);
+  assert.strictEqual(pgJuzOf(IMR, 92), 3); assert.strictEqual(pgJuzOf(IMR, 93), 4);
+  assert.strictEqual(pgJuzOf(idx("Al-Mulk"), 1), 29); assert.strictEqual(pgJuzOf(idx("Al-Mursalat"), 50), 29);
+  assert.strictEqual(pgJuzOf(idx("An-Naba"), 1), 30); assert.strictEqual(pgJuzOf(NAS, 6), 30);
+});
+t("ranges crossing juz boundaries are split exactly", () => {
+  assert.deepStrictEqual(pgJuzSplit(BAQ, 140, BAQ, 143), { 1: 2, 2: 2 });
+  assert.deepStrictEqual(pgJuzSplit(BAQ, 142, BAQ, 142), { 2: 1 });
+  assert.deepStrictEqual(pgJuzSplit(BAQ, 200, IMR, 23), { 2: 53, 3: 57 });
+  assert.deepStrictEqual(pgJuzSplit(BAQ, 252, IMR, 93), { 2: 1, 3: 126, 4: 1 });
+  assert.deepStrictEqual(pgJuzSplit(idx("Al-Mursalat"), 50, idx("An-Naba"), 1), { 29: 1, 30: 1 });
+});
+t("juz stats from progress analysis, tahfidz and murojaah consistent", () => {
+  const text = pgTextFromRows([{ i1: BAQ, a1: 252, i2: IMR, a2: 93 }], "Iqro 3 halaman 12");
+  const ents = { "2026-01-01": { tahfidz: text, murojaah: text, tahsin: "Iqro 4 halaman 253" } };
+  ["tahfidz", "murojaah"].forEach((f) => {
+    const st = pgJuzStats(pgAnalyze(ents, f).covered);
+    assert.deepStrictEqual([st[1].cnt, st[2].cnt, st[3].cnt, st[0].cnt], [1, 126, 1, 0]);
+  });
+  const none = pgJuzStats(pgAnalyze({ "2026-01-01": { tahsin: "Iqro 4 halaman 253" } }, "tahfidz").covered);
+  assert.strictEqual(none.reduce((s, x) => s + x.cnt, 0), 0);
+});
+t("full Qur'an covers every juz", () => {
+  const cov = SURAHS.map((s) => new Uint8Array(s.ayat + 1).fill(1));
+  pgJuzStats(cov).forEach((x) => assert.strictEqual(x.cnt, x.total));
 });
 
 console.log(n + " tests passed");

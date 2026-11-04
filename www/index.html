@@ -474,6 +474,13 @@
   .pg-chart .pg-area { fill: var(--gold); opacity: .14; }
   .pg-chart .pg-dot { fill: var(--gold); }
   .pg-chart .pg-val { fill: var(--ink); font-weight: 700; font-size: 10px; }
+  .pg-juz { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .pg-juz-cell { border: 1px solid var(--line); border-radius: 10px; padding: 7px 8px; background: var(--card); }
+  .pg-juz-cell .pg-jh { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+  .pg-juz-cell .pg-jc { font-size: 11px; color: var(--ink-soft); margin-top: 3px; white-space: nowrap; }
+  .pg-juz-cell .pg-track { height: 7px; }
+  .pg-juz-cell.done .pg-fill { background: var(--good); }
+  .pg-juz-cell.done .pg-jh span:last-child { color: var(--good); }
   .pg-surah { margin-bottom: 11px; }
   .pg-surah .pg-line { display: flex; justify-content: space-between; align-items: baseline; font-size: 13.5px; margin-bottom: 4px; gap: 8px; }
   .pg-surah .pg-name { color: var(--ink); font-weight: 600; }
@@ -607,6 +614,11 @@
         <div class="card">
           <h2 id="pgLineTitle">Total hafalan dari waktu ke waktu</h2>
           <div id="pgLineChart"></div>
+        </div>
+        <div class="card">
+          <h2 id="pgJuzTitle">Progres per juz</h2>
+          <div id="pgJuzGrid" class="pg-juz"></div>
+          <p class="pg-note" id="pgJuzNote"></p>
         </div>
         <div class="card">
           <h2>Progres per surah</h2>
@@ -2570,6 +2582,37 @@
     return parts.join("; ");
   }
 
+  // ---- Juz: awal tiap juz (surah, ayat) menurut Mushaf Madinah standar (Hafs). Dicocokkan dengan
+  // api.alquran.cloud/v1/juz/{1..30}; jumlah ayat per juz berjumlah 6236. Juz bisa mulai di tengah surah.
+  var JUZ_START = [[1,1],[2,142],[2,253],[3,93],[4,24],[4,148],[5,82],[6,111],[7,88],[8,41],[9,93],[11,6],[12,53],[15,1],[17,1],
+    [18,75],[21,1],[23,1],[25,21],[27,56],[29,46],[33,31],[36,28],[39,32],[41,47],[46,1],[51,31],[58,1],[67,1],[78,1]];
+  var PG_CUM = (function () { var c = [0]; SURAHS.forEach(function (s) { c.push(c[c.length - 1] + s.ayat); }); return c; })();
+  function pgAbs(i, a) { return PG_CUM[i] + a; } // nomor ayat 1..6236 menurut urutan mushaf
+  var JUZ_ABS = JUZ_START.map(function (x) { return pgAbs(x[0] - 1, x[1]); });
+  function pgJuzOf(i, a) {
+    var n = pgAbs(i, a), j = 0;
+    while (j + 1 < JUZ_ABS.length && n >= JUZ_ABS[j + 1]) j++;
+    return j + 1;
+  }
+  // Pecah satu rentang (surah awal/ayat awal -> surah akhir/ayat akhir) menjadi jumlah ayat per juz: {juz: count}
+  function pgJuzSplit(i1, a1, i2, a2) {
+    var out = {}, r = pgRangeCheck(i1, a1, i2, a2);
+    if (!r.ok) return out;
+    r.ranges.forEach(function (x) {
+      for (var a = x.a; a <= x.b; a++) { var j = pgJuzOf(x.i, a); out[j] = (out[j] || 0) + 1; }
+    });
+    return out;
+  }
+  // covered (hasil pgAnalyze) -> [{juz, cnt, total}] untuk 30 juz
+  function pgJuzStats(covered) {
+    var res = [];
+    for (var j = 1; j <= 30; j++) res.push({ juz: j, cnt: 0, total: (j < 30 ? JUZ_ABS[j] : QURAN_AYAT + 1) - JUZ_ABS[j - 1] });
+    covered.forEach(function (arr, i) {
+      for (var a = 1; a < arr.length; a++) if (arr[a]) res[pgJuzOf(i, a) - 1].cnt++;
+    });
+    return res;
+  }
+
   // Seluruh catatan satu santri -> angka-angka untuk diagram.
   // value: tahfidz = ayat BARU (unik, pengulangan tidak menambah); murojaah = ayat yang diulang hari itu.
   function pgAnalyze(ents, field) {
@@ -2779,6 +2822,31 @@
     document.getElementById("pgLineTitle").textContent = isTahfidz ? "Total hafalan dari waktu ke waktu (ayat)" : "Total murojaah dari waktu ke waktu (ayat)";
     document.getElementById("pgBarChart").innerHTML = pgBarSvg(buckets, "Diagram batang " + unitName.toLowerCase() + " per " + (perMonth ? "bulan" : "pekan") + " selama 12 " + (perMonth ? "bulan" : "pekan") + " terakhir");
     document.getElementById("pgLineChart").innerHTML = pgLineSvg(buckets, "Diagram garis total " + unitName.toLowerCase() + " dari waktu ke waktu");
+
+    // per juz
+    var jst = pgJuzStats(an.covered), jgrid = document.getElementById("pgJuzGrid"), jdone = 0, jstart = 0;
+    jgrid.innerHTML = "";
+    jst.forEach(function (x) {
+      var done = x.cnt === x.total;
+      if (done) jdone++; else if (x.cnt > 0) jstart++;
+      var cell = document.createElement("div");
+      cell.className = "pg-juz-cell" + (done ? " done" : "");
+      var h = document.createElement("div"); h.className = "pg-jh";
+      var a1 = document.createElement("span"); a1.textContent = "Juz " + x.juz;
+      var a2 = document.createElement("span"); a2.textContent = done ? "✓" : Math.floor(x.cnt / x.total * 100) + "%";
+      h.appendChild(a1); h.appendChild(a2);
+      var tr = document.createElement("div"); tr.className = "pg-track";
+      var fl = document.createElement("div"); fl.className = "pg-fill"; fl.style.width = (x.cnt / x.total * 100) + "%";
+      if (!x.cnt) fl.style.minWidth = "0";
+      tr.appendChild(fl);
+      var c = document.createElement("div"); c.className = "pg-jc"; c.textContent = x.cnt + " / " + x.total + " ayat";
+      cell.appendChild(h); cell.appendChild(tr); cell.appendChild(c);
+      jgrid.appendChild(cell);
+    });
+    document.getElementById("pgJuzTitle").textContent = "Progres per juz — " + (isTahfidz ? "hafalan" : "murojaah");
+    document.getElementById("pgJuzNote").textContent = jdone + " juz tuntas, " + jstart + " juz sedang berjalan. " +
+      "Mengukur ayat unik yang tercatat di tiap juz (" + (isTahfidz ? "hafalan baru" : "yang pernah dimurojaah") +
+      "), dari seluruh riwayat; rentang lintas surah/juz dipecah per ayat. Juz mengikuti Mushaf Madinah (Hafs) dan bisa dimulai di tengah surah. Catatan Tahsin/Iqro tidak ikut dihitung.";
 
     // per surah
     var list = document.getElementById("pgSurahList");
