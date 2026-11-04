@@ -255,4 +255,15 @@ t("UI: dropdown memakai panel kustom (bukan datalist), dengan click/keyboard", (
   assert.ok(html.includes('it.setAttribute("data-i", pos)'), "data-i harus posisi saran, bukan indeks surah");
 });
 
+t("dialog edit Laporan memakai komponen rentang yang sama dengan Catat", () => {
+  ["Tahsin", "Tahfidz", "Murojaah"].forEach((c) => {
+    assert.ok(html.includes('id="mrng' + c + '"'), c);
+    assert.ok(html.includes('data-cat="' + c + '" data-m="1"'), c);
+  });
+  assert.strictEqual((html.match(/function rngAddRow\(/g) || []).length, 1);
+  assert.strictEqual((html.match(/function rngCollect\(/g) || []).length, 1);
+  assert.ok(html.includes('rngLoad("Tahsin", e.tahsin || "", true)'));
+  assert.ok(html.includes("rngCollect(mcats[q], true)"));
+});
+
 console.log(n + " tests passed");

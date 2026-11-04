@@ -793,9 +793,27 @@
   <div class="modal-backdrop" id="dayModalBackdrop">
     <div class="modal">
       <h2 id="dayModalTitle">Detail Hari</h2>
-      <div class="field"><label>📗 Tahsin</label><textarea id="mTahsin" autocomplete="off" autocorrect="off" spellcheck="false"></textarea></div>
-      <div class="field"><label>📘 Tahfidz</label><textarea id="mTahfidz" autocomplete="off" autocorrect="off" spellcheck="false"></textarea></div>
-      <div class="field"><label>🔁 Murojaah</label><textarea id="mMurojaah" autocomplete="off" autocorrect="off" spellcheck="false"></textarea></div>
+      <div class="field">
+        <label>📗 Tahsin — rentang ayat (surah)</label>
+        <div class="rng" id="mrngTahsin"></div>
+        <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahsin" data-m="1">+ Tambah rentang</button>
+        <label for="mTahsin" class="rng-free">Iqro / catatan lain / teks bebas (tidak dibaca sistem)</label>
+        <textarea id="mTahsin" placeholder="Iqro 3 halaman 12" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+      </div>
+      <div class="field">
+        <label>📘 Tahfidz — rentang ayat</label>
+        <div class="rng" id="mrngTahfidz"></div>
+        <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahfidz" data-m="1">+ Tambah rentang</button>
+        <label for="mTahfidz" class="rng-free">Catatan lain / teks bebas (opsional)</label>
+        <textarea id="mTahfidz" placeholder="Teks lama atau catatan tambahan" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+      </div>
+      <div class="field">
+        <label>🔁 Murojaah — rentang ayat</label>
+        <div class="rng" id="mrngMurojaah"></div>
+        <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Murojaah" data-m="1">+ Tambah rentang</button>
+        <label for="mMurojaah" class="rng-free">Catatan lain / teks bebas (opsional)</label>
+        <textarea id="mMurojaah" placeholder="Teks lama atau catatan tambahan" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+      </div>
       <div class="field"><label>📝 Keterangan</label><textarea id="mKeterangan" autocomplete="off" autocorrect="off" spellcheck="false"></textarea><div class="chips" data-target="mKeterangan"><button type="button" class="chip izin" data-st="Izin">Izin</button><button type="button" class="chip sakit" data-st="Sakit">Sakit</button><button type="button" class="chip ghoib" data-st="Ghoib">Ghoib</button></div></div>
       <div class="row">
         <button class="btn btn-ghost" id="mCancel">Tutup</button>
@@ -1465,7 +1483,10 @@
     });
   }
 
-  function rngAddRow(cat, v) {
+  function rngBox(cat, m) { return document.getElementById((m ? "mrng" : "rng") + cat); }
+  function rngRest(cat, m) { return document.getElementById((m ? "m" : "f") + cat); }
+
+  function rngAddRow(cat, v, m) {
     var row = document.createElement("div");
     row.className = "rng-row";
     row.innerHTML =
@@ -1490,34 +1511,34 @@
     rsAttach(q("rs1")); rsAttach(q("rs2"));
     ["rs1", "rs2", "ra1", "ra2"].forEach(function (c) { q(c).addEventListener("input", function () { rngRefresh(row); }); });
     row.querySelector(".rng-del").addEventListener("click", function () { rsHide(); row.remove(); });
-    document.getElementById("rng" + cat).appendChild(row);
+    rngBox(cat, m).appendChild(row);
     rngRefresh(row);
     return row;
   }
 
-  function rngLoad(cat, text) {
-    var box = document.getElementById("rng" + cat);
+  function rngLoad(cat, text, m) {
+    var box = rngBox(cat, m);
     box.innerHTML = "";
     var p = pgRowsFromText(text);
-    p.rows.forEach(function (r) { rngAddRow(cat, r); });
-    if (!p.rows.length) rngAddRow(cat);
-    document.getElementById("f" + cat).value = p.rest;
+    p.rows.forEach(function (r) { rngAddRow(cat, r, m); });
+    if (!p.rows.length) rngAddRow(cat, null, m);
+    rngRest(cat, m).value = p.rest;
   }
 
   // -> {text} atau {error, row}
-  function rngCollect(cat) {
-    var rows = [], rowsEls = document.getElementById("rng" + cat).querySelectorAll(".rng-row");
+  function rngCollect(cat, m) {
+    var rows = [], rowsEls = rngBox(cat, m).querySelectorAll(".rng-row");
     for (var k = 0; k < rowsEls.length; k++) {
       var r = rngEval(rowsEls[k]);
       if (r.empty) continue;
       if (!r.ok) { rngRefresh(rowsEls[k]); return { error: cat + ": " + r.msg, row: rowsEls[k] }; }
       rows.push(r.row);
     }
-    return { text: pgTextFromRows(rows, document.getElementById("f" + cat).value) };
+    return { text: pgTextFromRows(rows, rngRest(cat, m).value) };
   }
 
   Array.prototype.forEach.call(document.querySelectorAll(".rng-add"), function (b) {
-    b.addEventListener("click", function () { rngAddRow(b.getAttribute("data-cat")).querySelector(".rs1").focus(); });
+    b.addEventListener("click", function () { rngAddRow(b.getAttribute("data-cat"), null, b.getAttribute("data-m") === "1").querySelector(".rs1").focus(); });
   });
 
   function loadEntryIntoForm() {
@@ -1797,9 +1818,9 @@
     var d = new Date(dateStr + "T00:00:00");
     document.getElementById("dayModalTitle").textContent =
       d.getDate() + " " + BULAN_ID[d.getMonth()] + " " + d.getFullYear();
-    document.getElementById("mTahsin").value = e.tahsin || "";
-    document.getElementById("mTahfidz").value = e.tahfidz || "";
-    document.getElementById("mMurojaah").value = e.murojaah || "";
+    rngLoad("Tahsin", e.tahsin || "", true);
+    rngLoad("Tahfidz", e.tahfidz || "", true);
+    rngLoad("Murojaah", e.murojaah || "", true);
     document.getElementById("mKeterangan").value = e.keterangan || "";
     syncChips("mKeterangan");
     document.getElementById("dayModalBackdrop").classList.add("show");
@@ -1818,10 +1839,16 @@
   document.getElementById("mSave").addEventListener("click", function () {
     var s = getSelectedStudent();
     if (!s || !modalDate) return;
+    var mc = {}, mcats = ["Tahsin", "Tahfidz", "Murojaah"];
+    for (var q = 0; q < mcats.length; q++) {
+      var mres = rngCollect(mcats[q], true);
+      if (mres.error) { showToast(mres.error); mres.row.scrollIntoView({ block: "center" }); return; }
+      mc[mcats[q]] = mres.text;
+    }
     setEntry(s.id, modalDate, {
-      tahsin: document.getElementById("mTahsin").value.trim(),
-      tahfidz: document.getElementById("mTahfidz").value.trim(),
-      murojaah: document.getElementById("mMurojaah").value.trim(),
+      tahsin: mc.Tahsin,
+      tahfidz: mc.Tahfidz,
+      murojaah: mc.Murojaah,
       keterangan: document.getElementById("mKeterangan").value.trim()
     });
     saveData();
