@@ -18,6 +18,7 @@ dibangun menjadi APK untuk pengujian atau AAB untuk Google Play Store.
 - **Catat setoran harian:** tahsin, tahfidz, murojaah, dan keterangan (Izin, Sakit, Ghoib), dengan navigasi per tanggal.
 - **Kelola santri:** tambah, ganti nama, dan hapus santri.
 - **Laporan bulanan:** tabel per bulan dengan total, bisa diunduh sebagai gambar dan diberi watermark lembaga.
+- **Progres:** diagram perkembangan hafalan per santri, dibaca dari teks setoran (misalnya "Al-Mulk 1-30"): total ayat dan surah tuntas, hafalan baru per minggu atau bulan, serta total dari waktu ke waktu. Penulisan ayat yang di luar jumlah ayat surah tidak dihitung dan ditandai.
 - **Setelan:** mode terang, gelap, atau otomatis; lima warna tema; ukuran teks; saran nama surah; pengingat cadangan.
 - **Cadangan data:** ekspor dan impor data sebagai file JSON.
 - **Offline:** data tersimpan di perangkat dan aplikasi tidak butuh koneksi internet.
@@ -28,7 +29,7 @@ Semua nama dan catatan pada gambar ini fiktif.
 
 | Catat | Santri | Laporan | Setelan |
 | --- | --- | --- | --- |
-| <img src="docs/screenshots/catat.png" alt="Halaman Catat: form setoran harian" width="200"> | <img src="docs/screenshots/santri.png" alt="Halaman Santri: daftar santri" width="200"> | <img src="docs/screenshots/laporan.png" alt="Halaman Laporan: tabel bulanan" width="200"> | <img src="docs/screenshots/setelan.png" alt="Halaman Setelan: tampilan dan lembaga" width="200"> |
+| <img src="docs/screenshots/catat.png" alt="Halaman Catat: form setoran harian" width="200"> | <img src="docs/screenshots/santri.png" alt="Halaman Santri: daftar santri" width="200"> | <img src="docs/screenshots/laporan.png" alt="Halaman Laporan: tabel bulanan" width="200"> | <img src="docs/screenshots/progres.png" alt="Halaman Progres: diagram perkembangan hafalan" width="200"> | <img src="docs/screenshots/setelan.png" alt="Halaman Setelan: tampilan dan lembaga" width="200"> |
 
 ## Tentang proyek
 

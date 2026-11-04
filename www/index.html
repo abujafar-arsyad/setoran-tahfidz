@@ -2359,9 +2359,7 @@
         nums.forEach(function (r) {
           var a = r[0], b = r[1], tmp;
           if (b < a) { tmp = a; a = b; b = tmp; }
-          if (a < 1) a = 1;
-          if (a > ay) { out.bad.push(seg); return; }
-          if (b > ay) b = ay;
+          if (a < 1 || b > ay) { if (out.bad.indexOf(seg) < 0) out.bad.push(seg); return; }
           out.ranges.push({ i: idx, a: a, b: b });
         });
       });
