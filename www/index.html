@@ -1417,11 +1417,11 @@
     var p = rsEnsurePanel();
     rsActive = inp; rsItems = list;
     p.innerHTML = "";
-    list.forEach(function (i) {
+    list.forEach(function (i, pos) {
       var it = document.createElement("div");
       it.className = "rs-item";
       it.setAttribute("role", "option");
-      it.setAttribute("data-i", i);
+      it.setAttribute("data-i", pos);
       it.innerHTML = "<span>" + (i + 1) + ". " + SURAHS[i].name + " <small>(" + SURAHS[i].ayat + " ayat)</small></span><span class=\"ac-ar\" dir=\"rtl\">" + SURAHS[i].ar + "</span>";
       p.appendChild(it);
     });

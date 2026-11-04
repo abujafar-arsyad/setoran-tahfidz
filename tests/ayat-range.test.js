@@ -252,6 +252,7 @@ t("UI: dropdown memakai panel kustom (bukan datalist), dengan click/keyboard", (
   assert.ok(html.includes('rsPanel.addEventListener("click"'));
   assert.ok(html.includes('rsPanel.addEventListener("mousedown"'));
   assert.ok(html.includes("rs2Touched"));
+  assert.ok(html.includes('it.setAttribute("data-i", pos)'), "data-i harus posisi saran, bukan indeks surah");
 });
 
 console.log(n + " tests passed");
