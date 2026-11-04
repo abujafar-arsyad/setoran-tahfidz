@@ -167,6 +167,7 @@
   .rng-line input.rs { flex: 1; min-width: 0; }
   .rng-line input.ra { width: 84px; flex: none; }
   .rng-info { font-size: 12.5px; color: var(--ink-soft); min-height: 16px; padding-right: 34px; }
+  .rng-hint { font-size: 12px; color: var(--ink-soft); margin: -2px 0 6px; }
   .rng-info.err { color: var(--danger); font-weight: 600; }
   .rng-info.ok { color: var(--good); font-weight: 600; }
   .rng-del { position: absolute; right: 6px; bottom: 6px; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--danger); background: transparent; color: var(--danger); font-size: 15px; cursor: pointer; }
@@ -529,7 +530,7 @@
             <div id="entryStatusBadge" style="margin-top:6px; font-size:12.5px; font-weight:600;"></div>
           </div>
           <div class="field">
-            <label>📗 Tahsin — rentang ayat (surah)</label>
+            <label>📗 Tahsin — rentang ayat (surah)</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
             <div class="rng" id="rngTahsin"></div>
             <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahsin">+ Tambah rentang</button>
             <label for="fTahsin" class="rng-free">Iqro / catatan lain / teks bebas (tidak dibaca sistem)</label>
@@ -537,14 +538,14 @@
           </div>
           <datalist id="surahList"></datalist>
           <div class="field">
-            <label>📘 Tahfidz — rentang ayat</label>
+            <label>📘 Tahfidz — rentang ayat</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
             <div class="rng" id="rngTahfidz"></div>
             <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahfidz">+ Tambah rentang</button>
             <label for="fTahfidz" class="rng-free">Catatan lain / teks bebas (opsional)</label>
             <textarea id="fTahfidz" placeholder="Teks lama atau catatan tambahan" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
           </div>
           <div class="field">
-            <label>🔁 Murojaah — rentang ayat</label>
+            <label>🔁 Murojaah — rentang ayat</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
             <div class="rng" id="rngMurojaah"></div>
             <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Murojaah">+ Tambah rentang</button>
             <label for="fMurojaah" class="rng-free">Catatan lain / teks bebas (opsional)</label>
@@ -794,21 +795,21 @@
     <div class="modal">
       <h2 id="dayModalTitle">Detail Hari</h2>
       <div class="field">
-        <label>📗 Tahsin — rentang ayat (surah)</label>
+        <label>📗 Tahsin — rentang ayat (surah)</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
         <div class="rng" id="mrngTahsin"></div>
         <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahsin" data-m="1">+ Tambah rentang</button>
         <label for="mTahsin" class="rng-free">Iqro / catatan lain / teks bebas (tidak dibaca sistem)</label>
         <textarea id="mTahsin" placeholder="Iqro 3 halaman 12" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
       </div>
       <div class="field">
-        <label>📘 Tahfidz — rentang ayat</label>
+        <label>📘 Tahfidz — rentang ayat</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
         <div class="rng" id="mrngTahfidz"></div>
         <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahfidz" data-m="1">+ Tambah rentang</button>
         <label for="mTahfidz" class="rng-free">Catatan lain / teks bebas (opsional)</label>
         <textarea id="mTahfidz" placeholder="Teks lama atau catatan tambahan" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
       </div>
       <div class="field">
-        <label>🔁 Murojaah — rentang ayat</label>
+        <label>🔁 Murojaah — rentang ayat</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
         <div class="rng" id="mrngMurojaah"></div>
         <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Murojaah" data-m="1">+ Tambah rentang</button>
         <label for="mMurojaah" class="rng-free">Catatan lain / teks bebas (opsional)</label>
@@ -1383,8 +1384,8 @@
     var i1 = pgSurahIndex(row.querySelector(".rs1").value), i2 = pgSurahIndex(row.querySelector(".rs2").value);
     row.querySelector(".ra1").max = i1 >= 0 ? SURAHS[i1].ayat : "";
     row.querySelector(".ra2").max = i2 >= 0 ? SURAHS[i2].ayat : "";
-    row.querySelector(".ra1").placeholder = i1 >= 0 ? "1–" + SURAHS[i1].ayat : "Ayat (kosong=1)";
-    row.querySelector(".ra2").placeholder = i2 >= 0 ? "1–" + SURAHS[i2].ayat : "Ayat (kosong=akhir)";
+    row.querySelector(".ra1").placeholder = i1 >= 0 ? "1–" + SURAHS[i1].ayat : "Ayat";
+    row.querySelector(".ra2").placeholder = i2 >= 0 ? "1–" + SURAHS[i2].ayat : "Ayat";
     var r = rngEval(row);
     info.className = "rng-info";
     if (r.empty) info.textContent = "";
