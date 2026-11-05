@@ -1431,7 +1431,7 @@
 
   function rsShow(inp) {
     var list = pgSuggestSurah(inp.value, 8);
-    if (!list.length || (list.length === 1 && SURAHS[list[0]].name === inp.value.trim())) { rsHide(); return; }
+    if (!list.length) { rsHide(); return; }
     var p = rsEnsurePanel();
     rsActive = inp; rsItems = list;
     p.innerHTML = "";
@@ -1466,7 +1466,14 @@
 
   function rsAttach(inp) {
     inp.addEventListener("input", function () { rsActive = inp; rsShow(inp); });
-    inp.addEventListener("focus", function () { rsActive = inp; if (inp.value.trim()) rsShow(inp); });
+    inp.addEventListener("focus", function () {
+      rsActive = inp;
+      if (inp.value.trim()) { inp.select(); rsShow(inp); }
+    });
+    inp.addEventListener("click", function () {
+      rsActive = inp;
+      if (inp.value.trim()) { inp.select(); rsShow(inp); }
+    });
     inp.addEventListener("blur", function () { clearTimeout(rsHideTimer); rsHideTimer = setTimeout(rsHide, 250); });
     inp.addEventListener("keydown", function (e) {
       var open = rsPanel && rsPanel.style.display !== "none" && rsItems.length;

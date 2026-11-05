@@ -1,5 +1,7 @@
 # Setoran Tahfidz
 
+[Unduh APK debug terbaru (v1.1.5)](https://github.com/abujafar-arsyad/setoran-tahfidz/releases/download/v1.1.5-debug/setoran-tahfidz-v1.1.5-debug.apk)
+
 **Setoran Tahfidz** membantu santri mencatat setoran hafalan Al-Qur'an.
 Aplikasi berjalan secara offline dan menyimpan data di `localStorage`
 perangkat, tanpa backend atau koneksi internet.
