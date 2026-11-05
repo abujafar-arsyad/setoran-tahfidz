@@ -1,6 +1,6 @@
 # Setoran Tahfidz
 
-[Unduh APK debug terbaru (v1.1.5)](https://github.com/abujafar-arsyad/setoran-tahfidz/releases/download/v1.1.5-debug/setoran-tahfidz-v1.1.5-debug.apk)
+[Unduh APK terbaru](https://github.com/abujafar-arsyad/setoran-tahfidz/releases/latest)
 
 **Setoran Tahfidz** membantu santri mencatat setoran hafalan Al-Qur'an.
 Aplikasi berjalan secara offline dan menyimpan data di `localStorage`
@@ -18,6 +18,7 @@ dibangun menjadi APK untuk pengujian atau AAB untuk Google Play Store.
 ## Fitur
 
 - **Catat setoran harian:** tahsin, tahfidz, murojaah, dan keterangan (Izin, Sakit, Ghoib), dengan navigasi per tanggal. Rentang ayat diisi per baris (bisa lebih dari satu) dan divalidasi dengan jumlah ayat tiap surah; catatan Iqro tetap berupa teks bebas dan tidak dibaca Progres.
+- **Nilai kelancaran:** beri nilai Mumtaz, Jayyid Jiddan, Jayyid, Maqbul, atau Rasib untuk tiap kategori setoran; laporan menampilkan nilai, dan Rasib tidak dihitung dalam progres ayat.
 - **Kelola santri:** tambah, ganti nama, dan hapus santri.
 - **Laporan bulanan:** tabel per bulan dengan total, bisa diunduh sebagai gambar dan diberi watermark lembaga.
 - **Progres:** diagram perkembangan hafalan per santri, dibaca dari rentang ayat terstruktur (surah + ayat awal sampai surah + ayat akhir, bisa lintas surah, mis. Al-Baqarah 200 → Ali 'Imran 23; teks lama tetap terbaca): total ayat dan surah tuntas, hafalan baru per minggu atau bulan, serta total dari waktu ke waktu. Ada juga progres per juz (30 juz, Mushaf Madinah/Hafs; rentang lintas surah/juz dipecah per ayat). Penulisan ayat yang di luar jumlah ayat surah tidak dihitung dan ditandai.
