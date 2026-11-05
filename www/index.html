@@ -282,8 +282,12 @@
   .grade-option { min-width: 0; min-height: 40px; padding: 6px 2px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); color: var(--ink-soft); font-family: inherit; font-size: 13px; font-weight: 700; line-height: 1; cursor: pointer; }
   .grade-option[aria-checked="true"] { border-color: var(--plum); background: var(--plum); color: var(--on-plum, #fff); }
   .grade-option[data-code="R"][aria-checked="true"] { border-color: var(--danger); background: var(--danger); color: var(--on-danger, #fff); }
-  .grade-badge { display: block; width: max-content; max-width: 100%; margin-top: 4px; padding: 2px 6px; border-radius: 6px; background: var(--plum-tint); color: var(--plum-deep); font-size: 10px; font-weight: 700; line-height: 1.3; }
-  .grade-badge[data-code="R"] { background: var(--danger); color: var(--on-danger, #fff); }
+  .grade-badge { display: block; width: max-content; max-width: 100%; margin-top: 4px; padding: 2px 6px; border-radius: 6px; color: #fff; font-size: 10px; font-weight: 700; line-height: 1.3; }
+  .grade-badge[data-code="M"] { background: var(--grade-m); }
+  .grade-badge[data-code="JJ"] { background: var(--grade-jj); }
+  .grade-badge[data-code="J"] { background: var(--grade-j); }
+  .grade-badge[data-code="MQ"] { background: var(--grade-mq); }
+  .grade-badge[data-code="R"] { background: var(--grade-r); }
   .grade-legend { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-top: 8px; color: var(--ink-soft); font-size: 11px; }
   .grade-legend span { display: inline-flex; align-items: center; gap: 4px; }
   .grade-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--grade-color); }
@@ -553,8 +557,8 @@
           <div class="field">
             <label>📗 Tahsin — rentang ayat (surah)</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
             <div class="rng" id="rngTahsin"></div>
-            <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="gradeTahsin" role="radiogroup" aria-label="Nilai kelancaran Tahsin"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
             <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahsin">+ Tambah rentang</button>
+            <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="gradeTahsin" role="radiogroup" aria-label="Nilai kelancaran Tahsin"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
             <label for="fTahsin" class="rng-free">Iqro / catatan lain / teks bebas (tidak dibaca sistem)</label>
             <textarea id="fTahsin" placeholder="Iqro 3 halaman 12" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
           </div>
@@ -562,16 +566,16 @@
           <div class="field">
             <label>📘 Tahfidz — rentang ayat</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
             <div class="rng" id="rngTahfidz"></div>
-            <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="gradeTahfidz" role="radiogroup" aria-label="Nilai kelancaran Tahfidz"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
             <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahfidz">+ Tambah rentang</button>
+            <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="gradeTahfidz" role="radiogroup" aria-label="Nilai kelancaran Tahfidz"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
             <label for="fTahfidz" class="rng-free">Catatan lain / teks bebas (opsional)</label>
             <textarea id="fTahfidz" placeholder="Teks lama atau catatan tambahan" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
           </div>
           <div class="field">
             <label>🔁 Murojaah — rentang ayat</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
             <div class="rng" id="rngMurojaah"></div>
-            <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="gradeMurojaah" role="radiogroup" aria-label="Nilai kelancaran Murojaah"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
             <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Murojaah">+ Tambah rentang</button>
+            <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="gradeMurojaah" role="radiogroup" aria-label="Nilai kelancaran Murojaah"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
             <label for="fMurojaah" class="rng-free">Catatan lain / teks bebas (opsional)</label>
             <textarea id="fMurojaah" placeholder="Teks lama atau catatan tambahan" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
           </div>
@@ -826,24 +830,24 @@
       <div class="field">
         <label>📗 Tahsin — rentang ayat (surah)</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
         <div class="rng" id="mrngTahsin"></div>
-        <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="mgradeTahsin" role="radiogroup" aria-label="Nilai kelancaran Tahsin"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
         <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahsin" data-m="1">+ Tambah rentang</button>
+        <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="mgradeTahsin" role="radiogroup" aria-label="Nilai kelancaran Tahsin"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
         <label for="mTahsin" class="rng-free">Iqro / catatan lain / teks bebas (tidak dibaca sistem)</label>
         <textarea id="mTahsin" placeholder="Iqro 3 halaman 12" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
       </div>
       <div class="field">
         <label>📘 Tahfidz — rentang ayat</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
         <div class="rng" id="mrngTahfidz"></div>
-        <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="mgradeTahfidz" role="radiogroup" aria-label="Nilai kelancaran Tahfidz"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
         <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahfidz" data-m="1">+ Tambah rentang</button>
+        <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="mgradeTahfidz" role="radiogroup" aria-label="Nilai kelancaran Tahfidz"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
         <label for="mTahfidz" class="rng-free">Catatan lain / teks bebas (opsional)</label>
         <textarea id="mTahfidz" placeholder="Teks lama atau catatan tambahan" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
       </div>
       <div class="field">
         <label>🔁 Murojaah — rentang ayat</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
         <div class="rng" id="mrngMurojaah"></div>
-        <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="mgradeMurojaah" role="radiogroup" aria-label="Nilai kelancaran Murojaah"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
         <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Murojaah" data-m="1">+ Tambah rentang</button>
+        <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="mgradeMurojaah" role="radiogroup" aria-label="Nilai kelancaran Murojaah"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
         <label for="mMurojaah" class="rng-free">Catatan lain / teks bebas (opsional)</label>
         <textarea id="mMurojaah" placeholder="Teks lama atau catatan tambahan" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
       </div>
@@ -1654,12 +1658,15 @@
       if (res.error) { showToast(res.error); res.row.scrollIntoView({ block: "center" }); return; }
       cols[cats[c]] = res.text;
     }
+    var grades = collectGradeValues(false);
+    var gradeError = pgGradeEntryError(cats, cols, grades);
+    if (gradeError) { showToast(gradeError); return; }
     setEntry(s.id, dateStr, {
       tahsin: cols.Tahsin,
       tahfidz: cols.Tahfidz,
       murojaah: cols.Murojaah,
       keterangan: document.getElementById("fKeterangan").value.trim(),
-      nilai: collectGradeValues(false)
+      nilai: grades
     });
     saveData();
     saveOk = true;
@@ -1938,12 +1945,15 @@
       if (mres.error) { showToast(mres.error); mres.row.scrollIntoView({ block: "center" }); return; }
       mc[mcats[q]] = mres.text;
     }
+    var grades = collectGradeValues(true);
+    var gradeError = pgGradeEntryError(mcats, mc, grades);
+    if (gradeError) { showToast(gradeError); return; }
     setEntry(s.id, modalDate, {
       tahsin: mc.Tahsin,
       tahfidz: mc.Tahfidz,
       murojaah: mc.Murojaah,
       keterangan: document.getElementById("mKeterangan").value.trim(),
-      nilai: collectGradeValues(true)
+      nilai: grades
     });
     saveData();
     if (document.getElementById("entryDate").value === modalDate) loadEntryIntoForm();
@@ -2159,22 +2169,36 @@
           ctx.fillRect(60 * S, top, (1173 - 60) * S, TPL.rowH * S);
         }
         ctx.fillStyle = st ? STATUS[st].color : PURPLE;
+        ctx.direction = "ltr";
+        ctx.textAlign = "center";
+        ctx.font = "bold " + (18 * S) + "px " + FONT_FAMILY;
+        ctx.fillText(String(d), 90 * S, top + (TPL.rowH / 2 + 6) * S);
+        ctx.textAlign = "left";
         if (!e) continue;
         for (var c = 0; c < 4; c++) {
           var val = e[keys[c]];
           if (val && c < 3) val = pgDisplayText(val);
           var grade = c < 3 && e.nilai ? pgGradeByCode(e.nilai[keys[c]]) : null;
           if (!val && !grade) continue;
-          drawFitted(ctx, val || "", TPL.colX[c] * S, TPL.colX[c + 1] * S, top, grade ? bottom - 15 * S : bottom, S, {});
+          drawFitted(ctx, val || "", TPL.colX[c] * S, TPL.colX[c + 1] * S, top,
+            grade ? bottom - 24 * S : bottom, S, grade ? { sizes: [20, 18, 15], multiline: false } : {});
           if (grade) {
             var gradeColor = getComputedStyle(document.documentElement).getPropertyValue(grade.color).trim() || "#777777";
-            var badgeX = TPL.colX[c] * S + 6 * S, badgeY = bottom - 16 * S;
+            var badgeX = TPL.colX[c] * S + 6 * S, badgeY = bottom - 22 * S;
+            var badgeW = 38 * S, badgeH = 19 * S, badgeR = 4 * S;
             ctx.fillStyle = gradeColor;
-            ctx.fillRect(badgeX, badgeY, 28 * S, 12 * S);
+            ctx.beginPath();
+            ctx.moveTo(badgeX + badgeR, badgeY);
+            ctx.arcTo(badgeX + badgeW, badgeY, badgeX + badgeW, badgeY + badgeH, badgeR);
+            ctx.arcTo(badgeX + badgeW, badgeY + badgeH, badgeX, badgeY + badgeH, badgeR);
+            ctx.arcTo(badgeX, badgeY + badgeH, badgeX, badgeY, badgeR);
+            ctx.arcTo(badgeX, badgeY, badgeX + badgeW, badgeY, badgeR);
+            ctx.closePath();
+            ctx.fill();
             ctx.fillStyle = "#ffffff";
             ctx.textAlign = "center";
-            ctx.font = "bold " + (9 * S) + "px " + FONT_FAMILY;
-            ctx.fillText(grade.short, badgeX + 14 * S, badgeY + 9 * S);
+            ctx.font = "bold " + (13 * S) + "px " + FONT_FAMILY;
+            ctx.fillText(grade.short, badgeX + badgeW / 2, badgeY + 14 * S);
             ctx.textAlign = "left";
             ctx.fillStyle = st ? STATUS[st].color : PURPLE;
           }
@@ -2647,6 +2671,16 @@
   function pgGradeByCode(code) {
     for (var i = 0; i < PG_GRADES.length; i++) if (PG_GRADES[i].code === code) return PG_GRADES[i];
     return null;
+  }
+
+  function pgGradeEntryError(categories, texts, grades) {
+    for (var i = 0; i < categories.length; i++) {
+      var category = categories[i], key = category.toLowerCase();
+      if (grades[key] && !String(texts[category] || "").trim()) {
+        return category + ": nilai diisi tapi setorannya kosong";
+      }
+    }
+    return "";
   }
 
   function pgNormalizeEntryGrades(entry) {

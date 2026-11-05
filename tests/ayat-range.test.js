@@ -9,8 +9,8 @@ const pureSrc = html.slice(html.indexOf("// PG-PURE-BEGIN"), html.indexOf("// PG
 const pad2 = (n) => String(n).padStart(2, "0");
 const BULAN_ID = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 const api = new Function("pad2", "BULAN_ID", surahSrc + "\n" + pureSrc +
-  "\nreturn {SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgNormalizeEntryGrades, pgNormalizeEntries};")(pad2, BULAN_ID);
-const { SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgNormalizeEntryGrades, pgNormalizeEntries } = api;
+  "\nreturn {SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgGradeEntryError, pgNormalizeEntryGrades, pgNormalizeEntries};")(pad2, BULAN_ID);
+const { SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgGradeEntryError, pgNormalizeEntryGrades, pgNormalizeEntries } = api;
 
 const idx = (n) => pgSurahIndex(n);
 const BAQ = idx("Al-Baqarah"), IMR = idx("Ali 'Imran"), NIS = idx("An-Nisa"), NAS = idx("An-Nas"), FAT = idx("Al-Fatihah");
@@ -402,5 +402,20 @@ t("sebaran nilai membuat 12 bucket tanpa menghilangkan label skala", () => {
   assert.strictEqual(buckets[11].counts.M, 1);
   assert.strictEqual(buckets[11].counts.R, 1);
   assert.deepStrictEqual(PG_GRADES.map((grade) => grade.label), ["Mumtaz", "Jayyid Jiddan", "Jayyid", "Maqbul", "Rasib"]);
+});
+t("menolak nilai tanpa setoran di Catat dan dialog Laporan", () => {
+  const categories = ["Tahsin", "Tahfidz", "Murojaah"];
+  const error = pgGradeEntryError(categories, { Tahsin: "Al-Fatihah 1-7", Tahfidz: "   ", Murojaah: "" }, {
+    tahsin: "M", tahfidz: "JJ", murojaah: "R"
+  });
+  assert.strictEqual(error, "Tahfidz: nilai diisi tapi setorannya kosong");
+  assert.strictEqual(pgGradeEntryError(categories, { Tahsin: "", Tahfidz: "", Murojaah: "" }, {
+    tahsin: "", tahfidz: "", murojaah: ""
+  }), "");
+  assert.strictEqual(pgGradeEntryError(categories, { Tahsin: "", Tahfidz: "Iqro 3 halaman 12", Murojaah: "Al-Mulk 1-10" }, {
+    tahsin: "", tahfidz: "J", murojaah: "MQ"
+  }), "");
+  assert.match(html, /var gradeError = pgGradeEntryError\(cats, cols, grades\)/);
+  assert.match(html, /var gradeError = pgGradeEntryError\(mcats, mc, grades\)/);
 });
 console.log(n + " tests passed");
