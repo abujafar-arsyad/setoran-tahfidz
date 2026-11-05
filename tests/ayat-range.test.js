@@ -418,4 +418,24 @@ t("menolak nilai tanpa setoran di Catat dan dialog Laporan", () => {
   assert.match(html, /var gradeError = pgGradeEntryError\(cats, cols, grades\)/);
   assert.match(html, /var gradeError = pgGradeEntryError\(mcats, mc, grades\)/);
 });
+t("teks laporan bernilai membungkus utuh dan badge disisihkan di kanan atas", () => {
+  const start = html.indexOf("  function drawFitted(");
+  const end = html.indexOf("\n  function exportReport()", start);
+  assert.ok(start >= 0 && end > start);
+  const drawFitted = new Function("ARABIC_RE", "FONT_FAMILY",
+    html.slice(start, end) + "\nreturn drawFitted;")(/[\u0600-\u06FF]/, "Arial");
+  const rendered = [];
+  const ctx = {
+    measureText(text) { return { width: text.length * 7 }; },
+    fillText(text) { rendered.push(text); }
+  };
+  const sample = "An-Naba 1 → An-Nazi'at 10; Al-Ikhlas 1-4; Al-Falaq 1-5";
+  drawFitted(ctx, sample, 0, 281 - 38 - 7, 0, 43.833, 1, {});
+  assert.strictEqual(rendered.join(" "), sample);
+  assert.ok(rendered.length > 1, "long multi-range text should wrap");
+  assert.ok(rendered.every((line) => !line.includes("…")));
+  const report = html.slice(end);
+  assert.match(report, /var badgeX = cellRight - badgeW - 6 \* S, badgeY = top \+ 5 \* S/);
+  assert.match(report, /drawFitted\(ctx, val \|\| "", cellLeft, badgeX - badgeGap, top, bottom, S, \{\}\)/);
+});
 console.log(n + " tests passed");

@@ -2180,12 +2180,13 @@
           if (val && c < 3) val = pgDisplayText(val);
           var grade = c < 3 && e.nilai ? pgGradeByCode(e.nilai[keys[c]]) : null;
           if (!val && !grade) continue;
-          drawFitted(ctx, val || "", TPL.colX[c] * S, TPL.colX[c + 1] * S, top,
-            grade ? bottom - 24 * S : bottom, S, grade ? { sizes: [20, 18, 15], multiline: false } : {});
           if (grade) {
             var gradeColor = getComputedStyle(document.documentElement).getPropertyValue(grade.color).trim() || "#777777";
-            var badgeX = TPL.colX[c] * S + 6 * S, badgeY = bottom - 22 * S;
             var badgeW = 38 * S, badgeH = 19 * S, badgeR = 4 * S;
+            var badgeGap = 7 * S;
+            var cellLeft = TPL.colX[c] * S, cellRight = TPL.colX[c + 1] * S;
+            var badgeX = cellRight - badgeW - 6 * S, badgeY = top + 5 * S;
+            drawFitted(ctx, val || "", cellLeft, badgeX - badgeGap, top, bottom, S, {});
             ctx.fillStyle = gradeColor;
             ctx.beginPath();
             ctx.moveTo(badgeX + badgeR, badgeY);
@@ -2201,6 +2202,8 @@
             ctx.fillText(grade.short, badgeX + badgeW / 2, badgeY + 14 * S);
             ctx.textAlign = "left";
             ctx.fillStyle = st ? STATUS[st].color : PURPLE;
+          } else {
+            drawFitted(ctx, val || "", TPL.colX[c] * S, TPL.colX[c + 1] * S, top, bottom, S, {});
           }
         }
       }
