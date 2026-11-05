@@ -1,48 +1,121 @@
 # Setoran Tahfidz
 
-[Unduh APK terbaru](https://github.com/abujafar-arsyad/setoran-tahfidz/releases/latest)
+Aplikasi Android untuk **guru tahfidz** mencatat setoran hafalan Al-Qur'an
+santri setiap hari: tahsin, tahfidz, dan murojaah, lengkap dengan nilai
+kelancaran, laporan bulanan, dan diagram progres hafalan.
 
-**Setoran Tahfidz** membantu santri mencatat setoran hafalan Al-Qur'an.
-Aplikasi berjalan secara offline dan menyimpan data di `localStorage`
-perangkat, tanpa backend atau koneksi internet.
+Aplikasi berjalan **sepenuhnya offline**. Tidak perlu akun, tidak ada iklan,
+dan data tidak pernah dikirim ke server mana pun.
 
-Aplikasi web-nya ada di `www/index.html` dan dibungkus menjadi aplikasi
-Android dengan [Capacitor](https://capacitorjs.com/). Proyek ini bisa
-dibangun menjadi APK untuk pengujian atau AAB untuk Google Play Store.
-
-- **Nama tampilan:** Setoran Tahfidz
-- **Application ID:** `id.tahfidz.setoran`
-- **Web dir:** `www/`
-- **Native project:** `android/`
-
-## Fitur
-
-- **Catat setoran harian:** tahsin, tahfidz, murojaah, dan keterangan (Izin, Sakit, Ghoib), dengan navigasi per tanggal. Rentang ayat diisi per baris (bisa lebih dari satu) dan divalidasi dengan jumlah ayat tiap surah; catatan Iqro tetap berupa teks bebas dan tidak dibaca Progres.
-- **Nilai kelancaran:** beri nilai Mumtaz, Jayyid Jiddan, Jayyid, Maqbul, atau Rasib untuk tiap kategori setoran; laporan menampilkan nilai, dan Rasib tidak dihitung dalam progres ayat.
-- **Kelola santri:** tambah, ganti nama, dan hapus santri.
-- **Laporan bulanan:** tabel per bulan dengan total, bisa diunduh sebagai gambar dan diberi watermark lembaga.
-- **Progres:** diagram perkembangan hafalan per santri, dibaca dari rentang ayat terstruktur (surah + ayat awal sampai surah + ayat akhir, bisa lintas surah, mis. Al-Baqarah 200 → Ali 'Imran 23; teks lama tetap terbaca): total ayat dan surah tuntas, hafalan baru per minggu atau bulan, serta total dari waktu ke waktu. Ada juga progres per juz (30 juz, Mushaf Madinah/Hafs; rentang lintas surah/juz dipecah per ayat). Penulisan ayat yang di luar jumlah ayat surah tidak dihitung dan ditandai.
-- **Setelan:** mode terang, gelap, atau otomatis; lima warna tema; ukuran teks; saran nama surah; pengingat cadangan.
-- **Cadangan data:** ekspor dan impor data sebagai file JSON.
-- **Offline:** data tersimpan di perangkat dan aplikasi tidak butuh koneksi internet.
+**[⬇️ Unduh APK terbaru](https://github.com/abujafar-arsyad/setoran-tahfidz/releases/latest)** · versi saat ini: 1.2.0 (uji coba) · [Riwayat rilis](https://github.com/abujafar-arsyad/setoran-tahfidz/releases)
 
 ## Tangkapan layar
 
 Semua nama dan catatan pada gambar ini fiktif.
 
-| Catat | Santri | Laporan | Setelan |
-| --- | --- | --- | --- |
-| <img src="docs/screenshots/catat.png" alt="Halaman Catat: form setoran harian" width="200"> | <img src="docs/screenshots/santri.png" alt="Halaman Santri: daftar santri" width="200"> | <img src="docs/screenshots/laporan.png" alt="Halaman Laporan: tabel bulanan" width="200"> | <img src="docs/screenshots/progres.png" alt="Halaman Progres: diagram perkembangan hafalan" width="200"> | <img src="docs/screenshots/setelan.png" alt="Halaman Setelan: tampilan dan lembaga" width="200"> |
+| Catat | Laporan | Progres | Sebaran nilai |
+| :---: | :---: | :---: | :---: |
+| <img src="docs/screenshots/catat.png" alt="Halaman Catat: rentang ayat dan nilai kelancaran" width="200"> | <img src="docs/screenshots/laporan.png" alt="Halaman Laporan: tabel bulanan dengan label nilai" width="200"> | <img src="docs/screenshots/progres.png" alt="Halaman Progres: ringkasan dan diagram hafalan per bulan" width="200"> | <img src="docs/screenshots/progres-nilai.png" alt="Halaman Progres: sebaran nilai per bulan dan progres per juz" width="200"> |
+
+| Santri | Setelan | Gambar laporan (untuk wali santri) |
+| :---: | :---: | :---: |
+| <img src="docs/screenshots/santri.png" alt="Halaman Santri: daftar santri" width="200"> | <img src="docs/screenshots/setelan.png" alt="Halaman Setelan: tampilan, lembaga, dan laporan" width="200"> | <img src="docs/screenshots/laporan-gambar.png" alt="Contoh gambar laporan bulanan yang diunduh" width="300"> |
+
+## Fitur
+
+**Pencatatan harian**
+- Catat tahsin, tahfidz, murojaah, dan keterangan (Izin, Sakit, Ghoib) per tanggal.
+- Rentang ayat diisi per baris: surah dan ayat awal sampai surah dan ayat akhir. Bisa lebih dari satu baris, dan bisa lintas surah (mis. Al-Baqarah 200 → Ali 'Imran 23).
+- Ayat boleh dikosongkan: surah tanpa nomor ayat dihitung satu surah penuh.
+- Nama surah muncul sebagai saran saat mengetik, dan jumlah ayat dicek otomatis (mis. Al-Ikhlas hanya 1–4).
+- Catatan Iqro atau buku lain tetap bisa ditulis sebagai teks bebas.
+
+**Nilai kelancaran**
+- Setiap kategori setoran bisa diberi nilai (tidak wajib):
+
+  | Singkatan | Nilai | | Keterangan |
+  | :---: | --- | :---: | --- |
+  | M | Mumtaz | ممتاز | lulus |
+  | JJ | Jayyid Jiddan | جيد جدا | lulus |
+  | J | Jayyid | جيد | lulus |
+  | Mq | Maqbul | مقبول | lulus |
+  | R | Rasib | راسب | belum lulus |
+
+- Nilai tampil sebagai label berwarna di tabel Laporan dan di gambar laporan.
+
+**Laporan bulanan**
+- Tabel per bulan dengan total Hadir, Izin, Sakit, dan Ghoib. Ketuk satu hari untuk mengedit.
+- Unduh sebagai gambar untuk dikirim ke wali santri, lengkap dengan nama lembaga, nama pengajar, rekap nilai, dan watermark lembaga (opsional).
+
+**Progres hafalan**
+- Ringkasan per santri: ayat tercatat dari 6.236 ayat, surah tuntas, hari setoran, dan rata-rata ayat per hari.
+- Diagram hafalan baru per pekan atau per bulan, total dari waktu ke waktu, dan sebaran nilai per bulan.
+- Progres per surah dan per juz (30 juz, Mushaf Madinah riwayat Hafs).
+- Bisa dilihat untuk Tahsin, Tahfidz, atau Murojaah, dan diunduh sebagai satu gambar.
+
+**Setelan dan data**
+- Mode terang, gelap, atau otomatis; lima warna tema; empat ukuran teks; halaman awal saat aplikasi dibuka.
+- Ekspor dan impor cadangan data (file JSON), plus pengingat cadangan berkala.
+
+## Cara pakai singkat
+
+1. **Tab Santri:** tambahkan nama santri.
+2. **Tab Catat:** pilih santri dan tanggal, isi rentang ayat untuk tahsin, tahfidz, atau murojaah, beri nilai bila perlu, lalu ketuk **Simpan Setoran**.
+3. **Tab Laporan:** lihat rekap bulanan. Ketuk **Unduh Laporan (Gambar)** untuk membuat gambar laporan yang bisa dikirim ke wali santri.
+4. **Tab Progres:** pantau perkembangan hafalan tiap santri. Ketuk **Unduh Progres** untuk menyimpannya sebagai gambar.
+5. **Tab Setelan:** isi nama lembaga dan pengajar, dan ketuk **Ekspor Data** secara rutin untuk mencadangkan data.
+
+## Cara Progres menghitung
+
+- Angka dihitung dari rentang ayat yang dicatat. Ayat yang disetor ulang tidak menambah total hafalan.
+- Setoran Tahfidz bernilai **Rasib** tidak dihitung sampai disetor ulang dengan nilai lulus (atau tanpa nilai).
+- Murojaah dan Tahsin bernilai Rasib tidak masuk total ayat, tetapi harinya tetap terhitung sebagai hari setoran.
+- Catatan Iqro, nomor halaman, atau tulisan seperti "Juz 30 halaman 3" tidak bisa dibaca sebagai ayat. Progres akan menampilkan peringatan untuk catatan seperti ini.
+- Hafalan santri sebelum memakai aplikasi ini tidak ikut terhitung.
+
+## Data dan privasi
+
+- Semua data tersimpan **hanya di HP ini** (`localStorage`). Tidak ada server, akun, iklan, atau pelacak.
+- Cadangan otomatis Android dimatikan, sehingga data **ikut terhapus** bila aplikasi di-uninstall atau datanya dihapus. Karena itu, ekspor cadangan secara rutin dari tab Setelan.
+- Untuk pindah HP, ekspor cadangan di HP lama lalu impor di HP baru.
+- Aplikasi tidak meminta izin khusus apa pun, termasuk izin internet.
+
+Selengkapnya: [Kebijakan Privasi](PRIVACY_POLICY.md).
 
 ## Tentang proyek
 
-- **Pemilik:** Abu Ja'far Putra Arsad
-- **Peran saya:** Saya menentukan fitur dan menguji aplikasi ini. Kode ditulis dengan bantuan AI.
-- **Status:** Uji coba. Aplikasi tersedia sebagai APK debug dan belum dirilis ke Google Play.
-- **Privasi:** aplikasi tidak mengumpulkan data pengguna. Lihat [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
+- **Pemilik:** Abu Ja'far Putra Arsad, pengajar tahfidz Al-Qur'an
+- **Peran saya:** menentukan fitur dan menguji aplikasi ini. Kode ditulis dengan bantuan AI.
+- **Status:** uji coba. Tersedia sebagai APK debug dan belum dirilis ke Google Play.
 - **Lisensi:** [MIT](LICENSE)
 
-## Menjalankan di browser
+---
+
+## Untuk pengembang
+
+Aplikasi web-nya ada di satu file, `www/index.html`, dan dibungkus menjadi
+aplikasi Android dengan [Capacitor](https://capacitorjs.com/).
+
+- **Application ID:** `id.tahfidz.setoran`
+- **Web dir:** `www/`
+- **Native project:** `android/`
+
+### Struktur proyek
+
+```
+www/index.html           # Aplikasi web (HTML + CSS + JS dalam satu file)
+tests/                   # Tes logika rentang ayat, progres, dan nilai (npm test)
+docs/screenshots/        # Tangkapan layar untuk README
+docs/PLAY_STORE.md       # Panduan rilis ke Google Play Store
+capacitor.config.json    # Konfigurasi Capacitor (appId, appName, webDir)
+android/                 # Proyek Android native
+assets-src/              # Sumber gambar ikon & splash (generate_icon.py)
+resources/               # Input untuk @capacitor/assets
+release-signing/         # Panduan membuat upload keystore & signing config
+PRIVACY_POLICY.md        # Kebijakan privasi
+```
+
+### Menjalankan di browser
 
 `www/index.html` bisa dibuka langsung di browser:
 
@@ -56,49 +129,22 @@ Jika browser membatasi akses melalui `file://`, jalankan server lokal:
 npx serve www
 ```
 
-## Struktur proyek
-
-```
-www/index.html          # Aplikasi web (HTML+CSS+JS inline, self-contained)
-capacitor.config.json    # Konfigurasi Capacitor (appId, appName, webDir)
-android/                 # Proyek Android native (dibuat oleh `npx cap add android`)
-assets-src/              # Source gambar 1024x1024 untuk ikon & splash (generate_icon.py)
-resources/               # Input untuk @capacitor/assets (icon.png, splash.png, dst.)
-release-signing/         # Panduan membuat upload keystore & signing config (README.md)
-PRIVACY_POLICY.md        # Kebijakan privasi (dibutuhkan untuk Play Store)
-```
-
-## Setup awal
-
-Perintah berikut sudah dijalankan untuk menyiapkan proyek. Jalankan lagi
-jika ingin mengulang setup:
+### Tes
 
 ```powershell
-npm install
-npx cap init "Setoran Tahfidz" "id.tahfidz.setoran" --web-dir www
-npx cap add android
-npx capacitor-assets generate --android   # dari resources/icon.png & resources/splash.png
+npm test
 ```
 
-## Membuka proyek di Android Studio
+Jalankan sebelum setiap rilis. Semua tes harus lulus.
 
-1. Install [Android Studio](https://developer.android.com/studio), termasuk
-   Android SDK dan JDK yang kompatibel.
-2. Di Android Studio, pilih **File → Open** lalu buka folder `android/`.
-3. Tunggu proses Gradle sync selesai.
-4. Klik **Run ▶** untuk menjalankan aplikasi di emulator atau perangkat.
-   Gunakan menu **Build** untuk membuat APK atau AAB.
-
-Setelah mengubah `www/index.html`, jalankan `npx cap sync android` agar
-perubahannya disalin ke `android/app/src/main/assets/public`.
-
-## Membuat Debug APK
+### Membuat Debug APK
 
 Gunakan JDK 21 dan Android SDK dengan build-tools serta platform yang sesuai
 `android/variables.gradle` (saat ini `compileSdk`/`targetSdk` 36 dan
 `minSdk` 24).
 
 ```powershell
+npx cap sync android
 cd android
 $env:JAVA_HOME = "<path ke JDK 21>"
 .\gradlew.bat assembleDebug
@@ -106,10 +152,18 @@ $env:JAVA_HOME = "<path ke JDK 21>"
 
 Output: `android/app/build/outputs/apk/debug/app-debug.apk`
 
-Build ini telah berhasil dijalankan di lingkungan pengembangan proyek dengan
-JDK Temurin 21 dan Android SDK build-tools 35/36.
+`npx cap sync android` wajib dijalankan setiap kali `www/index.html` berubah,
+agar perubahannya disalin ke `android/app/src/main/assets/public`.
 
-## Membuat Release AAB
+### Alur rilis
+
+1. Naikkan versi di `android/app/build.gradle`. Polanya: `versionName "1.2.0"` → `versionCode 120`.
+2. Jalankan `npm test`, lalu build APK seperti di atas.
+3. Buat GitHub Release dengan tag `vX.Y.Z-debug` dari `main`, unggah APK
+   bernama `setoran-tahfidz-vX.Y.Z-debug.apk`, dan tandai sebagai
+   **Latest release** agar tautan unduh di atas ikut berpindah.
+
+### Membuat Release AAB
 
 Google Play mewajibkan **Android App Bundle (.aab)** yang ditandatangani
 dengan upload key milik Anda. Ikuti petunjuk di `release-signing/README.md`
@@ -125,52 +179,22 @@ Output: `android/app/build/outputs/bundle/release/app-release.aab`
 > Keystore tidak disertakan di repo dan jangan di-commit. Buat keystore
 > sendiri dan simpan dengan aman.
 
-## Rilis ke Google Play Store
+Langkah lengkap ke Google Play ada di [docs/PLAY_STORE.md](docs/PLAY_STORE.md).
 
-Ikuti langkah berikut untuk menyiapkan aplikasi:
+### Membuka proyek di Android Studio
 
-1. Buat akun developer di [Google Play Console](https://play.google.com/console/).
-   Biaya pendaftaran satu kali sebesar **USD 25** dan verifikasi identitas
-   berlaku.
-2. Pilih **Create app**, lalu isi nama "Setoran Tahfidz", bahasa Indonesia,
-   kategori (misalnya Pendidikan/Education), dan status gratis (Free).
-3. Lengkapi Store Listing:
-   - Deskripsi singkat maksimal 80 karakter dan deskripsi lengkap maksimal
-     4000 karakter, dalam Bahasa Indonesia. Jelaskan pencatatan setoran,
-     penyimpanan lokal/offline, serta bahwa aplikasi tidak memakai iklan
-     atau akun.
-   - Minimal **2 screenshot ponsel** dalam format PNG/JPEG, rasio 16:9 atau
-     portrait, sisi terpanjang 320–3840 px. Ambil screenshot dari emulator
-     atau perangkat.
-   - **Feature graphic** berukuran 1024x500 px.
-   - Ikon listing berukuran 512x512 px. Ekspor `assets-src/icon-1024.png`
-     lalu ubah ukurannya; ikon adaptif hasil build tidak menggantikan ikon
-     listing ini.
-4. Isi **Content Rating Questionnaire** sesuai kondisi aplikasi untuk
-   mendapatkan rating usia.
-5. Isi **Data Safety form** sesuai perilaku aplikasi: data tidak dikumpulkan
-   atau dibagikan dan hanya tersimpan di perangkat (`localStorage`), tanpa
-   dikirim ke server. Gunakan `PRIVACY_POLICY.md` sebagai referensi.
-6. Publikasikan `PRIVACY_POLICY.md` di halaman web publik, misalnya GitHub
-   Pages atau hosting statis lain. Masukkan URL-nya di **App content →
-   Privacy Policy**.
-7. Mulai dari **Internal testing** melalui **Release → Testing → Internal
-   testing → Create new release**, lalu tambahkan email penguji.
-8. Unggah `app-release.aab` hasil `bundleRelease` yang sudah ditandatangani.
-9. Lengkapi rollout dan release notes, lalu kirim untuk ditinjau Google.
-   Setelah pengujian internal, Anda bisa mempromosikan rilis ke **Production**;
-   rilis ini juga perlu ditinjau Google.
+1. Install [Android Studio](https://developer.android.com/studio), termasuk
+   Android SDK dan JDK yang kompatibel.
+2. Pilih **File → Open** lalu buka folder `android/`.
+3. Tunggu proses Gradle sync selesai, lalu klik **Run ▶** untuk menjalankan
+   aplikasi di emulator atau perangkat.
 
-Pembuatan akun, verifikasi identitas, pembayaran, screenshot dari perangkat,
-dan persetujuan rilis harus dilakukan sendiri melalui akun Google Play Console.
-
-## Ikon dan splash screen
+### Ikon dan splash screen
 
 Ikon dan splash screen saat ini masih placeholder: latar ungu plum
 (`#5b2a6b`), motif buku terbuka, tanda centang emas, dan monogram "ST".
 File dibuat oleh `assets-src/generate_icon.py` (Python + Pillow), lalu
-`@capacitor/assets` menghasilkan ikon mipmap ldpi–xxxhdpi, adaptive icon,
-serta splash screen untuk berbagai densitas dan orientasi.
+`@capacitor/assets` menghasilkan ikon untuk semua densitas.
 
 Untuk memakai desain sendiri, ganti `resources/icon.png`,
 `resources/icon-foreground.png`, `resources/icon-background.png`, dan
@@ -179,8 +203,3 @@ Untuk memakai desain sendiri, ganti `resources/icon.png`,
 ```powershell
 npx capacitor-assets generate --android
 ```
-
-## Izin aplikasi
-
-Aplikasi ini tidak meminta izin khusus. Karena berjalan offline,
-`AndroidManifest.xml` tidak berisi izin `INTERNET` atau izin lainnya.
