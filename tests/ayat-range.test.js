@@ -7,9 +7,10 @@ const html = fs.readFileSync(path.join(__dirname, "..", "www", "index.html"), "u
 const surahSrc = html.slice(html.indexOf("var SURAHS = ["), html.indexOf("var dl = document.getElementById(\"surahList\")") - 20);
 const pureSrc = html.slice(html.indexOf("// PG-PURE-BEGIN"), html.indexOf("// PG-PURE-END"));
 const pad2 = (n) => String(n).padStart(2, "0");
-const api = new Function("pad2", surahSrc + "\n" + pureSrc +
-  "\nreturn {SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf,   pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow};")(pad2);
-  const { SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow } = api;
+const BULAN_ID = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+const api = new Function("pad2", "BULAN_ID", surahSrc + "\n" + pureSrc +
+  "\nreturn {SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgNormalizeEntryGrades, pgNormalizeEntries};")(pad2, BULAN_ID);
+const { SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgNormalizeEntryGrades, pgNormalizeEntries } = api;
 
 const idx = (n) => pgSurahIndex(n);
 const BAQ = idx("Al-Baqarah"), IMR = idx("Ali 'Imran"), NIS = idx("An-Nisa"), NAS = idx("An-Nas"), FAT = idx("Al-Fatihah");
@@ -329,5 +330,77 @@ t("input terstruktur (Catat/Laporan): ayat kosong = surah penuh", () => {
   assert.deepStrictEqual(pgResolveRow(FAL, 2, FAL, null), { i1: FAL, a1: 2, i2: FAL, a2: 2 });
   assert.deepStrictEqual(pgResolveRow(FAL, null, FAL, 3), { i1: FAL, a1: 1, i2: FAL, a2: 3 });
   assert.strictEqual(pgFormatRange(FAL, 1, NAS, 6), "Al-Falaq 1 \u2192 An-Nas 6");
+});
+
+t("entri lama tanpa nilai mempertahankan hasil progres yang sama", () => {
+  const legacy = {
+    "2026-01-01": { tahfidz: "Al-Mulk 1-30" },
+    "2026-01-02": { tahfidz: "Al-Mulk 1-10" }
+  };
+  const result = pgAnalyze(legacy, "tahfidz");
+  assert.deepStrictEqual(result.daily, [
+    { date: "2026-01-01", raw: 30, fresh: 30, value: 30 },
+    { date: "2026-01-02", raw: 10, fresh: 0, value: 0 }
+  ]);
+  assert.deepStrictEqual(result.perSurah, [{ i: idx("Al-Mulk"), cnt: 30, total: 30, last: "2026-01-02" }]);
+  assert.strictEqual(result.unique, 30);
+  assert.strictEqual(result.total, 30);
+  assert.deepStrictEqual(result.rasib, []);
+});
+t("Tahfidz Al-Mulk bernilai Rasib dikecualikan, lalu nilai JJ menghitung 30 ayat", () => {
+  const result = pgAnalyze({
+    "2026-01-01": { tahfidz: "Al-Mulk 1-30", nilai: { tahfidz: "R" } },
+    "2026-01-02": { tahfidz: "Al-Mulk 1-30", nilai: { tahfidz: "JJ" } }
+  }, "tahfidz");
+  assert.strictEqual(result.daily[0].value, 0);
+  assert.strictEqual(result.daily[1].value, 30);
+  assert.strictEqual(result.unique, 30);
+  assert.strictEqual(result.total, 30);
+  assert.deepStrictEqual(result.rasib, ["2026-01-01"]);
+});
+t("Murojaah bernilai Rasib tidak dihitung tetapi harinya tetap tercatat", () => {
+  const result = pgAnalyze({
+    "2026-01-01": { murojaah: "Al-Mulk 1-30", nilai: { murojaah: "R" } }
+  }, "murojaah");
+  assert.strictEqual(result.daily.length, 1);
+  assert.strictEqual(result.daily[0].value, 0);
+  assert.strictEqual(result.unique, 0);
+  assert.strictEqual(result.total, 0);
+});
+t("rekap nilai per bulan menghitung kode yang dikenal dalam urutan skala", () => {
+  const entries = {
+    "2026-03-01": { tahfidz: "Al-Mulk 1-3", nilai: { tahfidz: "M" } },
+    "2026-03-02": { tahfidz: "Al-Mulk 4-5", nilai: { tahfidz: "JJ" } },
+    "2026-03-03": { tahfidz: "Al-Mulk 6", nilai: { tahfidz: "R" } },
+    "2026-03-04": { tahfidz: "Al-Mulk 7", nilai: { tahfidz: "JJ" } },
+    "2026-04-01": { tahfidz: "Al-Mulk 8", nilai: { tahfidz: "J" } }
+  };
+  assert.deepStrictEqual(pgGradeSummary(entries, "tahfidz", 2026, 2), [
+    { code: "M", count: 1 }, { code: "JJ", count: 2 }, { code: "R", count: 1 }
+  ]);
+});
+t("impor backup membersihkan kode nilai yang tidak dikenal tanpa mengubah teks lama", () => {
+  const incoming = {
+    santri: {
+      "2026-03-01": { tahsin: "Al-Fatihah 1-7", nilai: { tahsin: "U", tahfidz: "X", murojaah: "JJ" } },
+      "2026-03-02": { tahsin: "Iqro 3 halaman 12" }
+    }
+  };
+  const normalized = pgNormalizeEntries(incoming);
+  assert.deepStrictEqual(normalized.santri["2026-03-01"].nilai, { tahsin: "", tahfidz: "", murojaah: "JJ" });
+  assert.strictEqual(normalized.santri["2026-03-01"].tahsin, "Al-Fatihah 1-7");
+  assert.ok(!Object.prototype.hasOwnProperty.call(normalized.santri["2026-03-02"], "nilai"));
+  assert.deepStrictEqual(pgNormalizeEntryGrades({ nilai: { tahsin: "Z" } }).nilai, { tahsin: "", tahfidz: "", murojaah: "" });
+  assert.ok(html.includes("data.entries = pgNormalizeEntries(pendingImport.entries || {})"));
+});
+t("sebaran nilai membuat 12 bucket tanpa menghilangkan label skala", () => {
+  const buckets = pgGradeBuckets({
+    "2026-01-10": { nilai: { tahsin: "M" } },
+    "2026-01-11": { nilai: { tahsin: "R" } }
+  }, "tahsin", 12, "2026-01-15");
+  assert.strictEqual(buckets.length, 12);
+  assert.strictEqual(buckets[11].counts.M, 1);
+  assert.strictEqual(buckets[11].counts.R, 1);
+  assert.deepStrictEqual(PG_GRADES.map((grade) => grade.label), ["Mumtaz", "Jayyid Jiddan", "Jayyid", "Maqbul", "Rasib"]);
 });
 console.log(n + " tests passed");

@@ -20,6 +20,11 @@
     --line: #ddccb6;
     --good: #3f6b4f;
     --danger: #9c3b3b;
+    --grade-m: #6b4c9a;
+    --grade-jj: #276b8f;
+    --grade-j: #3f6b4f;
+    --grade-mq: #9a6a1a;
+    --grade-r: #9c3b3b;
     --shadow: rgba(59, 26, 72, 0.14);
     --st-izin: #1d6fd1; --st-izin-bg: rgba(29,111,209,0.12);
     --st-sakit: #c96a00; --st-sakit-bg: rgba(217,119,6,0.14);
@@ -271,6 +276,22 @@
   .table-wrap { overflow-x: auto; border-radius: 12px; }
   .cell-text { white-space: pre-wrap; word-break: break-word; }
   .cell-empty { color: var(--ink-soft); opacity: 0.4; }
+  .grade-picker { margin: 8px 0 2px; }
+  .grade-title { font-size: 12px; color: var(--ink-soft); font-weight: 600; margin-bottom: 5px; }
+  .grade-options { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+  .grade-option { min-width: 0; min-height: 40px; padding: 6px 2px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); color: var(--ink-soft); font-family: inherit; font-size: 13px; font-weight: 700; line-height: 1; cursor: pointer; }
+  .grade-option[aria-checked="true"] { border-color: var(--plum); background: var(--plum); color: var(--on-plum, #fff); }
+  .grade-option[data-code="R"][aria-checked="true"] { border-color: var(--danger); background: var(--danger); color: var(--on-danger, #fff); }
+  .grade-badge { display: block; width: max-content; max-width: 100%; margin-top: 4px; padding: 2px 6px; border-radius: 6px; background: var(--plum-tint); color: var(--plum-deep); font-size: 10px; font-weight: 700; line-height: 1.3; }
+  .grade-badge[data-code="R"] { background: var(--danger); color: var(--on-danger, #fff); }
+  .grade-legend { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-top: 8px; color: var(--ink-soft); font-size: 11px; }
+  .grade-legend span { display: inline-flex; align-items: center; gap: 4px; }
+  .grade-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--grade-color); }
+  .pg-grade-M { fill: var(--grade-m); }
+  .pg-grade-JJ { fill: var(--grade-jj); }
+  .pg-grade-J { fill: var(--grade-j); }
+  .pg-grade-MQ { fill: var(--grade-mq); }
+  .pg-grade-R { fill: var(--grade-r); }
 
   .month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .month-nav h2 { font-size: 16px; color: var(--plum); }
@@ -532,6 +553,7 @@
           <div class="field">
             <label>📗 Tahsin — rentang ayat (surah)</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
             <div class="rng" id="rngTahsin"></div>
+            <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="gradeTahsin" role="radiogroup" aria-label="Nilai kelancaran Tahsin"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
             <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahsin">+ Tambah rentang</button>
             <label for="fTahsin" class="rng-free">Iqro / catatan lain / teks bebas (tidak dibaca sistem)</label>
             <textarea id="fTahsin" placeholder="Iqro 3 halaman 12" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
@@ -540,6 +562,7 @@
           <div class="field">
             <label>📘 Tahfidz — rentang ayat</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
             <div class="rng" id="rngTahfidz"></div>
+            <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="gradeTahfidz" role="radiogroup" aria-label="Nilai kelancaran Tahfidz"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
             <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahfidz">+ Tambah rentang</button>
             <label for="fTahfidz" class="rng-free">Catatan lain / teks bebas (opsional)</label>
             <textarea id="fTahfidz" placeholder="Teks lama atau catatan tambahan" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
@@ -547,6 +570,7 @@
           <div class="field">
             <label>🔁 Murojaah — rentang ayat</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
             <div class="rng" id="rngMurojaah"></div>
+            <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="gradeMurojaah" role="radiogroup" aria-label="Nilai kelancaran Murojaah"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
             <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Murojaah">+ Tambah rentang</button>
             <label for="fMurojaah" class="rng-free">Catatan lain / teks bebas (opsional)</label>
             <textarea id="fMurojaah" placeholder="Teks lama atau catatan tambahan" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
@@ -622,6 +646,11 @@
         <div class="card">
           <h2 id="pgLineTitle">Total hafalan dari waktu ke waktu</h2>
           <div id="pgLineChart"></div>
+        </div>
+        <div class="card">
+          <h2>Sebaran nilai per bulan</h2>
+          <div id="pgGradeChart"></div>
+          <div id="pgGradeLegend" class="grade-legend"></div>
         </div>
         <div class="card">
           <h2 id="pgJuzTitle">Progres per juz</h2>
@@ -797,6 +826,7 @@
       <div class="field">
         <label>📗 Tahsin — rentang ayat (surah)</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
         <div class="rng" id="mrngTahsin"></div>
+        <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="mgradeTahsin" role="radiogroup" aria-label="Nilai kelancaran Tahsin"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
         <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahsin" data-m="1">+ Tambah rentang</button>
         <label for="mTahsin" class="rng-free">Iqro / catatan lain / teks bebas (tidak dibaca sistem)</label>
         <textarea id="mTahsin" placeholder="Iqro 3 halaman 12" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
@@ -804,6 +834,7 @@
       <div class="field">
         <label>📘 Tahfidz — rentang ayat</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
         <div class="rng" id="mrngTahfidz"></div>
+        <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="mgradeTahfidz" role="radiogroup" aria-label="Nilai kelancaran Tahfidz"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
         <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahfidz" data-m="1">+ Tambah rentang</button>
         <label for="mTahfidz" class="rng-free">Catatan lain / teks bebas (opsional)</label>
         <textarea id="mTahfidz" placeholder="Teks lama atau catatan tambahan" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
@@ -811,6 +842,7 @@
       <div class="field">
         <label>🔁 Murojaah — rentang ayat</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
         <div class="rng" id="mrngMurojaah"></div>
+        <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="mgradeMurojaah" role="radiogroup" aria-label="Nilai kelancaran Murojaah"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
         <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Murojaah" data-m="1">+ Tambah rentang</button>
         <label for="mMurojaah" class="rng-free">Catatan lain / teks bebas (opsional)</label>
         <textarea id="mMurojaah" placeholder="Teks lama atau catatan tambahan" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
@@ -866,7 +898,7 @@
         var parsed = JSON.parse(raw);
         if (parsed && typeof parsed === "object") {
           data.students = Array.isArray(parsed.students) ? parsed.students : [];
-          data.entries = parsed.entries && typeof parsed.entries === "object" ? parsed.entries : {};
+          data.entries = pgNormalizeEntries(parsed.entries && typeof parsed.entries === "object" ? parsed.entries : {});
           data.selectedStudentId = parsed.selectedStudentId || null;
           data.lastBackupAt = parsed.lastBackupAt || null;
         }
@@ -1006,7 +1038,7 @@
   document.getElementById("importConfirm").addEventListener("click", function () {
     if (!pendingImport) return;
     data.students = pendingImport.students || [];
-    data.entries = pendingImport.entries || {};
+    data.entries = pgNormalizeEntries(pendingImport.entries || {});
     data.selectedStudentId = pendingImport.selectedStudentId || (data.students[0] && data.students[0].id) || null;
     saveData();
     renderAll();
@@ -1209,7 +1241,8 @@
   }
 
   function isFilled(entry) {
-    return !!(entry && (entry.tahsin || entry.tahfidz || entry.murojaah || entry.keterangan));
+    return !!(entry && (entry.tahsin || entry.tahfidz || entry.murojaah || entry.keterangan ||
+      entry.nilai && Object.keys(entry.nilai).some(function (key) { return !!entry.nilai[key]; })));
   }
 
   // Total kehadiran/izin/sakit/ghoib untuk satu santri pada satu bulan.
@@ -1338,9 +1371,44 @@
     return (data.entries[studentId] && data.entries[studentId][dateStr]) || null;
   }
 
+  function gradeBoxId(cat, m) { return (m ? "mgrade" : "grade") + cat; }
+
+  function gradeValue(cat, m) {
+    var box = document.getElementById(gradeBoxId(cat, m));
+    var selected = box && box.querySelector('[aria-checked="true"]');
+    return selected ? selected.getAttribute("data-code") : "";
+  }
+
+  function setGradeValue(cat, m, value) {
+    var box = document.getElementById(gradeBoxId(cat, m));
+    if (!box) return;
+    box.querySelectorAll("button[data-code]").forEach(function (button) {
+      button.setAttribute("aria-checked", button.getAttribute("data-code") === value ? "true" : "false");
+    });
+  }
+
+  function collectGradeValues(m) {
+    return {
+      tahsin: gradeValue("Tahsin", m),
+      tahfidz: gradeValue("Tahfidz", m),
+      murojaah: gradeValue("Murojaah", m)
+    };
+  }
+
+  document.querySelectorAll(".grade-options").forEach(function (box) {
+    box.addEventListener("click", function (event) {
+      var button = event.target.closest("button[data-code]");
+      if (!button) return;
+      var code = button.getAttribute("data-code");
+      setGradeValue(box.id.replace(/^m?grade/, ""), box.id.indexOf("mgrade") === 0, button.getAttribute("aria-checked") === "true" ? "" : code);
+    });
+  });
+
   function setEntry(studentId, dateStr, fields) {
     if (!data.entries[studentId]) data.entries[studentId] = {};
-    var isEmpty = !fields.tahsin && !fields.tahfidz && !fields.murojaah && !fields.keterangan;
+    fields = pgNormalizeEntryGrades(fields);
+    var hasGrade = fields.nilai && Object.keys(fields.nilai).some(function (key) { return !!fields.nilai[key]; });
+    var isEmpty = !fields.tahsin && !fields.tahfidz && !fields.murojaah && !fields.keterangan && !hasGrade;
     if (isEmpty) {
       delete data.entries[studentId][dateStr];
     } else {
@@ -1556,6 +1624,9 @@
     rngLoad("Tahsin", e.tahsin || "");
     rngLoad("Tahfidz", e.tahfidz || "");
     rngLoad("Murojaah", e.murojaah || "");
+    setGradeValue("Tahsin", false, e.nilai && e.nilai.tahsin || "");
+    setGradeValue("Tahfidz", false, e.nilai && e.nilai.tahfidz || "");
+    setGradeValue("Murojaah", false, e.nilai && e.nilai.murojaah || "");
     document.getElementById("fKeterangan").value = e.keterangan || "";
     syncChips("fKeterangan");
     var badge = document.getElementById("entryStatusBadge");
@@ -1587,7 +1658,8 @@
       tahsin: cols.Tahsin,
       tahfidz: cols.Tahfidz,
       murojaah: cols.Murojaah,
-      keterangan: document.getElementById("fKeterangan").value.trim()
+      keterangan: document.getElementById("fKeterangan").value.trim(),
+      nilai: collectGradeValues(false)
     });
     saveData();
     saveOk = true;
@@ -1784,6 +1856,17 @@
         span.className = val ? "cell-text" : "cell-text cell-empty";
         span.textContent = val || "—";
         td.appendChild(span);
+        if (key !== "keterangan" && e && e.nilai && e.nilai[key]) {
+          var grade = pgGradeByCode(e.nilai[key]);
+          if (grade) {
+            var badge = document.createElement("span");
+            badge.className = "grade-badge";
+            badge.setAttribute("data-code", grade.code);
+            badge.setAttribute("aria-label", grade.label);
+            badge.textContent = grade.short;
+            td.appendChild(badge);
+          }
+        }
         tr.appendChild(td);
       });
 
@@ -1828,6 +1911,9 @@
     rngLoad("Tahsin", e.tahsin || "", true);
     rngLoad("Tahfidz", e.tahfidz || "", true);
     rngLoad("Murojaah", e.murojaah || "", true);
+    setGradeValue("Tahsin", true, e.nilai && e.nilai.tahsin || "");
+    setGradeValue("Tahfidz", true, e.nilai && e.nilai.tahfidz || "");
+    setGradeValue("Murojaah", true, e.nilai && e.nilai.murojaah || "");
     document.getElementById("mKeterangan").value = e.keterangan || "";
     syncChips("mKeterangan");
     document.getElementById("dayModalBackdrop").classList.add("show");
@@ -1856,7 +1942,8 @@
       tahsin: mc.Tahsin,
       tahfidz: mc.Tahfidz,
       murojaah: mc.Murojaah,
-      keterangan: document.getElementById("mKeterangan").value.trim()
+      keterangan: document.getElementById("mKeterangan").value.trim(),
+      nilai: collectGradeValues(true)
     });
     saveData();
     if (document.getElementById("entryDate").value === modalDate) loadEntryIntoForm();
@@ -1962,9 +2049,27 @@
     function renderReport(img, watermarkImg) {
       var canvas = document.createElement("canvas");
       canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
       var S = canvas.width / TPL.baseW;
+      var gradeCategories = [
+        { key: "tahsin", name: "Tahsin" },
+        { key: "tahfidz", name: "Tahfidz" },
+        { key: "murojaah", name: "Murojaah" }
+      ];
+      var gradeSummaryRows = [];
+      gradeCategories.forEach(function (category) {
+        var counts = pgGradeSummary(data.entries[s.id], category.key, yr, m0);
+        if (!counts.length) return;
+        gradeSummaryRows.push(category.name + ": " + counts.map(function (item) {
+          var grade = pgGradeByCode(item.code);
+          return item.count + "× " + grade.label;
+        }).join(", "));
+      });
+      var summaryTop = (TPL.row1Top + nDays * TPL.rowH + 12 + 38 + 18) * S;
+      var summaryHeight = gradeSummaryRows.length ? (gradeSummaryRows.length + 1) * 22 * S + 12 * S : 0;
+      canvas.height = Math.max(img.naturalHeight, Math.ceil(summaryTop + summaryHeight));
       var ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
 
       // Hapus logo/watermark bawaan (baked-in) template, lalu gambar ulang
@@ -2058,8 +2163,21 @@
         for (var c = 0; c < 4; c++) {
           var val = e[keys[c]];
           if (val && c < 3) val = pgDisplayText(val);
-          if (!val) continue;
-          drawFitted(ctx, val, TPL.colX[c] * S, TPL.colX[c + 1] * S, top, bottom, S, {});
+          var grade = c < 3 && e.nilai ? pgGradeByCode(e.nilai[keys[c]]) : null;
+          if (!val && !grade) continue;
+          drawFitted(ctx, val || "", TPL.colX[c] * S, TPL.colX[c + 1] * S, top, grade ? bottom - 15 * S : bottom, S, {});
+          if (grade) {
+            var gradeColor = getComputedStyle(document.documentElement).getPropertyValue(grade.color).trim() || "#777777";
+            var badgeX = TPL.colX[c] * S + 6 * S, badgeY = bottom - 16 * S;
+            ctx.fillStyle = gradeColor;
+            ctx.fillRect(badgeX, badgeY, 28 * S, 12 * S);
+            ctx.fillStyle = "#ffffff";
+            ctx.textAlign = "center";
+            ctx.font = "bold " + (9 * S) + "px " + FONT_FAMILY;
+            ctx.fillText(grade.short, badgeX + 14 * S, badgeY + 9 * S);
+            ctx.textAlign = "left";
+            ctx.fillStyle = st ? STATUS[st].color : PURPLE;
+          }
         }
       }
 
@@ -2100,6 +2218,18 @@
         ctx.fillText(c.t + " : " + c.n, sx0 + labelW + i * cellW + cellW / 2, sTop + sH / 2 + fsT * 0.34);
       });
       ctx.textAlign = "left";
+
+      if (gradeSummaryRows.length) {
+        var summaryY = summaryTop;
+        ctx.fillStyle = "#333333";
+        ctx.font = "bold " + (15 * S) + "px " + FONT_FAMILY;
+        gradeSummaryRows.forEach(function (text) {
+          drawFitted(ctx, text, 60 * S, 1173 * S, summaryY, summaryY + 20 * S, S, { sizes: [15, 13, 11], multiline: false, padX: 0 });
+          summaryY += 22 * S;
+        });
+        drawFitted(ctx, "Keterangan nilai: M = Mumtaz, JJ = Jayyid Jiddan, J = Jayyid, Mq = Maqbul, R = Rasib",
+          60 * S, 1173 * S, summaryY, summaryY + 20 * S, S, { sizes: [14, 12, 10], multiline: false, padX: 0 });
+      }
 
       var filename = "setoran_" + s.name.replace(/\s+/g, "_") + "_" + BULAN_ID[m0] + "_" + yr + ".png";
       if (isNativeApp()) {
@@ -2506,6 +2636,84 @@
   // PG-PURE-BEGIN (fungsi murni tanpa DOM; diuji terpisah)
   var QURAN_AYAT = SURAHS.reduce(function (n, x) { return n + x.ayat; }, 0);
   var BULAN_PENDEK = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+  var PG_GRADES = [
+    { code: "M", label: "Mumtaz", short: "M", color: "--grade-m" },
+    { code: "JJ", label: "Jayyid Jiddan", short: "JJ", color: "--grade-jj" },
+    { code: "J", label: "Jayyid", short: "J", color: "--grade-j" },
+    { code: "MQ", label: "Maqbul", short: "Mq", color: "--grade-mq" },
+    { code: "R", label: "Rasib", short: "R", color: "--grade-r" }
+  ];
+
+  function pgGradeByCode(code) {
+    for (var i = 0; i < PG_GRADES.length; i++) if (PG_GRADES[i].code === code) return PG_GRADES[i];
+    return null;
+  }
+
+  function pgNormalizeEntryGrades(entry) {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) return {};
+    var out = {};
+    Object.keys(entry).forEach(function (key) {
+      if (key !== "nilai") Object.defineProperty(out, key, { value: entry[key], enumerable: true, writable: true, configurable: true });
+    });
+    if (Object.prototype.hasOwnProperty.call(entry, "nilai")) {
+      var source = entry.nilai && typeof entry.nilai === "object" && !Array.isArray(entry.nilai) ? entry.nilai : {};
+      var grades = {};
+      ["tahsin", "tahfidz", "murojaah"].forEach(function (key) {
+        var value = typeof source[key] === "string" && pgGradeByCode(source[key]) ? source[key] : "";
+        Object.defineProperty(grades, key, { value: value, enumerable: true, writable: true, configurable: true });
+      });
+      out.nilai = grades;
+    }
+    return out;
+  }
+
+  function pgNormalizeEntries(entries) {
+    var out = {};
+    if (!entries || typeof entries !== "object" || Array.isArray(entries)) return out;
+    Object.keys(entries).forEach(function (studentId) {
+      var source = entries[studentId];
+      if (!source || typeof source !== "object" || Array.isArray(source)) return;
+      var days = {};
+      Object.keys(source).forEach(function (date) {
+        var entry = source[date];
+        if (entry && typeof entry === "object" && !Array.isArray(entry)) {
+          Object.defineProperty(days, date, { value: pgNormalizeEntryGrades(entry), enumerable: true, writable: true, configurable: true });
+        }
+      });
+      Object.defineProperty(out, studentId, { value: days, enumerable: true, writable: true, configurable: true });
+    });
+    return out;
+  }
+
+  function pgGradeSummary(ents, field, year, month0) {
+    var counts = {};
+    (PG_GRADES || []).forEach(function (grade) { counts[grade.code] = 0; });
+    Object.keys(ents || {}).forEach(function (date) {
+      if (date.slice(0, 7) !== year + "-" + pad2(month0 + 1)) return;
+      var entry = ents[date], code = entry && entry.nilai && entry.nilai[field];
+      if (Object.prototype.hasOwnProperty.call(counts, code)) counts[code]++;
+    });
+    return PG_GRADES.filter(function (grade) { return counts[grade.code] > 0; }).map(function (grade) {
+      return { code: grade.code, count: counts[grade.code] };
+    });
+  }
+
+  function pgGradeBuckets(ents, field, n, today) {
+    var now = today ? new Date(today + "T00:00:00") : new Date();
+    var list = [], map = {};
+    for (var offset = n - 1; offset >= 0; offset--) {
+      var month = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+      var key = month.getFullYear() + "-" + pad2(month.getMonth() + 1);
+      var bucket = { key: key, label: BULAN_PENDEK[month.getMonth()], title: BULAN_ID[month.getMonth()] + " " + month.getFullYear(), counts: {} };
+      PG_GRADES.forEach(function (grade) { bucket.counts[grade.code] = 0; });
+      list.push(bucket); map[key] = bucket;
+    }
+    Object.keys(ents || {}).forEach(function (date) {
+      var bucket = map[date.slice(0, 7)], entry = ents[date], code = entry && entry.nilai && entry.nilai[field];
+      if (bucket && Object.prototype.hasOwnProperty.call(bucket.counts, code)) bucket.counts[code]++;
+    });
+    return list;
+  }
 
   function pgNormLatin(s) { return String(s).toLowerCase().replace(/[^a-z0-9]/g, ""); }
   function pgNormArabic(s) {
@@ -2831,9 +3039,15 @@
     var dates = Object.keys(ents).filter(function (d) { return /^\d{4}-\d{2}-\d{2}$/.test(d); }).sort();
     var covered = SURAHS.map(function (s) { return new Uint8Array(s.ayat + 1); });
     var lastSeen = SURAHS.map(function () { return ""; });
-    var res = { daily: [], bad: [], covered: covered, lastSeen: lastSeen };
+    var res = { daily: [], bad: [], rasib: [], covered: covered, lastSeen: lastSeen };
     dates.forEach(function (d) {
-      var e = ents[d], txt = e && e[field];
+      var e = ents[d];
+      if (e && e.nilai && e.nilai[field] === "R") {
+        res.rasib.push(d);
+        res.daily.push({ date: d, raw: 0, fresh: 0, value: 0, rasib: true });
+        return;
+      }
+      var txt = e && e[field];
       if (!txt) return;
       if (field === "tahsin") txt = pgTahsinText(txt);
       if (!txt) return;
@@ -2920,14 +3134,17 @@
   function pgThemeColors() {
     var cs = getComputedStyle(document.documentElement);
     function v(n, d) { return cs.getPropertyValue(n).trim() || d; }
+    var grades = {};
+    PG_GRADES.forEach(function (grade) { grades[grade.code] = v(grade.color, "#777777"); });
     return { paper: v("--paper", "#ffffff"), card: v("--card", "#ffffff"), ink: v("--ink", "#222222"), soft: v("--ink-soft", "#666666"),
-      line: v("--line", "#dddddd"), plum: v("--plum", "#5b2a86"), gold: v("--gold", "#b8860b"), good: v("--good", "#2e7d32"), tint: v("--plum-tint", "#eee") };
+      line: v("--line", "#dddddd"), plum: v("--plum", "#5b2a86"), gold: v("--gold", "#b8860b"), good: v("--good", "#2e7d32"), tint: v("--plum-tint", "#eee"), grades: grades };
   }
 
   function pgSvgToImage(svgStr, C) {
+    var gradeStyles = PG_GRADES.map(function (grade) { return ".pg-grade-" + grade.code + "{fill:" + C.grades[grade.code] + "}"; }).join("");
     var style = "text{fill:" + C.soft + ";font-size:10px;font-family:sans-serif}.pg-grid{stroke:" + C.line + ";stroke-width:1}.pg-bar{fill:" + C.plum +
       "}.pg-lineStroke{fill:none;stroke:" + C.gold + ";stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}.pg-area{fill:" + C.gold +
-      ";opacity:.14}.pg-dot{fill:" + C.gold + "}.pg-val{fill:" + C.ink + ";font-weight:700;font-size:10px}";
+      ";opacity:.14}.pg-dot{fill:" + C.gold + "}.pg-val{fill:" + C.ink + ";font-weight:700;font-size:10px}" + gradeStyles;
     var xml = svgStr.replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" ').replace(/>/, "><style>" + style + "</style>");
     return new Promise(function (resolve, reject) {
       var img = new Image();
@@ -2953,20 +3170,26 @@
     if (!s) return;
     var perMonth = pgState.period === "month";
     var chartH = Math.round(CW * 196 / 340);
+    var gradeLegendH = 30;
     var cols = 5, juzGap = 12, juzCellH = 84, juzRows = 6, juzH = juzRows * (juzCellH + juzGap) - juzGap;
     var SUMH = 230, HEAD = 150, BLOCK_HEAD = 84, TITLE = 52, GAP = 28, FOOT = 60;
     var metrics = [["tahsin", "Tahsin"], ["tahfidz", "Tahfidz"], ["murojaah", "Muroja'ah"]];
     var blocks = metrics.map(function (m) {
       var an = pgAnalyze(data.entries[s.id], m[0]);
       var buckets = pgBuckets(an.daily, pgState.period, 12);
-      return { key: m[0], name: m[1], an: an, buckets: buckets, jst: pgJuzStats(an.covered) };
+      var gradeBuckets = pgGradeBuckets(data.entries[s.id], m[0], 12);
+      var hasGrades = gradeBuckets.some(function (bucket) {
+        return PG_GRADES.some(function (grade) { return bucket.counts[grade.code] > 0; });
+      });
+      return { key: m[0], name: m[1], an: an, buckets: buckets, gradeBuckets: gradeBuckets, hasGrades: hasGrades, jst: pgJuzStats(an.covered) };
     });
-    var blockH = BLOCK_HEAD + (TITLE + SUMH + GAP) + 2 * (TITLE + chartH + GAP) + (TITLE + juzH + GAP);
+    var blockH = BLOCK_HEAD + (TITLE + SUMH + GAP) + 2 * (TITLE + chartH + GAP) + (TITLE + chartH + gradeLegendH + GAP) + (TITLE + juzH + GAP);
     var H = HEAD + blocks.length * blockH + FOOT;
     var need = [];
     blocks.forEach(function (b) {
       need.push(pgSvgToImage(pgBarSvg(b.buckets, "bar"), C).then(function (i) { b.bar = i; }));
       need.push(pgSvgToImage(pgLineSvg(b.buckets, "line"), C).then(function (i) { b.line = i; }));
+      if (b.hasGrades) need.push(pgSvgToImage(pgGradeSvg(b.gradeBuckets, "Sebaran nilai " + b.name + " per bulan"), C).then(function (i) { b.grade = i; }));
     });
     pgExportBusy = true;
     Promise.all(need).then(function () {
@@ -3010,6 +3233,24 @@
           ctx.drawImage(b[c[0]], PAD, y + TITLE, CW, chartH);
           y += TITLE + chartH + GAP;
         });
+
+        ctx.fillStyle = C.plum; ctx.font = "bold 30px " + FF; ctx.textAlign = "left";
+        ctx.fillText("Sebaran nilai " + b.name + " per bulan", PAD, y + 34, CW);
+        if (b.hasGrades) {
+          ctx.drawImage(b.grade, PAD, y + TITLE, CW, chartH);
+          var legendW = CW / PG_GRADES.length;
+          PG_GRADES.forEach(function (grade, i) {
+            var lx = PAD + i * legendW;
+            ctx.fillStyle = C.grades[grade.code];
+            ctx.fillRect(lx, y + TITLE + chartH + 10, 12, 12);
+            ctx.fillStyle = C.soft; ctx.font = "16px " + FF;
+            ctx.fillText(grade.short + " = " + grade.label, lx + 18, y + TITLE + chartH + 22, legendW - 20);
+          });
+        } else {
+          ctx.fillStyle = C.soft; ctx.font = "22px " + FF;
+          ctx.fillText("Belum ada nilai tercatat.", PAD, y + TITLE + 42, CW);
+        }
+        y += TITLE + chartH + gradeLegendH + GAP;
 
         ctx.fillStyle = C.plum; ctx.font = "bold 30px " + FF; ctx.textAlign = "left";
         ctx.fillText("Progres per juz — " + b.name, PAD, y + 34, CW);
@@ -3102,6 +3343,38 @@
     return '<svg class="pg-chart" viewBox="0 0 ' + geo.W + ' ' + geo.H + '" role="img" aria-label="' + label + '">' + g + '</svg>';
   }
 
+  function pgGradeSvg(buckets, label) {
+    var geo = { W: 340, H: 196, L: 30, R: 8, T: 14, B: 30 };
+    geo.pw = geo.W - geo.L - geo.R; geo.ph = geo.H - geo.T - geo.B;
+    var maxv = 0;
+    buckets.forEach(function (bucket) {
+      var total = 0;
+      PG_GRADES.forEach(function (grade) { total += bucket.counts[grade.code] || 0; });
+      if (total > maxv) maxv = total;
+    });
+    var sc = pgScale(maxv), band = geo.pw / buckets.length, bw = Math.min(20, band * 0.68);
+    var g = "";
+    for (var tick = 0; tick <= 4; tick++) {
+      var y = geo.T + geo.ph - geo.ph * tick / 4;
+      g += '<line class="pg-grid" x1="' + geo.L + '" x2="' + (geo.W - geo.R) + '" y1="' + y + '" y2="' + y + '"/>';
+    }
+    buckets.forEach(function (bucket, i) {
+      var x = geo.L + band * (i + 0.5), bottom = geo.T + geo.ph, total = 0;
+      PG_GRADES.forEach(function (grade) { total += bucket.counts[grade.code] || 0; });
+      PG_GRADES.forEach(function (grade) {
+        var count = bucket.counts[grade.code] || 0;
+        if (!count) return;
+        var h = count / sc.max * geo.ph;
+        bottom -= h;
+        g += '<rect class="pg-grade-' + grade.code + '" x="' + (x - bw / 2) + '" y="' + bottom + '" width="' + bw + '" height="' + h + '" rx="2"><title>' +
+          bucket.title + " — " + grade.label + ": " + count + (count === 1 ? " setoran" : " setoran") + '</title></rect>';
+      });
+      g += '<text x="' + x + '" y="' + (geo.H - 8) + '" text-anchor="middle">' + bucket.label + '</text>';
+      if (total) g += '<text class="pg-val" x="' + x + '" y="' + Math.max(geo.T + 9, bottom - 4) + '" text-anchor="middle">' + total + '</text>';
+    });
+    return '<svg class="pg-chart" viewBox="0 0 ' + geo.W + ' ' + geo.H + '" role="img" aria-label="' + label + '">' + g + '</svg>';
+  }
+
   function pgSetSeg(id, value) {
     document.querySelectorAll("#" + id + " button").forEach(function (b) {
       b.setAttribute("aria-checked", b.getAttribute("data-v") === value ? "true" : "false");
@@ -3127,17 +3400,24 @@
     // peringatan: catatan yang tidak terbaca
     var warn = document.getElementById("pgWarn");
     warn.innerHTML = "";
-    if (an.bad.length) {
+    if (an.bad.length || an.rasib.length) {
       var box = document.createElement("div");
       box.className = "pg-warn";
-      var head = document.createElement("b");
-      head.textContent = an.bad.length + " catatan tidak terbaca diagram. ";
-      box.appendChild(head);
-      var ex = an.bad.slice(-3).map(function (x) {
-        var p = x.date.split("-");
-        return p[2] + "/" + p[1] + ' "' + (x.text.length > 28 ? x.text.slice(0, 28) + "…" : x.text) + '"';
-      }).join(", ");
-      box.appendChild(document.createTextNode("Contoh: " + ex + '. Tulis dengan nama surah + nomor ayat, mis. "Al-Mulk 1-30".'));
+      if (an.rasib.length) {
+        var rasib = document.createElement("b");
+        rasib.textContent = an.rasib.length + " setoran bernilai Rasib belum dihitung.";
+        box.appendChild(rasib);
+      }
+      if (an.bad.length) {
+        var head = document.createElement("b");
+        head.textContent = (an.rasib.length ? " " : "") + an.bad.length + " catatan tidak terbaca diagram. ";
+        box.appendChild(head);
+        var ex = an.bad.slice(-3).map(function (x) {
+          var p = x.date.split("-");
+          return p[2] + "/" + p[1] + ' "' + (x.text.length > 28 ? x.text.slice(0, 28) + "…" : x.text) + '"';
+        }).join(", ");
+        box.appendChild(document.createTextNode("Contoh: " + ex + '. Tulis dengan nama surah + nomor ayat, mis. "Al-Mulk 1-30".'));
+      }
       warn.appendChild(box);
     }
 
@@ -3161,6 +3441,21 @@
     document.getElementById("pgLineTitle").textContent = isTahsin ? "Total tahsin dari waktu ke waktu (ayat)" : isTahfidz ? "Total hafalan dari waktu ke waktu (ayat)" : "Total murojaah dari waktu ke waktu (ayat)";
     document.getElementById("pgBarChart").innerHTML = pgBarSvg(buckets, "Diagram batang " + unitName.toLowerCase() + " per " + (perMonth ? "bulan" : "pekan") + " selama 12 " + (perMonth ? "bulan" : "pekan") + " terakhir");
     document.getElementById("pgLineChart").innerHTML = pgLineSvg(buckets, "Diagram garis total " + unitName.toLowerCase() + " dari waktu ke waktu");
+    var gradeBuckets = pgGradeBuckets(data.entries[s.id], pgState.metric, 12);
+    var hasGrades = gradeBuckets.some(function (bucket) {
+      return PG_GRADES.some(function (grade) { return bucket.counts[grade.code] > 0; });
+    });
+    document.getElementById("pgGradeChart").innerHTML = hasGrades
+      ? pgGradeSvg(gradeBuckets, "Sebaran nilai " + mName + " per bulan selama 12 bulan terakhir")
+      : '<p class="pg-note" style="margin:0">Belum ada nilai tercatat.</p>';
+    var gradeLegend = document.getElementById("pgGradeLegend");
+    gradeLegend.innerHTML = "";
+    if (hasGrades) PG_GRADES.forEach(function (grade) {
+      var item = document.createElement("span");
+      item.innerHTML = '<i class="grade-swatch" style="--grade-color:var(' + grade.color + ')"></i>';
+      item.appendChild(document.createTextNode(grade.short + " = " + grade.label));
+      gradeLegend.appendChild(item);
+    });
 
     // per juz
     var jst = pgJuzStats(an.covered), jgrid = document.getElementById("pgJuzGrid"), jdone = 0, jstart = 0;
@@ -3225,7 +3520,7 @@
     more.style.display = an.perSurah.length > LIMIT ? "" : "none";
     more.textContent = pgState.all ? "Tampilkan lebih sedikit" : "Tampilkan semua (" + an.perSurah.length + " surah)";
 
-    pgLast = { name: s.name, mName: mName, an: an, buckets: buckets, jst: jst, perMonth: perMonth, label: pgState.metric };
+    pgLast = { name: s.name, mName: mName, an: an, buckets: buckets, gradeBuckets: gradeBuckets, hasGrades: hasGrades, jst: jst, perMonth: perMonth, label: pgState.metric };
     document.getElementById("pgNote").textContent =
       "Dihitung dari rentang ayat di kolom " + mName + " (teks lama juga dibaca; catatan Iqro/buku dan nomor halamannya tidak pernah dibaca sebagai ayat). " +
       "Surah tanpa nomor ayat dihitung satu surah penuh. " +
