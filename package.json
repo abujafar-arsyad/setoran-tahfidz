@@ -4,7 +4,8 @@
   "description": "Setoran Tahfidz - offline Al-Qur'an memorization tracking app, wrapped as an Android app with Capacitor.",
   "main": "index.js",
   "scripts": {
-    "test": "node tests/ayat-range.test.js"
+    "test": "node tests/ayat-range.test.js",
+    "test:ui": "node tests/ui/ui.test.js"
   },
   "keywords": [
     "tahfidz",
