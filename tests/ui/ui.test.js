@@ -325,9 +325,12 @@ t("kirim laporan & rapor ke wali: pesan siap pakai + gambar", async (H) => {
   await H.ev("for (let i = 0; i < 50 && !document.getElementById('waliModalBackdrop').classList.contains('show'); i++) await new Promise((r) => setTimeout(r, 100));");
   const msg = await H.ev("return document.getElementById('waliText').value;");
   assert.ok(msg.startsWith("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ"), "pesan diawali basmalah");
-  assert.match(msg, /ananda \*Ali\* bulan \*Oktober 2026\*/);
+  assert.match(msg, /ananda Ali bulan Oktober 2026:/);
+  assert.ok(!msg.includes("*"), "pesan tanpa tanda bintang");
   assert.match(msg, /Hadir: 3 hari \(Izin 1\)/);
-  assert.match(msg, /Hafalan baru: 50 ayat/);           // Al-Mulk 30 + An-Naba 1-20 (Rasib lalu Maqbul)
+  // Al-Mulk 30 + An-Naba 1-20 (Rasib lalu Maqbul), disebut per surah
+  assert.match(msg, /• Hafalan baru: Al-Mulk dan An-Naba ayat 1–20 \(50 ayat\)/);
+  assert.match(msg, /• Murojaah: Al-Mulk \(30 ayat\)/);
   assert.match(msg, /— Ustadz Uji$/);
   assert.strictEqual(await H.ev("return document.getElementById('waliPreview').naturalWidth > 0;"), true, "pratinjau gambar tampil");
   // guru boleh mengubah pesan sebelum mengirim
@@ -359,10 +362,45 @@ t("kirim laporan & rapor ke wali: pesan siap pakai + gambar", async (H) => {
   await H.tap("#pgWali");
   await H.ev("for (let i = 0; i < 50 && !document.getElementById('waliModalBackdrop').classList.contains('show'); i++) await new Promise((r) => setTimeout(r, 100));");
   const rap = await H.ev("return document.getElementById('waliText').value;");
-  assert.match(rap, /rapor progres hafalan ananda \*Ali\*/);
-  assert.match(rap, /Total hafalan: 50 ayat/);
+  assert.match(rap, /rapor progres hafalan ananda Ali per /);
+  assert.match(rap, /sudah hafal 1 surah dan 20 ayat, yaitu Al-Mulk dan An-Naba ayat 1–20\./);
+  assert.ok(!rap.includes("%"), "tanpa persentase");
   await H.tap("#waliCancel");
   assert.strictEqual(await H.ev("return document.getElementById('waliModalBackdrop').classList.contains('show');"), false);
+});
+
+t("template pesan wali: ubah, tersimpan, dipakai saat kirim, bisa dikembalikan", async (H) => {
+  await H.open(SEED, { pengajar: "Ustadz Uji" });
+  await H.tab("setelan");
+  const awal = await H.ev("return document.getElementById('waliTplText').value;");
+  assert.match(awal, /^بِسْمِ اللَّهِ/, "template bawaan diawali basmalah");
+  assert.match(await H.text("#waliTplPreview"), /ananda Fulan bulan/, "pratinjau memakai contoh Fulan");
+  // tulis template sendiri lalu sisipkan {nama} lewat tombol
+  await H.ev(`const ta = document.getElementById('waliTplText'); ta.value = 'Laporan untuk '; ta.dispatchEvent(new Event('input'));
+    ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);`);
+  await H.tap('#waliTplChips button[data-field="nama"]');
+  await H.ev(`const ta = document.getElementById('waliTplText'); ta.value += ', hadir {hadir} hari.\\n— {pengajar}'; ta.dispatchEvent(new Event('input'));`);
+  assert.strictEqual(await H.text("#waliTplPreview"), "Laporan untuk Fulan, hadir 18 hari.\n— Ustadz Uji");
+  const saved = await H.ev("return JSON.parse(localStorage.getItem('tahfidz_settings_v1')).waliTplLaporan;");
+  assert.strictEqual(saved, "Laporan untuk {nama}, hadir {hadir} hari.\n— {pengajar}", "template tersimpan");
+  // tetap ada setelah aplikasi dibuka ulang, dan dipakai saat Kirim Laporan ke Wali
+  await H.ev("location.reload(); return 1;"); await new Promise((r) => setTimeout(r, 1000));
+  await H.tab("laporan");
+  for (let i = 0; i < 24 && !/Oktober 2026/.test(await H.text("#monthLabel")); i++) await H.ev("document.getElementById('prevMonth').click();");
+  await H.tap("#btnWali");
+  await H.ev("for (let i = 0; i < 50 && !document.getElementById('waliModalBackdrop').classList.contains('show'); i++) await new Promise((r) => setTimeout(r, 100));");
+  assert.strictEqual(await H.ev("return document.getElementById('waliText').value;"), "Laporan untuk Ali, hadir 3 hari.\n— Ustadz Uji");
+  // tombol Ubah template pesan membuka Setelan pada template yang sama
+  await H.tap("#waliEditTpl");
+  assert.strictEqual(await H.ev("return document.querySelector('section.tab.active').id;"), "tab-setelan");
+  assert.strictEqual(await H.ev("return document.querySelector('#waliTplKind button[aria-checked=\"true\"]').dataset.v;"), "laporan");
+  // kembalikan ke bawaan
+  await H.tap("#waliTplReset");
+  assert.strictEqual(await H.ev("return JSON.parse(localStorage.getItem('tahfidz_settings_v1')).waliTplLaporan;"), "");
+  assert.strictEqual(await H.ev("return document.getElementById('waliTplText').value;"), awal);
+  // template rapor terpisah
+  await H.tap('#waliTplKind button[data-v="rapor"]');
+  assert.match(await H.text("#waliTplPreview"), /rapor progres hafalan ananda Fulan/);
 });
 
 t("ekspor lalu impor data: semua kembali termasuk halaqah", async (H) => {

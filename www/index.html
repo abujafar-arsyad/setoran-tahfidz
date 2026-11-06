@@ -211,6 +211,16 @@
   textarea { resize: vertical; min-height: 46px; }
   .wali-preview { display: block; max-width: 100%; max-height: 210px; margin: 0 auto 12px; border-radius: 10px; border: 1px solid var(--line); background: #fff; }
   #waliText { min-height: 210px; font-size: 14px; line-height: 1.45; }
+  .tpl-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tpl-chips button {
+    min-height: 34px; padding: 4px 10px; border-radius: 999px; border: 1.5px solid var(--line);
+    background: var(--card); color: var(--plum); font: 600 13px/1.2 inherit; font-family: inherit; cursor: pointer;
+  }
+  .tpl-chips button small { display: block; font-weight: 400; color: var(--ink-soft); font-size: 11px; }
+  .tpl-preview {
+    margin: 0; white-space: pre-wrap; word-break: break-word; font: 14px/1.45 inherit; font-family: inherit;
+    background: var(--plum-tint); border-radius: 12px; padding: 12px; color: var(--ink);
+  }
   input:focus, textarea:focus, select:focus { outline: 2px solid var(--plum); outline-offset: 1px; }
 
   .btn {
@@ -731,6 +741,26 @@
         <label class="toggle-row"><span><b>Judul Arab di header</b><small>Tampilkan tulisan سجل التحفيظ di bagian atas.</small></span><input type="checkbox" class="sw" role="switch" data-key="arabic"></label>
       </div>
 
+      <div class="card" id="waliTplCard">
+        <h2>Pesan untuk wali</h2>
+        <p class="set-desc">Template pesan untuk tombol <b>Kirim ke Wali</b>. Bagian dalam kurung kurawal, mis. <code>{nama}</code>, otomatis diganti data santri. Baris yang isiannya kosong (mis. tahsin saat tidak ada tahsin) tidak ditampilkan. Perubahan tersimpan otomatis.</p>
+        <div class="pg-seg" role="radiogroup" aria-label="Jenis pesan" id="waliTplKind">
+          <button type="button" role="radio" data-v="laporan" aria-checked="true">Laporan bulanan</button>
+          <button type="button" role="radio" data-v="rapor" aria-checked="false">Rapor progres</button>
+        </div>
+        <div class="field">
+          <label for="waliTplText">Template</label>
+          <textarea id="waliTplText" rows="12" spellcheck="false" style="min-height:240px; font-size:14px; line-height:1.45;"></textarea>
+        </div>
+        <div class="set-desc" style="margin:-2px 0 6px">Ketuk untuk menyisipkan isian:</div>
+        <div id="waliTplChips" class="tpl-chips"></div>
+        <div class="field" style="margin-top:12px">
+          <label>Pratinjau (contoh santri: Fulan)</label>
+          <pre id="waliTplPreview" class="tpl-preview"></pre>
+        </div>
+        <button type="button" class="btn btn-ghost" id="waliTplReset" style="width:100%">↺ Kembalikan ke template bawaan</button>
+      </div>
+
       <div class="card">
         <h2>Lembaga &amp; laporan</h2>
         <div class="field">
@@ -834,6 +864,7 @@
         <textarea id="waliText" spellcheck="false"></textarea>
         <div class="rng-hint" style="margin:6px 0 0">Setelah menekan Kirim, pilih WhatsApp (atau aplikasi lain) lalu pilih kontak wali santri.</div>
       </div>
+      <button class="btn btn-ghost" id="waliEditTpl" type="button" style="width:100%; margin-bottom:10px;">✏️ Ubah template pesan</button>
       <div class="row">
         <button class="btn btn-ghost" id="waliCancel">Batal</button>
         <button class="btn btn-primary" id="waliSend">📨 Kirim</button>
@@ -2553,7 +2584,7 @@
     if (!s) return "";
     var y = currentMonthDate.getFullYear(), m0 = currentMonthDate.getMonth();
     var t = countMonth(s.id, y, m0);
-    var lines = [PG_BASMALAH, "", "*Laporan Setoran Tahfidz*"];
+    var lines = [PG_BASMALAH, "", "Laporan Setoran Tahfidz"];
     if (settings.lembaga.trim()) lines.push(settings.lembaga.trim());
     lines.push(s.name + " - " + BULAN_ID[m0] + " " + y, "",
       "Hadir: " + t.hadir + " | Izin: " + t.izin + " | Sakit: " + t.sakit + " | Ghoib: " + t.ghoib);
@@ -2597,8 +2628,8 @@
   // ---------------- Kirim ke wali: gambar + pesan pembuka dalam satu kali bagikan ----------------
 
   var waliPending = null;
-  function openWali(title, canvas, filename, text) {
-    waliPending = { canvas: canvas, filename: filename };
+  function openWali(title, canvas, filename, text, kind) {
+    waliPending = { canvas: canvas, filename: filename, kind: kind };
     document.getElementById("waliTitle").textContent = title;
     document.getElementById("waliPreview").src = canvas.toDataURL("image/png");
     document.getElementById("waliText").value = text;
@@ -2659,17 +2690,18 @@
     exportReport(function (r) {
       openWali("Kirim Laporan ke Wali", r.canvas, r.filename, pgWaliLaporanText({
         name: r.student.name, bulan: BULAN_ID[r.month0] + " " + r.year, att: r.att, ayat: r.ayat, nilai: r.nilai,
+        bulanan: pgMonthHafalan(data.entries[r.student.id], r.year, r.month0),
         pengajar: settings.pengajar, lembaga: settings.lembaga
-      }));
+      }, settings.waliTplLaporan), "laporan");
     });
   });
   document.getElementById("pgWali").addEventListener("click", function () {
     pgExport(function (r) {
       var R = r.rapor;
       openWali("Kirim Rapor ke Wali", r.canvas, r.filename, pgWaliRaporText({
-        name: r.student.name, tanggal: r.tanggal, unique: R.unique, pct: R.pct, surahDone: R.surahDone, juzDone: R.juzDone,
-        bulan: r.bulan, cur: R.cur, recent: R.recent, pengajar: settings.pengajar, lembaga: settings.lembaga
-      }));
+        name: r.student.name, tanggal: r.tanggal, unique: R.unique, surahDone: R.surahDone, juzDone: R.juzDone,
+        bulan: r.bulan, cur: R.cur, recent: R.recent, hafalan: R.hafalan, bulanIni: R.bulanIni, pengajar: settings.pengajar, lembaga: settings.lembaga
+      }, settings.waliTplRapor), "rapor");
     });
   });
 
@@ -2677,7 +2709,8 @@
 
   var SETTINGS_KEY = "tahfidz_settings_v1";
   var DEFAULT_SETTINGS = { mode: "auto", palette: "ungu", fs: 1, arabic: true, lembaga: "", pengajar: "", watermark: "",
-    watermarkScale: 100, detail: true, suggest: true, startTab: "catat", vibrate: false, backupEvery: 7, halaqah: false };
+    watermarkScale: 100, detail: true, suggest: true, startTab: "catat", vibrate: false, backupEvery: 7, halaqah: false,
+    waliTplLaporan: "", waliTplRapor: "" };
   var PALETTE_KEYS = ["ungu", "zamrud", "samudra", "kurma", "mawar"];
   var DEFAULT_SUBTITLE = "Catatan tahsin \u00b7 tahfidz \u00b7 murojaah harian";
   var pendingSettings = null;
@@ -2691,6 +2724,7 @@
     if (typeof o.fs === "number" && [0.92, 1, 1.12, 1.25].indexOf(o.fs) >= 0) r.fs = o.fs;
     ["arabic", "detail", "suggest", "vibrate", "halaqah"].forEach(function (key) { if (typeof o[key] === "boolean") r[key] = o[key]; });
     ["lembaga", "pengajar"].forEach(function (key) { if (typeof o[key] === "string") r[key] = o[key].slice(0, 60); });
+    ["waliTplLaporan", "waliTplRapor"].forEach(function (key) { if (typeof o[key] === "string") r[key] = o[key].slice(0, 3000); });
     if (typeof o.watermark === "string" && o.watermark.length < 2000000 && /^data:image\//.test(o.watermark)) r.watermark = o.watermark;
     if (typeof o.watermarkScale === "number" && o.watermarkScale >= 30 && o.watermarkScale <= 150) r.watermarkScale = o.watermarkScale;
     if (["catat", "laporan"].indexOf(o.startTab) >= 0) r.startTab = o.startTab;
@@ -2764,6 +2798,7 @@
 
   function commitSettings() {
     saveSettings(); applySettings(); syncSettingsUI(); renderBackupInfo();
+    if (document.getElementById("waliTplPreview")) renderWaliTplPreview();
   }
 
   document.querySelectorAll("#tab-setelan .seg, #tab-setelan .swatches").forEach(function (box) {
@@ -2788,6 +2823,74 @@
       settings[el.getAttribute("data-key")] = el.value;
       commitSettings();
     });
+  });
+
+  // ---------------- Template pesan untuk wali (Setelan) ----------------
+  var waliTplKind = "laporan";
+  function waliTplKey(kind) { return kind === "rapor" ? "waliTplRapor" : "waliTplLaporan"; }
+  function waliTplCurrent(kind) { var v = settings[waliTplKey(kind)]; return String(v || "").trim() ? v : PG_WALI_TPL[kind]; }
+  function waliTplSample(kind) {
+    var now = new Date(), bulan = BULAN_ID[now.getMonth()];
+    var who = { pengajar: (settings.pengajar || "").trim() || "Ustadz Fulan", lembaga: (settings.lembaga || "").trim() || "Ma'had Fulan" };
+    if (kind === "rapor") {
+      return pgWaliRaporText(Object.assign({ name: "Fulan", tanggal: now.getDate() + " " + bulan + " " + now.getFullYear(), unique: 32,
+        surahDone: 3, juzDone: 0, bulan: bulan, cur: { thf: 8, mur: 15 },
+        hafalan: { jumlah: "3 surah dan 6 ayat", text: "Al-Qadr, Al-Bayyinah, Al-Qari'ah, dan Al-'Alaq ayat 1–6" },
+        bulanIni: { baru: { desc: { text: "Al-'Alaq ayat 1–6" }, count: 6 }, murojaah: { desc: { text: "Al-Qadr dan Al-Bayyinah" }, count: 13 } } }, who), waliTplCurrent(kind));
+    }
+    return pgWaliLaporanText(Object.assign({ name: "Fulan", bulan: bulan + " " + now.getFullYear(), att: { hadir: 18, izin: 1, sakit: 1, ghoib: 0 },
+      ayat: { tahfidz: 6, murojaah: 13, tahsin: 0 }, nilai: ["Tahfidz: 12× Mumtaz, 5× Jayyid Jiddan"],
+      bulanan: { baru: { desc: { text: "Al-'Alaq ayat 1–6" }, count: 6 }, murojaah: { desc: { text: "Al-Qadr dan Al-Bayyinah" }, count: 13 },
+        tahsin: { desc: { text: "" }, count: 0, last: "Iqro 4 hal 12" } } }, who), waliTplCurrent(kind));
+  }
+  function renderWaliTplPreview() { document.getElementById("waliTplPreview").textContent = waliTplSample(waliTplKind); }
+  function renderWaliTpl() {
+    document.querySelectorAll("#waliTplKind button").forEach(function (b) { b.setAttribute("aria-checked", b.getAttribute("data-v") === waliTplKind ? "true" : "false"); });
+    document.getElementById("waliTplText").value = waliTplCurrent(waliTplKind);
+    var chips = document.getElementById("waliTplChips");
+    chips.innerHTML = "";
+    PG_WALI_FIELDS[waliTplKind].forEach(function (f) {
+      var b = document.createElement("button");
+      b.type = "button"; b.setAttribute("data-field", f[0]);
+      b.textContent = "{" + f[0] + "}";
+      var small = document.createElement("small"); small.textContent = f[1]; b.appendChild(small);
+      chips.appendChild(b);
+    });
+    renderWaliTplPreview();
+  }
+  function saveWaliTpl(value) {
+    // sama dengan bawaan -> simpan kosong, supaya ikut perbaikan template bawaan di versi berikutnya
+    settings[waliTplKey(waliTplKind)] = value.trim() === PG_WALI_TPL[waliTplKind].trim() ? "" : value;
+    saveSettings();
+    renderWaliTplPreview();
+  }
+  document.querySelectorAll("#waliTplKind button").forEach(function (b) {
+    b.addEventListener("click", function () { waliTplKind = b.getAttribute("data-v"); renderWaliTpl(); });
+  });
+  document.getElementById("waliTplText").addEventListener("input", function (e) { saveWaliTpl(e.target.value); });
+  document.getElementById("waliTplChips").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-field]");
+    if (!b) return;
+    var ta = document.getElementById("waliTplText"), ins = "{" + b.getAttribute("data-field") + "}";
+    var st = ta.selectionStart != null ? ta.selectionStart : ta.value.length, en = ta.selectionEnd != null ? ta.selectionEnd : st;
+    ta.value = ta.value.slice(0, st) + ins + ta.value.slice(en);
+    ta.focus();
+    ta.setSelectionRange(st + ins.length, st + ins.length);
+    saveWaliTpl(ta.value);
+  });
+  document.getElementById("waliTplReset").addEventListener("click", function () {
+    settings[waliTplKey(waliTplKind)] = "";
+    saveSettings();
+    renderWaliTpl();
+    showToast("Template dikembalikan ke bawaan");
+  });
+  document.getElementById("waliEditTpl").addEventListener("click", function () {
+    var kind = waliPending && waliPending.kind === "rapor" ? "rapor" : "laporan";
+    closeWali();
+    waliTplKind = kind;
+    document.querySelector('nav.tabbar button[data-tab="setelan"]').click();
+    renderWaliTpl();
+    setTimeout(function () { document.getElementById("waliTplCard").scrollIntoView({ block: "start", behavior: "smooth" }); }, 60);
   });
 
   // Watermark laporan: baca gambar yang dipilih, kecilkan ukurannya (maks 600px)
@@ -3440,40 +3543,89 @@
   // Setiap pesan yang dibuat aplikasi diawali basmalah.
   var PG_BASMALAH = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ";
   function pgNum(n) { return String(Math.round(n * 10) / 10).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
-  function pgWaliSign(d) {
-    var who = [d.pengajar, d.lembaga].map(function (x) { return String(x || "").trim(); }).filter(Boolean);
-    return ["", "Jazakumullahu khairan."].concat(who.length ? ["— " + who.join(", ")] : []);
+  // Template pesan untuk wali. {nama}, {bulan}, ... diganti data santri. Baris yang semua isiannya
+  // kosong (mis. "• Tahsin: {tahsin} ayat" saat tidak ada tahsin) otomatis tidak ditampilkan.
+  var PG_WALI_TPL = {
+    laporan: [PG_BASMALAH, "", "Assalamu'alaikum warahmatullahi wabarakatuh.", "",
+      "Berikut laporan setoran ananda {nama} bulan {bulan}:",
+      "• Hadir: {hadir} hari{izin_sakit}",
+      "• Hafalan baru: {hafalan_baru}",
+      "• Murojaah: {murojaah}",
+      "• Tahsin: {tahsin}",
+      "{nilai}", "",
+      "Laporan lengkap ada di gambar terlampir.", "",
+      "Jazakumullahu khairan.",
+      "— {pengajar}"].join("\n"),
+    rapor: [PG_BASMALAH, "", "Assalamu'alaikum warahmatullahi wabarakatuh.", "",
+      "Berikut rapor progres hafalan ananda {nama} per {tanggal}.", "",
+      "Alhamdulillah, ananda sudah hafal {jumlah_hafalan}, yaitu {daftar_hafalan}.", "",
+      "Bulan {bulan}:",
+      "• Hafalan baru: {hafalan_baru}",
+      "• Murojaah: {murojaah}", "",
+      "Rapor lengkap ada di gambar terlampir.", "",
+      "Jazakumullahu khairan.",
+      "— {pengajar}"].join("\n")
+  };
+  // Daftar isian per jenis pesan (untuk tombol sisip di Setelan): [kunci, keterangan]
+  var PG_WALI_FIELDS = {
+    laporan: [["nama", "nama santri"], ["bulan", "bulan laporan"], ["hadir", "jumlah hari hadir"],
+      ["izin_sakit", "(Izin 1, Sakit 2) bila ada"], ["hafalan_baru", "surah & ayat baru bulan ini"], ["murojaah", "surah yang dimurojaah"],
+      ["tahsin", "bacaan tahsin"], ["nilai", "rekap nilai per kategori"], ["pengajar", "nama pengajar"], ["lembaga", "nama lembaga"]],
+    rapor: [["nama", "nama santri"], ["tanggal", "tanggal rapor"], ["jumlah_hafalan", "mis. 2 surah dan 6 ayat"],
+      ["daftar_hafalan", "nama surah yang sudah hafal"], ["total_ayat", "total ayat hafalan"], ["surah_tuntas", "jumlah surah tuntas"],
+      ["juz_tuntas", "jumlah juz tuntas"], ["bulan", "bulan ini"], ["hafalan_baru", "surah & ayat baru bulan ini"],
+      ["murojaah", "surah yang dimurojaah bulan ini"], ["hafalan_terakhir", "surah terakhir dihafal"], ["pengajar", "nama pengajar"], ["lembaga", "nama lembaga"]]
+  };
+
+  function pgFillTemplate(tpl, vals) {
+    var known = function (k) { return Object.prototype.hasOwnProperty.call(vals, k); };
+    var out = [];
+    String(tpl).replace(/\r\n?/g, "\n").split("\n").forEach(function (line) {
+      var keys = [], m, re = /\{([a-z_]+)\}/g;
+      while ((m = re.exec(line))) if (known(m[1])) keys.push(m[1]);
+      // baris berisi isian yang semuanya kosong -> lewati
+      if (keys.length && keys.every(function (k) { return String(vals[k]) === ""; })) return;
+      out.push(line.replace(/\{([a-z_]+)\}/g, function (all, k) { return known(k) ? String(vals[k]) : all; }));
+    });
+    // rapikan: tidak lebih dari satu baris kosong berturut-turut, tanpa baris kosong di awal/akhir
+    var text = out.join("\n").replace(/\n{3,}/g, "\n\n");
+    return text.replace(/^\s*\n/, "").replace(/\n\s*$/, "");
   }
-  // d: { name, bulan, att:{hadir,izin,sakit,ghoib}, ayat:{tahfidz,murojaah,tahsin}, nilai:["Tahfidz: 2× Mumtaz", ...], pengajar, lembaga }
-  function pgWaliLaporanText(d) {
+
+  function pgWaliLaporanVals(d) {
     var att = d.att || {}, ay = d.ayat || {};
     var absent = [["Izin", att.izin], ["Sakit", att.sakit], ["Ghoib", att.ghoib]].filter(function (a) { return a[1] > 0; })
       .map(function (a) { return a[0] + " " + a[1]; });
-    var lines = [PG_BASMALAH, "", "Assalamu'alaikum warahmatullahi wabarakatuh.", "",
-      "Berikut laporan setoran ananda *" + d.name + "* bulan *" + d.bulan + "*:",
-      "• Hadir: " + pgNum(att.hadir || 0) + " hari" + (absent.length ? " (" + absent.join(", ") + ")" : "")];
-    if (ay.tahfidz || ay.murojaah || ay.tahsin) {
-      lines.push("• Hafalan baru: " + pgNum(ay.tahfidz || 0) + " ayat");
-      lines.push("• Murojaah: " + pgNum(ay.murojaah || 0) + " ayat");
-      if (ay.tahsin) lines.push("• Tahsin: " + pgNum(ay.tahsin) + " ayat");
-    }
-    (d.nilai || []).forEach(function (row) { lines.push("• Nilai " + row); });
-    lines.push("", "Laporan lengkap ada di gambar terlampir.");
-    return lines.concat(pgWaliSign(d)).join("\n");
+    return {
+      nama: d.name || "", bulan: d.bulan || "", hadir: pgNum(att.hadir || 0),
+      izin_sakit: absent.length ? " (" + absent.join(", ") + ")" : "",
+      // dengan uraian surah (d.bulanan dari pgMonthHafalan) bila ada; tanpa itu jatuh ke jumlah ayat saja
+      hafalan_baru: d.bulanan ? (pgHafalanPhrase(d.bulanan.baru.desc, d.bulanan.baru.count) || "belum ada")
+        : (ay.tahfidz ? pgNum(ay.tahfidz) + " ayat" : "belum ada"),
+      murojaah: d.bulanan ? (pgHafalanPhrase(d.bulanan.murojaah.desc, d.bulanan.murojaah.count) || "belum ada")
+        : (ay.murojaah ? pgNum(ay.murojaah) + " ayat" : "belum ada"),
+      tahsin: d.bulanan ? (pgHafalanPhrase(d.bulanan.tahsin.desc, d.bulanan.tahsin.count) || d.bulanan.tahsin.last)
+        : (ay.tahsin ? pgNum(ay.tahsin) + " ayat" : ""),
+      nilai: (d.nilai || []).map(function (row) { return "• Nilai " + row; }).join("\n"),
+      pengajar: String(d.pengajar || "").trim(), lembaga: String(d.lembaga || "").trim()
+    };
   }
-  // d: { name, tanggal, unique, pct, surahDone, juzDone, bulan, cur:{thf,mur}, recent:[{name,cnt,total}], pengajar, lembaga }
-  function pgWaliRaporText(d) {
-    var lines = [PG_BASMALAH, "", "Assalamu'alaikum warahmatullahi wabarakatuh.", "",
-      "Berikut rapor progres hafalan ananda *" + d.name + "* per " + d.tanggal + ":",
-      "• Total hafalan: " + pgNum(d.unique || 0) + " ayat (" + pgNum(Math.round((d.pct || 0) * 10) / 10) + "% dari Al-Qur'an)",
-      "• Surah tuntas: " + pgNum(d.surahDone || 0) + (d.juzDone ? " · Juz tuntas: " + pgNum(d.juzDone) : "")];
-    var cur = d.cur || {};
-    lines.push("• Bulan " + d.bulan + ": hafalan baru " + pgNum(cur.thf || 0) + " ayat, murojaah " + pgNum(cur.mur || 0) + " ayat");
-    var r = (d.recent || [])[0];
-    if (r) lines.push("• Hafalan terakhir: " + r.name + (r.cnt === r.total ? " (tuntas)" : " (" + r.cnt + "/" + r.total + " ayat)"));
-    lines.push("", "Rapor lengkap ada di gambar terlampir.");
-    return lines.concat(pgWaliSign(d)).join("\n");
+  function pgWaliRaporVals(d) {
+    var cur = d.cur || {}, r = (d.recent || [])[0], h = d.hafalan || {}, b = d.bulanIni;
+    return {
+      nama: d.name || "", tanggal: d.tanggal || "", bulan: d.bulan || "",
+      jumlah_hafalan: h.jumlah || "", daftar_hafalan: h.text || "",
+      total_ayat: pgNum(d.unique || 0),
+      surah_tuntas: pgNum(d.surahDone || 0), juz_tuntas: d.juzDone ? pgNum(d.juzDone) : "",
+      hafalan_baru: b ? (pgHafalanPhrase(b.baru.desc, b.baru.count) || "belum ada") : (cur.thf ? pgNum(cur.thf) + " ayat" : "belum ada"),
+      murojaah: b ? (pgHafalanPhrase(b.murojaah.desc, b.murojaah.count) || "belum ada") : (cur.mur ? pgNum(cur.mur) + " ayat" : "belum ada"),
+      hafalan_terakhir: r ? r.name + (r.cnt === r.total ? " (tuntas)" : " (" + r.cnt + "/" + r.total + " ayat)") : "",
+      pengajar: String(d.pengajar || "").trim(), lembaga: String(d.lembaga || "").trim()
+    };
   }
+  // tpl kosong/tidak diisi = template bawaan
+  function pgWaliLaporanText(d, tpl) { return pgFillTemplate(String(tpl || "").trim() ? tpl : PG_WALI_TPL.laporan, pgWaliLaporanVals(d)); }
+  function pgWaliRaporText(d, tpl) { return pgFillTemplate(String(tpl || "").trim() ? tpl : PG_WALI_TPL.rapor, pgWaliRaporVals(d)); }
 
   // Jumlah ayat dalam satu bulan untuk ringkasan laporan bulanan.
   // tahfidz = ayat hafalan BARU (sama seperti Progres); murojaah & tahsin = ayat yang dibaca (pengulangan ikut dihitung).
@@ -3483,6 +3635,82 @@
       out[f[0]] = pgAnalyze(ents, f[0]).daily.reduce(function (n, x) { return x.date.slice(0, 7) === key ? n + x[f[1]] : n; }, 0);
     });
     return out;
+  }
+
+  // ---- Uraian hafalan dalam kata-kata: "2 surah dan 6 ayat", "Al-Qadr, Al-Bayyinah, dan Al-'Alaq ayat 1–6" ----
+  function pgListJoin(items) {
+    if (items.length <= 1) return items.join("");
+    if (items.length === 2) return items[0] + " dan " + items[1];
+    return items.slice(0, -1).join(", ") + ", dan " + items[items.length - 1];
+  }
+  // tanda ayat (Uint8Array, indeks 1..n) -> "1–6, 10–12"
+  function pgRangesText(arr) {
+    var out = [], a = 1;
+    while (a < arr.length) {
+      if (!arr[a]) { a++; continue; }
+      var b = a;
+      while (b + 1 < arr.length && arr[b + 1]) b++;
+      out.push(a === b ? String(a) : a + "–" + b);
+      a = b + 1;
+    }
+    return out.join(", ");
+  }
+  // covered: daftar tanda ayat per surah. Juz yang tuntas ditulis "Juz N" agar pesan tidak terlalu panjang.
+  function pgDescribeCoverage(covered) {
+    var fullJuz = {};
+    pgJuzStats(covered).forEach(function (j) { if (j.cnt === j.total) fullJuz[j.juz] = 1; });
+    var items = [], juzSaid = {}, fullCount = 0, partialAyat = 0, total = 0;
+    covered.forEach(function (arr, i) {
+      var cnt = 0, a;
+      for (a = 1; a < arr.length; a++) if (arr[a]) cnt++;
+      if (!cnt) return;
+      total += cnt;
+      var full = cnt === SURAHS[i].ayat;
+      if (full) fullCount++; else partialAyat += cnt;
+      var inFull = full;
+      for (a = 1; inFull && a < arr.length; a++) if (!fullJuz[pgJuzOf(i, a)]) inFull = false;
+      if (inFull) {
+        var j = pgJuzOf(i, 1);
+        if (!juzSaid[j]) { juzSaid[j] = 1; items.push("Juz " + j); }
+        return;
+      }
+      items.push(full ? SURAHS[i].name : SURAHS[i].name + " ayat " + pgRangesText(arr));
+    });
+    var jumlah = [];
+    if (fullCount) jumlah.push(pgNum(fullCount) + " surah");
+    if (partialAyat) jumlah.push(pgNum(partialAyat) + " ayat");
+    return { text: pgListJoin(items), jumlah: jumlah.join(" dan "), fullCount: fullCount, partialAyat: partialAyat, total: total };
+  }
+  // "Al-Mulk dan An-Naba ayat 1–20 (50 ayat)"; kosong bila tidak ada
+  function pgHafalanPhrase(desc, count) { return count > 0 && desc.text ? desc.text + " (" + pgNum(count) + " ayat)" : ""; }
+
+  // Hafalan baru, murojaah, dan tahsin dalam satu bulan, diuraikan per surah.
+  function pgMonthHafalan(ents, year, month0) {
+    ents = ents || {};
+    var key = year + "-" + pad2(month0 + 1);
+    var pick = function (test) {
+      var o = {};
+      Object.keys(ents).forEach(function (d) { if (/^\d{4}-\d{2}-\d{2}$/.test(d) && test(d.slice(0, 7))) o[d] = ents[d]; });
+      return o;
+    };
+    var before = pgAnalyze(pick(function (k) { return k < key; }), "tahfidz").covered;
+    var upto = pgAnalyze(pick(function (k) { return k <= key; }), "tahfidz").covered;
+    var baru = upto.map(function (arr, i) {
+      var d = new Uint8Array(arr.length);
+      for (var a = 1; a < arr.length; a++) if (arr[a] && !before[i][a]) d[a] = 1;
+      return d;
+    });
+    var monthEnts = pick(function (k) { return k === key; });
+    var mur = pgAnalyze(monthEnts, "murojaah"), ths = pgAnalyze(monthEnts, "tahsin");
+    var sum = function (an) { return an.daily.reduce(function (n, x) { return n + x.raw; }, 0); };
+    var baruDesc = pgDescribeCoverage(baru);
+    var tahsinLast = "";
+    Object.keys(monthEnts).sort().forEach(function (d) { var v = String(monthEnts[d].tahsin || "").trim(); if (v) tahsinLast = v; });
+    return {
+      baru: { desc: baruDesc, count: baruDesc.total },
+      murojaah: { desc: pgDescribeCoverage(mur.covered), count: sum(mur) },
+      tahsin: { desc: pgDescribeCoverage(ths.covered), count: sum(ths), last: tahsinLast }
+    };
   }
 
   // Angka untuk rapor progres satu halaman (gambar unduhan). today = "YYYY-MM-DD".
@@ -3522,7 +3750,9 @@
       unique: thf.unique, pct: thf.unique / QURAN_AYAT * 100, surahDone: thf.surahDone, juzDone: juzDone,
       setoranDays: setoranDays.length, months: months, cur: cur, prev: prev, juz: juz,
       recent: thf.perSurah.slice(0, 5).map(function (x) { return { name: SURAHS[x.i].name, cnt: x.cnt, total: x.total, last: x.last }; }),
-      grades: grades, tahsinLast: tahsinLast, rasib: thf.rasib.length, bad: thf.bad.length
+      grades: grades, tahsinLast: tahsinLast, rasib: thf.rasib.length, bad: thf.bad.length,
+      hafalan: pgDescribeCoverage(thf.covered),
+      bulanIni: pgMonthHafalan(ents, +today.slice(0, 4), +today.slice(5, 7) - 1)
     };
   }
   // PG-PURE-END
@@ -4036,6 +4266,7 @@
   });
 
   // ---------------- Init ----------------
+  renderWaliTpl();
 
   function renderAll() {
     renderStudentSelect();

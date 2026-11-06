@@ -102,7 +102,8 @@ Indonesia, jenis **App**, **Free**.
   • Rapor progres satu halaman untuk wali santri.
 
   KIRIM KE WALI, SEKALI KETUK
-  • Kirim gambar laporan bulanan atau rapor progres beserta pesan pembuka yang sudah tersusun (kehadiran, hafalan baru, murojaah, nilai) langsung ke WhatsApp wali santri. Pesan bisa diubah dulu sebelum dikirim.
+  • Kirim gambar laporan bulanan atau rapor progres beserta pesan pembuka yang sudah tersusun langsung ke WhatsApp wali santri. Hafalan disebut per surah, mis. "sudah hafal 2 surah dan 6 ayat, yaitu Al-'Alaq ayat 1–6, Al-Qadr, dan Al-Bayyinah".
+  • Template pesan bisa diedit dan disimpan sendiri di Setelan.
 
   KELOMPOK HALAQAH (OPSIONAL)
   • Untuk lembaga dengan beberapa kelompok: nyalakan di Setelan untuk mengelompokkan santri per halaqah (pagi, sore, kelas).
