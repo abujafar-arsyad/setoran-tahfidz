@@ -193,8 +193,31 @@ t("aplikasi terbuka tanpa error dan punya 5 tab", async (H, B) => {
   assert.strictEqual(await H.ev("return document.getElementById('halaqahSelect').hidden;"), true, "pilihan halaqah tersembunyi bila belum ada halaqah");
 });
 
+t("halaqah mati secara bawaan: kolom & pilihan halaqah tersembunyi, data tetap ada", async (H) => {
+  await H.open(SEED);
+  await H.tab("santri");
+  const hidden = await H.ev(`return {
+    pilihan: document.getElementById('halaqahSelect').hidden,
+    kolomTambah: getComputedStyle(document.getElementById('newHalaqahField')).display,
+    judulKelompok: document.querySelectorAll('#studentList .halaqah-head').length };`);
+  assert.deepStrictEqual(hidden, { pilihan: true, kolomTambah: "none", judulKelompok: 0 });
+  // ubah nama saat fitur mati tidak menghapus halaqah yang sudah tersimpan
+  await H.tap('#studentList button[aria-label="Ubah data Ali"]');
+  await H.ev("document.getElementById('renameInput').value = 'Ali Akbar';");
+  await H.tap("#renameSave");
+  const ali = (await H.store()).students.find((s) => s.id === "a");
+  assert.deepStrictEqual([ali.name, ali.halaqah], ["Ali Akbar", "Pagi"]);
+  // nyalakan lewat Setelan: kelompok langsung muncul
+  await H.tab("setelan");
+  await H.tap('#tab-setelan input[data-key="halaqah"]');
+  await H.tab("santri");
+  const heads = await H.ev("return document.querySelectorAll('#studentList .halaqah-head').length;");
+  assert.strictEqual(heads, 3, "Pagi, Sore, Tanpa halaqah");
+  assert.strictEqual(await H.ev("return document.getElementById('halaqahSelect').hidden;"), false);
+});
+
 t("tambah santri dengan halaqah, daftar dikelompokkan, filter halaqah", async (H) => {
-  await H.open(null);
+  await H.open(null, { halaqah: true });
   await H.tab("santri");
   for (const [nama, hal] of [["Ali", "Pagi"], ["Badr", "pagi"], ["Cici", ""]]) {
     await H.tap("#newStudentName"); await H.type(nama);
@@ -216,7 +239,7 @@ t("tambah santri dengan halaqah, daftar dikelompokkan, filter halaqah", async (H
 });
 
 t("ubah halaqah santri lewat tombol ubah data", async (H) => {
-  await H.open(SEED);
+  await H.open(SEED, { halaqah: true });
   await H.tab("santri");
   await H.tap('#studentList button[aria-label="Ubah data Dina"]');
   await H.tap("#renameHalaqah"); await H.type("sore");
@@ -292,6 +315,35 @@ t("progres: Rasib tidak dihitung, rapor satu halaman, tema gelap tetap", async (
   assert.strictEqual(img.width, 1080);
   assert.ok(img.height < 2200, "rapor harus satu halaman ringkas, tinggi " + img.height);
   assert.strictEqual(await H.ev("return document.documentElement.getAttribute('data-theme');"), "dark", "tema aplikasi kembali gelap setelah unduh");
+});
+
+t("kirim laporan & rapor ke wali: pesan siap pakai + gambar", async (H) => {
+  await H.open(SEED, { pengajar: "Ustadz Uji" });
+  await H.tab("laporan");
+  for (let i = 0; i < 24 && !/Oktober 2026/.test(await H.text("#monthLabel")); i++) await H.ev("document.getElementById('prevMonth').click();");
+  await H.tap("#btnWali");
+  await H.ev("for (let i = 0; i < 50 && !document.getElementById('waliModalBackdrop').classList.contains('show'); i++) await new Promise((r) => setTimeout(r, 100));");
+  const msg = await H.ev("return document.getElementById('waliText').value;");
+  assert.match(msg, /ananda \*Ali\* bulan \*Oktober 2026\*/);
+  assert.match(msg, /Hadir: 3 hari \(Izin 1\)/);
+  assert.match(msg, /Hafalan baru: 50 ayat/);           // Al-Mulk 30 + An-Naba 1-20 (Rasib lalu Maqbul)
+  assert.match(msg, /— Ustadz Uji$/);
+  assert.strictEqual(await H.ev("return document.getElementById('waliPreview').naturalWidth > 0;"), true, "pratinjau gambar tampil");
+  // guru boleh mengubah pesan sebelum mengirim
+  await H.ev("const ta = document.getElementById('waliText'); ta.value = ta.value + '\\nCatatan: semangat!';");
+  // browser tanpa Web Share berkas: pesan disalin, gambar diunduh
+  const img = await H.download("#waliSend");
+  assert.ok(img && img.type === "image/png", "gambar laporan ikut terkirim/terunduh");
+  assert.strictEqual(await H.ev("return document.getElementById('waliModalBackdrop').classList.contains('show');"), false);
+  // rapor progres
+  await H.tab("progres");
+  await H.tap("#pgWali");
+  await H.ev("for (let i = 0; i < 50 && !document.getElementById('waliModalBackdrop').classList.contains('show'); i++) await new Promise((r) => setTimeout(r, 100));");
+  const rap = await H.ev("return document.getElementById('waliText').value;");
+  assert.match(rap, /rapor progres hafalan ananda \*Ali\*/);
+  assert.match(rap, /Total hafalan: 50 ayat/);
+  await H.tap("#waliCancel");
+  assert.strictEqual(await H.ev("return document.getElementById('waliModalBackdrop').classList.contains('show');"), false);
 });
 
 t("ekspor lalu impor data: semua kembali termasuk halaqah", async (H) => {

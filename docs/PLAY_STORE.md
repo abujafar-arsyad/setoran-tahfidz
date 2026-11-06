@@ -13,7 +13,7 @@ membuat akun developer, membuat kunci upload, dan mengisi Play Console.
 | `targetSdk` 36, tanpa izin khusus, cadangan otomatis mati | ✅ siap |
 | Ikon listing 512×512 — [`icon-512.png`](play-store/icon-512.png) | ✅ siap |
 | Feature graphic 1024×500 — [`feature-graphic.png`](play-store/feature-graphic.png) | ✅ siap |
-| 6 screenshot ponsel 1080×1920 — `docs/play-store/screenshot-*.png` | ✅ siap |
+| 6 screenshot ponsel 1080×1920 — `docs/play-store/screenshot-*.png` (catat, laporan, progres, sebaran nilai, kirim ke wali, rapor) | ✅ siap |
 | Teks listing (judul, deskripsi singkat, deskripsi lengkap) | ✅ di bawah |
 | Jawaban formulir Data Safety, rating konten, target audiens | ✅ di bawah |
 | Halaman kebijakan privasi — [`docs/privacy-policy.html`](privacy-policy.html) | ✅ siap, **perlu diaktifkan** (langkah 2) |
@@ -101,8 +101,11 @@ Indonesia, jenis **App**, **Free**.
   • Total ayat dari 6.236 ayat, surah dan juz yang tuntas, diagram per bulan, sebaran nilai, dan peta 30 juz (Mushaf Madinah, riwayat Hafs).
   • Rapor progres satu halaman untuk wali santri.
 
-  KELOMPOK HALAQAH
-  • Kelompokkan santri per halaqah (pagi, sore, kelas) dan pilih halaqah dengan cepat.
+  KIRIM KE WALI, SEKALI KETUK
+  • Kirim gambar laporan bulanan atau rapor progres beserta pesan pembuka yang sudah tersusun (kehadiran, hafalan baru, murojaah, nilai) langsung ke WhatsApp wali santri. Pesan bisa diubah dulu sebelum dikirim.
+
+  KELOMPOK HALAQAH (OPSIONAL)
+  • Untuk lembaga dengan beberapa kelompok: nyalakan di Setelan untuk mengelompokkan santri per halaqah (pagi, sore, kelas).
 
   PRIVASI
   • 100% offline: tidak ada akun, iklan, atau pelacak, dan tidak ada data yang dikirim ke server.

@@ -17,9 +17,9 @@ Semua nama dan catatan pada gambar ini fiktif.
 | :---: | :---: | :---: | :---: |
 | <img src="docs/screenshots/catat.png" alt="Halaman Catat: rentang ayat dan nilai kelancaran" width="200"> | <img src="docs/screenshots/laporan.png" alt="Halaman Laporan: tabel bulanan dengan label nilai" width="200"> | <img src="docs/screenshots/progres.png" alt="Halaman Progres: ringkasan dan diagram hafalan per bulan" width="200"> | <img src="docs/screenshots/progres-nilai.png" alt="Halaman Progres: sebaran nilai per bulan dan progres per juz" width="200"> |
 
-| Santri | Setelan | Laporan bulanan (gambar) | Rapor progres (gambar) |
+| Kirim ke wali | Setelan | Laporan bulanan (gambar) | Rapor progres (gambar) |
 | :---: | :---: | :---: | :---: |
-| <img src="docs/screenshots/santri.png" alt="Halaman Santri: daftar santri dikelompokkan per halaqah" width="200"> | <img src="docs/screenshots/setelan.png" alt="Halaman Setelan: tampilan, lembaga, dan laporan" width="200"> | <img src="docs/screenshots/laporan-gambar.png" alt="Contoh gambar laporan bulanan yang diunduh" width="230"> | <img src="docs/screenshots/rapor-progres.png" alt="Contoh rapor progres satu halaman yang diunduh" width="230"> |
+| <img src="docs/screenshots/kirim-wali.png" alt="Jendela Kirim Laporan ke Wali: pratinjau gambar dan pesan pembuka yang bisa diubah" width="200"> | <img src="docs/screenshots/setelan.png" alt="Halaman Setelan: tampilan, lembaga, dan laporan" width="200"> | <img src="docs/screenshots/laporan-gambar.png" alt="Contoh gambar laporan bulanan yang diunduh" width="230"> | <img src="docs/screenshots/rapor-progres.png" alt="Contoh rapor progres satu halaman yang diunduh" width="230"> |
 
 ## Fitur
 
@@ -54,7 +54,12 @@ Semua nama dan catatan pada gambar ini fiktif.
 - Bisa dilihat untuk Tahsin, Tahfidz, atau Murojaah.
 - **Unduh Progres** membuat rapor satu halaman untuk wali santri: total hafalan, perbandingan bulan ini dengan bulan lalu, kehadiran, diagram 6 bulan, peta 30 juz, hafalan terakhir, rekap nilai, dan catatan tahsin terakhir.
 
-**Kelompok halaqah**
+**Kirim ke wali**
+- Tombol **Kirim Laporan ke Wali** (tab Laporan) dan **Kirim Rapor ke Wali** (tab Progres) membagikan gambar laporan/rapor **bersama pesan pembuka** yang sudah tersusun: salam, kehadiran, hafalan baru, murojaah, nilai, dan nama pengajar.
+- Pesan bisa diubah dulu, lalu pilih WhatsApp dan kontak wali. WhatsApp memakai pesan itu sebagai keterangan gambar.
+
+**Kelompok halaqah (opsional)**
+- Mati secara bawaan. Nyalakan di **Setelan → Pencatatan → Kelompok halaqah** bila lembaga Anda punya beberapa kelompok. Bila dimatikan lagi, halaqah hanya disembunyikan dan tetap tersimpan.
 - Santri bisa diberi halaqah (mis. Pagi, Sore, Kelas A). Boleh dikosongkan.
 - Daftar santri dikelompokkan per halaqah, dan di bagian atas aplikasi ada pilihan halaqah untuk menyaring santri.
 - Nama halaqah ikut tercantum di laporan bulanan dan rapor progres.
@@ -65,10 +70,10 @@ Semua nama dan catatan pada gambar ini fiktif.
 
 ## Cara pakai singkat
 
-1. **Tab Santri:** tambahkan nama santri, dan halaqahnya bila perlu. Ketuk ✏️ untuk mengubah nama atau halaqah.
+1. **Tab Santri:** tambahkan nama santri. Ketuk ✏️ untuk mengubah nama.
 2. **Tab Catat:** pilih santri dan tanggal, isi rentang ayat untuk tahsin, tahfidz, atau murojaah, beri nilai bila perlu, lalu ketuk **Simpan Setoran**.
-3. **Tab Laporan:** lihat rekap bulanan. Ketuk **Unduh Laporan (Gambar)** untuk membuat gambar laporan yang bisa dikirim ke wali santri.
-4. **Tab Progres:** pantau perkembangan hafalan tiap santri. Ketuk **Unduh Progres** untuk menyimpannya sebagai gambar.
+3. **Tab Laporan:** lihat rekap bulanan. Ketuk **Kirim Laporan ke Wali** untuk mengirim gambar laporan beserta pesannya lewat WhatsApp, atau **Unduh Laporan (Gambar)** untuk menyimpannya saja.
+4. **Tab Progres:** pantau perkembangan hafalan tiap santri. Ketuk **Kirim Rapor ke Wali** atau **Unduh Progres**.
 5. **Tab Setelan:** isi nama lembaga dan pengajar, dan ketuk **Ekspor Data** secara rutin untuk mencadangkan data.
 
 ## Cara Progres menghitung
@@ -150,7 +155,8 @@ Jalankan keduanya sebelum setiap rilis. Semua tes harus lulus.
 Tes tampilan tidak butuh paket tambahan. Ia mencari Chrome, Edge, atau
 Chromium yang terpasang (perlu Node.js 22 atau lebih baru), lalu mengetuk
 layar, mengisi rentang ayat, memberi nilai, mengunduh gambar laporan
-(termasuk mengecek nomor tanggalnya), dan menguji ekspor–impor. Bila
+(termasuk mengecek nomor tanggalnya), mencoba Kirim ke wali, sakelar halaqah,
+dan menguji ekspor–impor. Bila
 browser tidak ditemukan, tunjukkan lokasinya:
 
 ```powershell
