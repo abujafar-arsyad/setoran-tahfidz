@@ -9,8 +9,8 @@ const pureSrc = html.slice(html.indexOf("// PG-PURE-BEGIN"), html.indexOf("// PG
 const pad2 = (n) => String(n).padStart(2, "0");
 const BULAN_ID = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 const api = new Function("pad2", "BULAN_ID", surahSrc + "\n" + pureSrc +
-  "\nreturn {SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgGradeEntryError, pgNormalizeEntryGrades, pgNormalizeEntries};")(pad2, BULAN_ID);
-const { SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgGradeEntryError, pgNormalizeEntryGrades, pgNormalizeEntries } = api;
+  "\nreturn {SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgGradeEntryError, pgNormalizeEntryGrades, pgNormalizeEntries, pgRapor};")(pad2, BULAN_ID);
+const { SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgGradeEntryError, pgNormalizeEntryGrades, pgNormalizeEntries, pgRapor } = api;
 
 const idx = (n) => pgSurahIndex(n);
 const BAQ = idx("Al-Baqarah"), IMR = idx("Ali 'Imran"), NIS = idx("An-Nisa"), NAS = idx("An-Nas"), FAT = idx("Al-Fatihah");
@@ -210,7 +210,8 @@ t("Tahsin metric: structured ranges counted (unique, per juz, timeline); Iqro ne
   assert.strictEqual(pgAnalyze({ d: { tahsin: "Iqro 3 halaman 12" } }, "tahsin").unique, 0);
   assert.strictEqual(pgAnalyze({ "2026-01-01": { tahsin: "Iqro 3 halaman 12" } }, "tahsin").bad.length, 0);
 });
-
+
+
 // ---- Regresi: dropdown surah, lintas surah independen, tampilan Tahsin ----
 t("saran surah: ketik 'L' menampilkan pilihan yang bisa dipilih; hasil terpilih dikenali", () => {
   const s = pgSuggestSurah("L", 8);
@@ -437,5 +438,31 @@ t("teks laporan bernilai membungkus utuh dan badge disisihkan di kanan atas", ()
   const report = html.slice(end);
   assert.match(report, /var badgeX = cellRight - badgeW - 6 \* S, badgeY = top \+ 5 \* S/);
   assert.match(report, /drawFitted\(ctx, val \|\| "", cellLeft, badgeX - badgeGap, top, bottom, S, \{\}\)/);
+});
+t("rapor progres: ringkasan satu halaman", () => {
+  const ents = {
+    "2026-09-10": { tahsin: "", tahfidz: "Al-Mulk 1-30", murojaah: "", keterangan: "", nilai: { tahsin: "", tahfidz: "R", murojaah: "" } },
+    "2026-10-05": { tahsin: "Iqro 3 hal 10", tahfidz: "Al-Mulk 1-30", murojaah: "An-Nas 1-6", keterangan: "", nilai: { tahsin: "J", tahfidz: "JJ", murojaah: "M" } },
+    "2026-11-02": { tahsin: "Iqro 4 hal 2", tahfidz: "An-Naba 1-10", murojaah: "Al-Mulk 1-30", keterangan: "" },
+    "2026-11-03": { tahsin: "", tahfidz: "", murojaah: "", keterangan: "Izin" }
+  };
+  const r = pgRapor(ents, "2026-11-06");
+  assert.strictEqual(r.unique, 40);                       // Rasib September tidak dihitung
+  assert.strictEqual(r.surahDone, 1);
+  assert.strictEqual(r.months.length, 6);
+  assert.deepStrictEqual(r.months.map((m) => m.label), ["Jun", "Jul", "Agu", "Sep", "Okt", "Nov"]);
+  assert.deepStrictEqual([r.prev.thf, r.cur.thf], [30, 10]);
+  assert.deepStrictEqual([r.prev.mur, r.cur.mur], [6, 30]);
+  assert.strictEqual(r.setoranDays, 3);                   // hari Rasib tetap hari setoran; hari Izin tidak
+  assert.strictEqual(r.juz.length, 30);
+  assert.strictEqual(r.juz[28].cnt, 30); assert.strictEqual(r.juz[29].cnt, 10);
+  assert.deepStrictEqual(r.recent.map((x) => x.name), ["An-Naba", "Al-Mulk"]);
+  assert.deepStrictEqual(r.tahsinLast, { date: "2026-11-02", text: "Iqro 4 hal 2" });
+  assert.strictEqual(r.grades.tahfidz.total, 2);          // 3 bulan terakhir (Sep-Nov): R di Sep + JJ di Okt
+  assert.strictEqual(r.grades.tahfidz.counts.R, 1); assert.strictEqual(r.grades.tahfidz.counts.JJ, 1);
+  assert.strictEqual(pgRapor(ents, "2026-12-15").grades.tahfidz.total, 1);   // per Desember: Sep sudah keluar dari 3 bulan
+  assert.strictEqual(r.grades.murojaah.counts.M, 1);
+  const empty = pgRapor({}, "2026-11-06");
+  assert.strictEqual(empty.unique, 0); assert.strictEqual(empty.recent.length, 0); assert.strictEqual(empty.tahsinLast, null);
 });
 console.log(n + " tests passed");

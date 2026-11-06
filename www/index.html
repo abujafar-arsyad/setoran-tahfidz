@@ -3161,6 +3161,47 @@
     list.forEach(function (b) { run += b.v; b.cum = run; });
     return list;
   }
+
+  // Angka untuk rapor progres satu halaman (gambar unduhan). today = "YYYY-MM-DD".
+  function pgRapor(ents, today) {
+    ents = ents || {};
+    var thf = pgAnalyze(ents, "tahfidz"), mur = pgAnalyze(ents, "murojaah");
+    var months = pgBuckets(thf.daily, "month", 6, today);
+    var murMonths = pgBuckets(mur.daily, "month", 6, today);
+    months = months.map(function (b, i) { return { key: b.key, label: b.label, sub: b.sub, title: b.title, thf: b.v, mur: murMonths[i].v }; });
+    var cur = months[months.length - 1], prev = months[months.length - 2];
+    var juz = pgJuzStats(thf.covered);
+    var juzDone = juz.filter(function (j) { return j.cnt === j.total; }).length;
+    var dates = Object.keys(ents).filter(function (d) { return /^\d{4}-\d{2}-\d{2}$/.test(d); }).sort();
+    // hari setoran = hari yang berisi tahsin/tahfidz/murojaah (termasuk yang bernilai Rasib)
+    var setoranDays = dates.filter(function (d) {
+      var e = ents[d];
+      return e && ["tahsin", "tahfidz", "murojaah"].some(function (k) { return String(e[k] || "").trim(); });
+    });
+    var tahsinLast = null;
+    for (var i = dates.length - 1; i >= 0; i--) {
+      var e = ents[dates[i]];
+      if (e && String(e.tahsin || "").trim()) { tahsinLast = { date: dates[i], text: String(e.tahsin).trim() }; break; }
+    }
+    var gradeKeys = {};
+    months.slice(-3).forEach(function (m) { gradeKeys[m.key] = 1; });
+    var grades = {};
+    ["tahfidz", "murojaah", "tahsin"].forEach(function (field) {
+      var counts = {}, total = 0;
+      PG_GRADES.forEach(function (g) { counts[g.code] = 0; });
+      dates.forEach(function (d) {
+        var e = ents[d], code = e && e.nilai && e.nilai[field];
+        if (gradeKeys[d.slice(0, 7)] && Object.prototype.hasOwnProperty.call(counts, code)) { counts[code]++; total++; }
+      });
+      grades[field] = { counts: counts, total: total };
+    });
+    return {
+      unique: thf.unique, pct: thf.unique / QURAN_AYAT * 100, surahDone: thf.surahDone, juzDone: juzDone,
+      setoranDays: setoranDays.length, months: months, cur: cur, prev: prev, juz: juz,
+      recent: thf.perSurah.slice(0, 5).map(function (x) { return { name: SURAHS[x.i].name, cnt: x.cnt, total: x.total, last: x.last }; }),
+      grades: grades, tahsinLast: tahsinLast, rasib: thf.rasib.length, bad: thf.bad.length
+    };
+  }
   // PG-PURE-END
 
   // ---- tampilan ----
@@ -3177,143 +3218,214 @@
       line: v("--line", "#dddddd"), plum: v("--plum", "#5b2a86"), gold: v("--gold", "#b8860b"), good: v("--good", "#2e7d32"), tint: v("--plum-tint", "#eee"), grades: grades };
   }
 
-  function pgSvgToImage(svgStr, C) {
-    var gradeStyles = PG_GRADES.map(function (grade) { return ".pg-grade-" + grade.code + "{fill:" + C.grades[grade.code] + "}"; }).join("");
-    var style = "text{fill:" + C.soft + ";font-size:10px;font-family:sans-serif}.pg-grid{stroke:" + C.line + ";stroke-width:1}.pg-bar{fill:" + C.plum +
-      "}.pg-lineStroke{fill:none;stroke:" + C.gold + ";stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}.pg-area{fill:" + C.gold +
-      ";opacity:.14}.pg-dot{fill:" + C.gold + "}.pg-val{fill:" + C.ink + ";font-weight:700;font-size:10px}" + gradeStyles;
-    var xml = svgStr.replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" ').replace(/>/, "><style>" + style + "</style>");
-    return new Promise(function (resolve, reject) {
-      var img = new Image();
-      img.onload = function () { resolve(img); };
-      img.onerror = function () { reject(new Error("Gagal membuat gambar diagram")); };
-      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(xml);
-    });
-  }
-
   function pgRoundRect(ctx, x, y, w, h, r) {
     ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
     ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
   }
 
+  // Warna gambar unduhan selalu dari tema TERANG (enak dibaca, dicetak, dan dikirim ke wali),
+  // walaupun aplikasi sedang memakai mode gelap. Palet warna (ungu/zamrud/...) tetap diikuti.
+  function pgLightColors() {
+    var root = document.documentElement, prev = root.getAttribute("data-theme");
+    root.setAttribute("data-theme", "light");
+    var C = pgThemeColors();
+    if (prev === null) root.removeAttribute("data-theme"); else root.setAttribute("data-theme", prev);
+    return C;
+  }
+
+  function pgTglPendek(ymd) {
+    var p = ymd.split("-");
+    return (+p[2]) + " " + BULAN_PENDEK[+p[1] - 1];
+  }
+
   var pgExportBusy = false;
   function pgExport() {
-    if (!pgLast || pgExportBusy) return;
-    var C = pgThemeColors(), W = 1080, PAD = 48, CW = W - PAD * 2, FF = "sans-serif";
-    var now = new Date();
-    var tgl = now.getDate() + " " + BULAN_ID[now.getMonth()] + " " + now.getFullYear();
-    var stamp = pgYmd(now);
+    if (pgExportBusy) return;
     var s = getSelectedStudent();
     if (!s) return;
-    var perMonth = pgState.period === "month";
-    var chartH = Math.round(CW * 196 / 340);
-    var gradeLegendH = 30;
-    var cols = 5, juzGap = 12, juzCellH = 84, juzRows = 6, juzH = juzRows * (juzCellH + juzGap) - juzGap;
-    var SUMH = 230, HEAD = 150, BLOCK_HEAD = 84, TITLE = 52, GAP = 28, FOOT = 60;
-    var metrics = [["tahsin", "Tahsin"], ["tahfidz", "Tahfidz"], ["murojaah", "Muroja'ah"]];
-    var blocks = metrics.map(function (m) {
-      var an = pgAnalyze(data.entries[s.id], m[0]);
-      var buckets = pgBuckets(an.daily, pgState.period, 12);
-      var gradeBuckets = pgGradeBuckets(data.entries[s.id], m[0], 12);
-      var hasGrades = gradeBuckets.some(function (bucket) {
-        return PG_GRADES.some(function (grade) { return bucket.counts[grade.code] > 0; });
-      });
-      return { key: m[0], name: m[1], an: an, buckets: buckets, gradeBuckets: gradeBuckets, hasGrades: hasGrades, jst: pgJuzStats(an.covered) };
-    });
-    var blockH = BLOCK_HEAD + (TITLE + SUMH + GAP) + 2 * (TITLE + chartH + GAP) + (TITLE + chartH + gradeLegendH + GAP) + (TITLE + juzH + GAP);
-    var H = HEAD + blocks.length * blockH + FOOT;
-    var need = [];
-    blocks.forEach(function (b) {
-      need.push(pgSvgToImage(pgBarSvg(b.buckets, "bar"), C).then(function (i) { b.bar = i; }));
-      need.push(pgSvgToImage(pgLineSvg(b.buckets, "line"), C).then(function (i) { b.line = i; }));
-      if (b.hasGrades) need.push(pgSvgToImage(pgGradeSvg(b.gradeBuckets, "Sebaran nilai " + b.name + " per bulan"), C).then(function (i) { b.grade = i; }));
-    });
+    var C = pgLightColors(), W = 1080, PAD = 48, CW = W - PAD * 2, FF = "sans-serif", GAP = 32;
+    var now = new Date(), today = pgYmd(now);
+    var tgl = now.getDate() + " " + BULAN_ID[now.getMonth()] + " " + now.getFullYear();
+    var R = pgRapor(data.entries[s.id], today);
+    var curD = new Date(now.getFullYear(), now.getMonth(), 1), prevD = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    var att = countMonth(s.id, curD.getFullYear(), curD.getMonth());
+    var attPrev = countMonth(s.id, prevD.getFullYear(), prevD.getMonth());
+    var lembaga = (settings.lembaga || "").trim(), pengajar = (settings.pengajar || "").trim();
+    var gradeRows = [["tahfidz", "Tahfidz"], ["murojaah", "Murojaah"], ["tahsin", "Tahsin"]].filter(function (g) { return R.grades[g[0]].total > 0; });
+
+    // tinggi tiap bagian
+    var HEAD = 196, HERO = 196, TILE_T = 46, TILE = 150, CHART_T = 46, CHART = 270, JUZ_T = 46, JUZ_CELL = 58, JUZ_GAP = 8, JUZ_LEG = 34;
+    var ROW = 54, LIST_T = 46;
+    var listH = Math.max(Math.max(R.recent.length, 1) * ROW, Math.max(gradeRows.length, 1) * 92);
+    var TAHSIN = R.tahsinLast ? 64 : 0, FOOT = 76;
+    var juzH = 3 * JUZ_CELL + 2 * JUZ_GAP;
+    var H = HEAD + GAP + HERO + GAP + TILE_T + TILE + GAP + CHART_T + CHART + GAP + JUZ_T + juzH + JUZ_LEG + GAP + LIST_T + listH + (TAHSIN ? GAP + TAHSIN : 0) + FOOT;
+
     pgExportBusy = true;
-    Promise.all(need).then(function () {
+    try {
       var canvas = document.createElement("canvas");
       canvas.width = W; canvas.height = H;
       var ctx = canvas.getContext("2d");
-      ctx.fillStyle = C.paper; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = C.plum; ctx.fillRect(0, 0, W, 8);
       ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
-      ctx.fillStyle = C.plum; ctx.font = "bold 44px " + FF;
-      ctx.fillText("Progres — " + s.name, PAD, 80, CW);
-      ctx.fillStyle = C.soft; ctx.font = "26px " + FF;
-      ctx.fillText("Tahsin · Tahfidz · Muroja'ah  |  Setoran Tahfidz · dibuat " + tgl, PAD, 122, CW);
-      var y = HEAD;
-      blocks.forEach(function (b) {
-        var an = b.an;
-        ctx.fillStyle = C.plum; pgRoundRect(ctx, PAD, y, CW, 60, 14); ctx.fill();
-        ctx.fillStyle = C.paper; ctx.font = "bold 34px " + FF; ctx.textAlign = "left";
-        ctx.fillText(b.name, PAD + 22, y + 42, CW - 44);
-        y += BLOCK_HEAD;
+      ctx.fillStyle = C.paper; ctx.fillRect(0, 0, W, H);
+      function text(str, x, y, font, color, align, maxW) {
+        ctx.font = font + " " + FF; ctx.fillStyle = color; ctx.textAlign = align || "left";
+        ctx.fillText(str, x, y, maxW || CW);
+      }
+      function card(x, y, w, h) {
+        pgRoundRect(ctx, x, y, w, h, 18); ctx.fillStyle = C.card; ctx.fill();
+        ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.stroke();
+      }
+      function bar(x, y, w, h, frac, color) {
+        pgRoundRect(ctx, x, y, w, h, h / 2); ctx.fillStyle = C.tint; ctx.fill();
+        if (frac > 0) { pgRoundRect(ctx, x, y, Math.max(w * Math.min(frac, 1), h), h, h / 2); ctx.fillStyle = color; ctx.fill(); }
+      }
+      function title(str, y) { text(str, PAD, y + 32, "bold 30px", C.plum); }
 
-        var pct = an.unique / QURAN_AYAT * 100;
-        ctx.fillStyle = C.plum; ctx.font = "bold 30px " + FF; ctx.fillText("Ringkasan", PAD, y + 34, CW);
-        var sy = y + TITLE;
-        ctx.fillStyle = C.ink; ctx.font = "28px " + FF;
-        ctx.fillText(pgFmt(an.unique) + " dari " + pgFmt(QURAN_AYAT) + " ayat (" + pgFmt(Math.round(pct * 10) / 10) + "%)", PAD, sy + 28, CW);
-        pgRoundRect(ctx, PAD, sy + 48, CW, 22, 11); ctx.fillStyle = C.tint; ctx.fill();
-        if (an.unique > 0) { pgRoundRect(ctx, PAD, sy + 48, Math.max(CW * pct / 100, 22), 22, 11); ctx.fillStyle = C.plum; ctx.fill(); }
-        var avg = an.daily.length ? an.total / an.daily.length : 0;
-        [[pgFmt(an.surahDone), "Surah tuntas"], [pgFmt(an.total), "Ayat tercatat (total)"], [pgFmt(avg), "Ayat / hari setoran"]].forEach(function (st, i) {
-          var cw = (CW - 32) / 3, x = PAD + i * (cw + 16);
-          pgRoundRect(ctx, x, sy + 96, cw, 120, 16); ctx.fillStyle = C.card; ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.stroke();
-          ctx.fillStyle = C.plum; ctx.font = "bold 44px " + FF; ctx.fillText(st[0], x + 18, sy + 150, cw - 30);
-          ctx.fillStyle = C.soft; ctx.font = "22px " + FF; ctx.fillText(st[1], x + 18, sy + 190, cw - 30);
-        });
-        y += TITLE + SUMH + GAP;
+      // 1. Kepala
+      ctx.fillStyle = C.plum; ctx.fillRect(0, 0, W, HEAD);
+      ctx.globalAlpha = 0.85; text((lembaga || "Setoran Tahfidz") + "  ·  Rapor Progres Hafalan", PAD, 58, "24px", "#ffffff"); ctx.globalAlpha = 1;
+      text(s.name, PAD, 122, "bold 54px", "#ffffff");
+      ctx.globalAlpha = 0.85; text("Per " + tgl + (pengajar ? "  ·  Pengajar: " + pengajar : ""), PAD, 166, "24px", "#ffffff"); ctx.globalAlpha = 1;
+      var y = HEAD + GAP;
 
-        [["bar", b.name + " per " + (perMonth ? "bulan" : "pekan") + " (ayat)"], ["line", "Total " + b.name + " dari waktu ke waktu (ayat)"]].forEach(function (c) {
-          ctx.fillStyle = C.plum; ctx.font = "bold 30px " + FF; ctx.textAlign = "left";
-          ctx.fillText(c[1], PAD, y + 34, CW);
-          ctx.drawImage(b[c[0]], PAD, y + TITLE, CW, chartH);
-          y += TITLE + chartH + GAP;
-        });
+      // 2. Total hafalan
+      card(PAD, y, CW, HERO);
+      var num = pgFmt(R.unique);
+      text(num, PAD + 32, y + 96, "bold 80px", C.plum);
+      ctx.font = "bold 80px " + FF; var numW = ctx.measureText(num).width;
+      text("ayat hafalan", PAD + 44 + numW, y + 96, "30px", C.ink);
+      text(pgFmt(Math.round(R.pct * 10) / 10) + "% dari " + pgFmt(QURAN_AYAT) + " ayat", PAD + CW - 32, y + 96, "26px", C.soft, "right");
+      bar(PAD + 32, y + 120, CW - 64, 18, R.pct / 100, C.plum);
+      text(pgFmt(R.surahDone) + " surah tuntas   ·   " + pgFmt(R.juzDone) + " juz tuntas   ·   " + pgFmt(R.setoranDays) + " hari setoran", PAD + 32, y + 174, "24px", C.ink, "left", CW - 64);
+      y += HERO + GAP;
 
-        ctx.fillStyle = C.plum; ctx.font = "bold 30px " + FF; ctx.textAlign = "left";
-        ctx.fillText("Sebaran nilai " + b.name + " per bulan", PAD, y + 34, CW);
-        if (b.hasGrades) {
-          ctx.drawImage(b.grade, PAD, y + TITLE, CW, chartH);
-          var legendW = CW / PG_GRADES.length;
-          PG_GRADES.forEach(function (grade, i) {
-            var lx = PAD + i * legendW;
-            ctx.fillStyle = C.grades[grade.code];
-            ctx.fillRect(lx, y + TITLE + chartH + 10, 12, 12);
-            ctx.fillStyle = C.soft; ctx.font = "16px " + FF;
-            ctx.fillText(grade.short + " = " + grade.label, lx + 18, y + TITLE + chartH + 22, legendW - 20);
-          });
-        } else {
-          ctx.fillStyle = C.soft; ctx.font = "22px " + FF;
-          ctx.fillText("Belum ada nilai tercatat.", PAD, y + TITLE + 42, CW);
-        }
-        y += TITLE + chartH + gradeLegendH + GAP;
-
-        ctx.fillStyle = C.plum; ctx.font = "bold 30px " + FF; ctx.textAlign = "left";
-        ctx.fillText("Progres per juz — " + b.name, PAD, y + 34, CW);
-        var cw2 = (CW - juzGap * (cols - 1)) / cols, jy = y + TITLE;
-        b.jst.forEach(function (j, i) {
-          var x = PAD + (i % cols) * (cw2 + juzGap), cy = jy + Math.floor(i / cols) * (juzCellH + juzGap), done = j.cnt === j.total;
-          pgRoundRect(ctx, x, cy, cw2, juzCellH, 12); ctx.fillStyle = C.card; ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.stroke();
-          ctx.fillStyle = C.ink; ctx.font = "bold 22px " + FF; ctx.textAlign = "left"; ctx.fillText("Juz " + j.juz, x + 12, cy + 28);
-          ctx.fillStyle = done ? C.good : C.soft; ctx.textAlign = "right";
-          ctx.fillText(done ? "✓" : Math.floor(j.cnt / j.total * 100) + "%", x + cw2 - 12, cy + 28);
-          ctx.textAlign = "left";
-          pgRoundRect(ctx, x + 12, cy + 38, cw2 - 24, 8, 4); ctx.fillStyle = C.tint; ctx.fill();
-          if (j.cnt > 0) { pgRoundRect(ctx, x + 12, cy + 38, Math.max((cw2 - 24) * j.cnt / j.total, 8), 8, 4); ctx.fillStyle = done ? C.good : C.plum; ctx.fill(); }
-          ctx.fillStyle = C.soft; ctx.font = "17px " + FF; ctx.fillText(j.cnt + "/" + j.total, x + 12, cy + 70, cw2 - 24);
-        });
-        y += TITLE + juzH + GAP;
+      // 3. Bulan ini
+      title("Bulan ini — " + BULAN_ID[curD.getMonth()] + " " + curD.getFullYear(), y);
+      y += TILE_T;
+      var absent = att.izin + att.sakit + att.ghoib, absentPrev = attPrev.izin + attPrev.sakit + attPrev.ghoib;
+      var absentParts = [["Izin", att.izin], ["Sakit", att.sakit], ["Ghoib", att.ghoib]].filter(function (a) { return a[1] > 0; })
+        .map(function (a) { return a[0] + " " + a[1]; }).join(" · ");
+      var bl = BULAN_PENDEK[prevD.getMonth()];
+      var tiles = [
+        [pgFmt(R.cur.thf), "ayat hafalan baru", bl + ": " + pgFmt(R.prev.thf)],
+        [pgFmt(R.cur.mur), "ayat murojaah", bl + ": " + pgFmt(R.prev.mur)],
+        [pgFmt(att.hadir), "hari hadir", bl + ": " + pgFmt(attPrev.hadir)],
+        [pgFmt(absent), "tidak hadir", absent ? absentParts : bl + ": " + pgFmt(absentPrev)]
+      ];
+      var tw = (CW - 3 * 16) / 4;
+      tiles.forEach(function (tl, i) {
+        var x = PAD + i * (tw + 16);
+        card(x, y, tw, TILE);
+        text(tl[0], x + 20, y + 62, "bold 50px", C.plum, "left", tw - 36);
+        text(tl[1], x + 20, y + 98, "22px", C.ink, "left", tw - 36);
+        text(tl[2], x + 20, y + 132, "20px", C.soft, "left", tw - 36);
       });
-      ctx.fillStyle = C.soft; ctx.font = "20px " + FF; ctx.textAlign = "left";
-      ctx.fillText("Dihitung dari rentang ayat yang dicatat; catatan Iqro tidak ikut dihitung. Juz mengikuti Mushaf Madinah (Hafs).", PAD, H - 24, CW);
-      var filename = "progres_" + s.name.replace(/\s+/g, "_") + "_" + stamp + ".png";
+      y += TILE + GAP;
+
+      // 4. Diagram 6 bulan: hafalan baru + murojaah berdampingan
+      title("6 bulan terakhir (ayat)", y);
+      [["Hafalan baru", C.plum], ["Murojaah", C.gold]].forEach(function (lg, i) {
+        var lx = PAD + CW - (i === 0 ? 330 : 150);
+        ctx.fillStyle = lg[1]; pgRoundRect(ctx, lx, y + 14, 20, 20, 5); ctx.fill();
+        text(lg[0], lx + 28, y + 32, "22px", C.ink, "left", 140);
+      });
+      y += CHART_T;
+      card(PAD, y, CW, CHART);
+      var cL = PAD + 30, cR = PAD + CW - 30, cT = y + 40, cB = y + CHART - 52, ph = cB - cT;
+      var maxv = 1; R.months.forEach(function (m) { maxv = Math.max(maxv, m.thf, m.mur); });
+      ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cL, cB + 0.5); ctx.lineTo(cR, cB + 0.5); ctx.stroke();
+      var band = (cR - cL) / R.months.length, bw = Math.min(46, band * 0.3);
+      R.months.forEach(function (m, i) {
+        var cx = cL + band * (i + 0.5);
+        [[m.thf, C.plum, -1], [m.mur, C.gold, 1]].forEach(function (b) {
+          var x = b[2] < 0 ? cx - bw - 3 : cx + 3;
+          if (b[0] > 0) {
+            var h = Math.max(b[0] / maxv * ph, 8);
+            pgRoundRect(ctx, x, cB - h, bw, h, Math.min(6, h / 2)); ctx.fillStyle = b[1]; ctx.fill();
+            text(pgFmt(b[0]), x + bw / 2, cB - h - 8, "bold 19px", C.ink, "center", band / 2);
+          }
+        });
+        text(m.label, cx, cB + 32, (i === R.months.length - 1 ? "bold " : "") + "22px", i === R.months.length - 1 ? C.ink : C.soft, "center", band);
+      });
+      y += CHART + GAP;
+
+      // 5. Peta 30 juz
+      title("Peta hafalan 30 juz", y);
+      y += JUZ_T;
+      var jw = (CW - 9 * JUZ_GAP) / 10;
+      R.juz.forEach(function (j, i) {
+        var x = PAD + (i % 10) * (jw + JUZ_GAP), cy = y + Math.floor(i / 10) * (JUZ_CELL + JUZ_GAP);
+        var frac = j.cnt / j.total, done = j.cnt === j.total;
+        pgRoundRect(ctx, x, cy, jw, JUZ_CELL, 10);
+        ctx.fillStyle = C.card; ctx.fill();
+        if (frac > 0) { ctx.globalAlpha = done ? 1 : 0.18 + 0.62 * frac; ctx.fillStyle = done ? C.good : C.plum; ctx.fill(); ctx.globalAlpha = 1; }
+        ctx.strokeStyle = C.line; ctx.lineWidth = 1.5; ctx.stroke();
+        var light = done || frac > 0.45;
+        text(String(j.juz), x + jw / 2, cy + 27, "bold 22px", light ? "#ffffff" : C.ink, "center", jw - 8);
+        text(done ? "✓" : frac > 0 ? Math.max(1, Math.floor(frac * 100)) + "%" : "", x + jw / 2, cy + 50, "18px", light ? "#ffffff" : C.soft, "center", jw - 8);
+      });
+      y += juzH + 12;
+      [[C.card, "belum"], [C.plum, "sebagian (makin gelap makin banyak)"], [C.good, "tuntas"]].forEach(function (lg, i) {
+        var lx = PAD + [0, 150, 610][i];
+        pgRoundRect(ctx, lx, y + 2, 20, 20, 5); ctx.fillStyle = lg[0]; ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 1.5; ctx.stroke();
+        text(lg[1], lx + 28, y + 19, "20px", C.soft, "left", 420);
+      });
+      y += JUZ_LEG + GAP;
+
+      // 6. Hafalan terakhir | Nilai 3 bulan
+      var colW = (CW - 32) / 2, xR = PAD + colW + 32;
+      text("Hafalan terakhir", PAD, y + 32, "bold 30px", C.plum, "left", colW);
+      text("Nilai 3 bulan terakhir", xR, y + 32, "bold 30px", C.plum, "left", colW);
+      y += LIST_T;
+      if (!R.recent.length) text("Belum ada hafalan tercatat.", PAD, y + 30, "22px", C.soft, "left", colW);
+      R.recent.forEach(function (r, i) {
+        var ry = y + i * ROW, done = r.cnt === r.total;
+        text(r.name, PAD, ry + 24, "bold 22px", C.ink, "left", colW - 150);
+        text(done ? "✓ tuntas" : r.cnt + "/" + r.total + " ayat", PAD + colW, ry + 24, "20px", done ? C.good : C.soft, "right", 150);
+        bar(PAD, ry + 34, colW, 10, r.cnt / r.total, done ? C.good : C.plum);
+      });
+      if (!gradeRows.length) text("Belum ada nilai tercatat.", xR, y + 30, "22px", C.soft, "left", colW);
+      gradeRows.forEach(function (g, i) {
+        var gy = y + i * 92, gr = R.grades[g[0]], gx = xR;
+        text(g[1] + " (" + gr.total + "×)", xR, gy + 24, "bold 22px", C.ink, "left", colW);
+        PG_GRADES.forEach(function (grade) {
+          var c = gr.counts[grade.code];
+          if (!c) return;
+          var w = colW * c / gr.total;
+          ctx.fillStyle = C.grades[grade.code]; ctx.fillRect(gx, gy + 36, w, 20);
+          if (w > 30) text(grade.short, gx + w / 2, gy + 53, "bold 16px", "#ffffff", "center", w);
+          gx += w;
+        });
+        var parts = PG_GRADES.filter(function (grade) { return gr.counts[grade.code]; }).map(function (grade) { return gr.counts[grade.code] + " " + grade.label; });
+        text(parts.join(" · "), xR, gy + 82, "18px", C.soft, "left", colW);
+      });
+      y += listH;
+
+      // 7. Tahsin terakhir
+      if (R.tahsinLast) {
+        y += GAP;
+        card(PAD, y, CW, TAHSIN);
+        var tl = "Tahsin terakhir (" + pgTglPendek(R.tahsinLast.date) + "):";
+        text(tl, PAD + 24, y + 41, "bold 22px", C.plum, "left", 360);
+        var tlW = Math.min(ctx.measureText(tl).width, 360);
+        text(R.tahsinLast.text, PAD + 24 + tlW + 14, y + 41, "22px", C.ink, "left", CW - 62 - tlW);
+        y += TAHSIN;
+      }
+
+      // Kaki
+      var note = "Dihitung dari rentang ayat yang dicatat; setoran bernilai Rasib baru dihitung setelah lulus." +
+        (R.bad ? " " + R.bad + " catatan tidak terbaca sebagai ayat." : "") + " Juz: Mushaf Madinah (Hafs).";
+      text(note, PAD, H - 40, "19px", C.soft, "left", CW);
+      text("Dibuat dengan aplikasi Setoran Tahfidz", PAD, H - 14, "17px", C.soft, "left", CW);
+
+      var filename = "progres_" + s.name.replace(/\s+/g, "_") + "_" + today + ".png";
       if (isNativeApp()) { exportImageNative(canvas, filename); pgExportBusy = false; return; }
       canvas.toBlob(function (blob) { pgExportBusy = false; saveFile(blob, filename); }, "image/png");
-    }).catch(function (err) {
+    } catch (err) {
       pgExportBusy = false;
       alert("Gagal membuat gambar: " + (err && err.message ? err.message : err));
-    });
+    }
   }
 
   document.getElementById("pgDownload").addEventListener("click", function () { pgExport(); });
