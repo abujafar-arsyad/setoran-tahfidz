@@ -19,7 +19,7 @@ Semua nama dan catatan pada gambar ini fiktif.
 
 | Santri | Setelan | Laporan bulanan (gambar) | Rapor progres (gambar) |
 | :---: | :---: | :---: | :---: |
-| <img src="docs/screenshots/santri.png" alt="Halaman Santri: daftar santri" width="200"> | <img src="docs/screenshots/setelan.png" alt="Halaman Setelan: tampilan, lembaga, dan laporan" width="200"> | <img src="docs/screenshots/laporan-gambar.png" alt="Contoh gambar laporan bulanan yang diunduh" width="230"> | <img src="docs/screenshots/rapor-progres.png" alt="Contoh rapor progres satu halaman yang diunduh" width="230"> |
+| <img src="docs/screenshots/santri.png" alt="Halaman Santri: daftar santri dikelompokkan per halaqah" width="200"> | <img src="docs/screenshots/setelan.png" alt="Halaman Setelan: tampilan, lembaga, dan laporan" width="200"> | <img src="docs/screenshots/laporan-gambar.png" alt="Contoh gambar laporan bulanan yang diunduh" width="230"> | <img src="docs/screenshots/rapor-progres.png" alt="Contoh rapor progres satu halaman yang diunduh" width="230"> |
 
 ## Fitur
 
@@ -54,13 +54,18 @@ Semua nama dan catatan pada gambar ini fiktif.
 - Bisa dilihat untuk Tahsin, Tahfidz, atau Murojaah.
 - **Unduh Progres** membuat rapor satu halaman untuk wali santri: total hafalan, perbandingan bulan ini dengan bulan lalu, kehadiran, diagram 6 bulan, peta 30 juz, hafalan terakhir, rekap nilai, dan catatan tahsin terakhir.
 
+**Kelompok halaqah**
+- Santri bisa diberi halaqah (mis. Pagi, Sore, Kelas A). Boleh dikosongkan.
+- Daftar santri dikelompokkan per halaqah, dan di bagian atas aplikasi ada pilihan halaqah untuk menyaring santri.
+- Nama halaqah ikut tercantum di laporan bulanan dan rapor progres.
+
 **Setelan dan data**
 - Mode terang, gelap, atau otomatis; lima warna tema; empat ukuran teks; halaman awal saat aplikasi dibuka.
 - Ekspor dan impor cadangan data (file JSON), plus pengingat cadangan berkala.
 
 ## Cara pakai singkat
 
-1. **Tab Santri:** tambahkan nama santri.
+1. **Tab Santri:** tambahkan nama santri, dan halaqahnya bila perlu. Ketuk ✏️ untuk mengubah nama atau halaqah.
 2. **Tab Catat:** pilih santri dan tanggal, isi rentang ayat untuk tahsin, tahfidz, atau murojaah, beri nilai bila perlu, lalu ketuk **Simpan Setoran**.
 3. **Tab Laporan:** lihat rekap bulanan. Ketuk **Unduh Laporan (Gambar)** untuk membuat gambar laporan yang bisa dikirim ke wali santri.
 4. **Tab Progres:** pantau perkembangan hafalan tiap santri. Ketuk **Unduh Progres** untuk menyimpannya sebagai gambar.
@@ -87,7 +92,7 @@ Selengkapnya: [Kebijakan Privasi](PRIVACY_POLICY.md).
 
 - **Pemilik:** Abu Ja'far Putra Arsad, pengajar tahfidz Al-Qur'an
 - **Peran saya:** menentukan fitur dan menguji aplikasi ini. Kode ditulis dengan bantuan AI.
-- **Status:** uji coba. Tersedia sebagai APK debug dan belum dirilis ke Google Play.
+- **Status:** uji coba. Tersedia sebagai APK debug dan belum dirilis ke Google Play. Bahan rilis Play Store sudah disiapkan di [docs/PLAY_STORE.md](docs/PLAY_STORE.md).
 - **Lisensi:** [MIT](LICENSE)
 
 ---
@@ -105,9 +110,12 @@ aplikasi Android dengan [Capacitor](https://capacitorjs.com/).
 
 ```
 www/index.html           # Aplikasi web (HTML + CSS + JS dalam satu file)
-tests/                   # Tes logika rentang ayat, progres, dan nilai (npm test)
+tests/                   # Tes logika rentang ayat, progres, nilai, halaqah (npm test)
+tests/ui/                # Tes tampilan otomatis lewat Chrome/Edge (npm run test:ui)
 docs/screenshots/        # Tangkapan layar untuk README
 docs/PLAY_STORE.md       # Panduan rilis ke Google Play Store
+docs/play-store/         # Ikon, feature graphic, dan screenshot untuk listing Play Store
+docs/privacy-policy.html # Kebijakan privasi versi web (GitHub Pages)
 capacitor.config.json    # Konfigurasi Capacitor (appId, appName, webDir)
 android/                 # Proyek Android native
 assets-src/              # Sumber gambar ikon & splash (generate_icon.py)
@@ -133,10 +141,24 @@ npx serve www
 ### Tes
 
 ```powershell
-npm test
+npm test          # tes logika (cepat, tanpa browser)
+npm run test:ui   # tes tampilan: membuka aplikasi di Chrome/Edge dan memakainya seperti pengguna
 ```
 
-Jalankan sebelum setiap rilis. Semua tes harus lulus.
+Jalankan keduanya sebelum setiap rilis. Semua tes harus lulus.
+
+Tes tampilan tidak butuh paket tambahan. Ia mencari Chrome, Edge, atau
+Chromium yang terpasang (perlu Node.js 22 atau lebih baru), lalu mengetuk
+layar, mengisi rentang ayat, memberi nilai, mengunduh gambar laporan
+(termasuk mengecek nomor tanggalnya), dan menguji ekspor–impor. Bila
+browser tidak ditemukan, tunjukkan lokasinya:
+
+```powershell
+$env:CHROME_PATH = "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+npm run test:ui
+```
+
+Tambahkan `$env:SHOW = "1"` untuk melihat jendela browser saat tes berjalan.
 
 ### Membuat Debug APK
 
@@ -158,8 +180,10 @@ agar perubahannya disalin ke `android/app/src/main/assets/public`.
 
 ### Alur rilis
 
-1. Naikkan versi di `android/app/build.gradle`. Polanya: `versionName "1.2.0"` → `versionCode 120`.
-2. Jalankan `npm test`, lalu build APK seperti di atas.
+1. Naikkan versi di `android/app/build.gradle`. Polanya: `versionName "1.3.0"` → `versionCode 130`.
+2. Jalankan `npm test` dan `npm run test:ui`, lalu build APK seperti di atas
+   **di PC yang biasa dipakai**, supaya APK ditandatangani dengan
+   `debug.keystore` yang sama (lihat [release-signing/README.md](release-signing/README.md)).
 3. Buat GitHub Release dengan tag `vX.Y.Z-debug` dari `main`, unggah APK
    bernama `setoran-tahfidz-vX.Y.Z-debug.apk`, dan tandai sebagai
    **Latest release** agar tautan unduh di atas ikut berpindah.
