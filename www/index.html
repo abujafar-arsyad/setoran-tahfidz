@@ -2553,7 +2553,7 @@
     if (!s) return "";
     var y = currentMonthDate.getFullYear(), m0 = currentMonthDate.getMonth();
     var t = countMonth(s.id, y, m0);
-    var lines = ["*Laporan Setoran Tahfidz*"];
+    var lines = [PG_BASMALAH, "", "*Laporan Setoran Tahfidz*"];
     if (settings.lembaga.trim()) lines.push(settings.lembaga.trim());
     lines.push(s.name + " - " + BULAN_ID[m0] + " " + y, "",
       "Hadir: " + t.hadir + " | Izin: " + t.izin + " | Sakit: " + t.sakit + " | Ghoib: " + t.ghoib);
@@ -3437,6 +3437,8 @@
   }
 
   // ---- Pesan "Kirim ke wali" (teks WhatsApp; *tebal*) ----
+  // Setiap pesan yang dibuat aplikasi diawali basmalah.
+  var PG_BASMALAH = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ";
   function pgNum(n) { return String(Math.round(n * 10) / 10).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
   function pgWaliSign(d) {
     var who = [d.pengajar, d.lembaga].map(function (x) { return String(x || "").trim(); }).filter(Boolean);
@@ -3447,7 +3449,7 @@
     var att = d.att || {}, ay = d.ayat || {};
     var absent = [["Izin", att.izin], ["Sakit", att.sakit], ["Ghoib", att.ghoib]].filter(function (a) { return a[1] > 0; })
       .map(function (a) { return a[0] + " " + a[1]; });
-    var lines = ["Assalamu'alaikum warahmatullahi wabarakatuh.", "",
+    var lines = [PG_BASMALAH, "", "Assalamu'alaikum warahmatullahi wabarakatuh.", "",
       "Berikut laporan setoran ananda *" + d.name + "* bulan *" + d.bulan + "*:",
       "• Hadir: " + pgNum(att.hadir || 0) + " hari" + (absent.length ? " (" + absent.join(", ") + ")" : "")];
     if (ay.tahfidz || ay.murojaah || ay.tahsin) {
@@ -3461,7 +3463,7 @@
   }
   // d: { name, tanggal, unique, pct, surahDone, juzDone, bulan, cur:{thf,mur}, recent:[{name,cnt,total}], pengajar, lembaga }
   function pgWaliRaporText(d) {
-    var lines = ["Assalamu'alaikum warahmatullahi wabarakatuh.", "",
+    var lines = [PG_BASMALAH, "", "Assalamu'alaikum warahmatullahi wabarakatuh.", "",
       "Berikut rapor progres hafalan ananda *" + d.name + "* per " + d.tanggal + ":",
       "• Total hafalan: " + pgNum(d.unique || 0) + " ayat (" + pgNum(Math.round((d.pct || 0) * 10) / 10) + "% dari Al-Qur'an)",
       "• Surah tuntas: " + pgNum(d.surahDone || 0) + (d.juzDone ? " · Juz tuntas: " + pgNum(d.juzDone) : "")];

@@ -324,6 +324,7 @@ t("kirim laporan & rapor ke wali: pesan siap pakai + gambar", async (H) => {
   await H.tap("#btnWali");
   await H.ev("for (let i = 0; i < 50 && !document.getElementById('waliModalBackdrop').classList.contains('show'); i++) await new Promise((r) => setTimeout(r, 100));");
   const msg = await H.ev("return document.getElementById('waliText').value;");
+  assert.ok(msg.startsWith("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ"), "pesan diawali basmalah");
   assert.match(msg, /ananda \*Ali\* bulan \*Oktober 2026\*/);
   assert.match(msg, /Hadir: 3 hari \(Izin 1\)/);
   assert.match(msg, /Hafalan baru: 50 ayat/);           // Al-Mulk 30 + An-Naba 1-20 (Rasib lalu Maqbul)

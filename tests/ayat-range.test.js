@@ -504,6 +504,7 @@ t("pesan kirim ke wali", () => {
   const lap = pgWaliLaporanText({ name: "Khalisa", bulan: "Oktober 2026", att: { hadir: 11, izin: 4, sakit: 2, ghoib: 0 },
     ayat: { tahfidz: 29, murojaah: 1412, tahsin: 0 }, nilai: ["Tahfidz: 3× Mumtaz, 1× Jayyid"], pengajar: "Ustadz Fulan", lembaga: "Ma'had Contoh" });
   assert.strictEqual(lap, [
+    "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", "",
     "Assalamu'alaikum warahmatullahi wabarakatuh.", "",
     "Berikut laporan setoran ananda *Khalisa* bulan *Oktober 2026*:",
     "• Hadir: 11 hari (Izin 4, Sakit 2)", "• Hafalan baru: 29 ayat", "• Murojaah: 1.412 ayat",
@@ -517,6 +518,7 @@ t("pesan kirim ke wali", () => {
   const rap = pgWaliRaporText({ name: "Ahmad", tanggal: "6 November 2026", unique: 352, pct: 5.645, surahDone: 31, juzDone: 0,
     bulan: "November", cur: { thf: 25, mur: 86 }, recent: [{ name: "Al-Insyiqaq", cnt: 10, total: 25 }], pengajar: "Ustadz Fulan" });
   assert.ok(rap.includes("rapor progres hafalan ananda *Ahmad* per 6 November 2026:"));
+  assert.ok(rap.startsWith("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ\n\nAssalamu'alaikum"), "rapor diawali basmalah");
   assert.ok(rap.includes("• Total hafalan: 352 ayat (5,6% dari Al-Qur'an)"));
   assert.ok(rap.includes("• Surah tuntas: 31\n"), "juz tuntas 0 tidak ditulis");
   assert.ok(rap.includes("• Bulan November: hafalan baru 25 ayat, murojaah 86 ayat"));
