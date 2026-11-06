@@ -3861,7 +3861,7 @@
       text(num, PAD + 32, y + 96, "bold 80px", C.plum);
       ctx.font = "bold 80px " + FF; var numW = ctx.measureText(num).width;
       text("ayat hafalan", PAD + 44 + numW, y + 96, "30px", C.ink);
-      text(pgFmt(Math.round(R.pct * 10) / 10) + "% dari " + pgFmt(QURAN_AYAT) + " ayat", PAD + CW - 32, y + 96, "26px", C.soft, "right");
+      text("dari " + pgFmt(QURAN_AYAT) + " ayat Al-Qur'an", PAD + CW - 32, y + 96, "26px", C.soft, "right");
       bar(PAD + 32, y + 120, CW - 64, 18, R.pct / 100, C.plum);
       text(pgFmt(R.surahDone) + " surah tuntas   ·   " + pgFmt(R.juzDone) + " juz tuntas   ·   " + pgFmt(R.setoranDays) + " hari setoran", PAD + 32, y + 174, "24px", C.ink, "left", CW - 64);
       y += HERO + GAP;
@@ -3930,7 +3930,8 @@
         ctx.strokeStyle = C.line; ctx.lineWidth = 1.5; ctx.stroke();
         var light = done || frac > 0.45;
         text(String(j.juz), x + jw / 2, cy + 27, "bold 22px", light ? "#ffffff" : C.ink, "center", jw - 8);
-        text(done ? "✓" : frac > 0 ? Math.max(1, Math.floor(frac * 100)) + "%" : "", x + jw / 2, cy + 50, "18px", light ? "#ffffff" : C.soft, "center", jw - 8);
+        // tanpa persen: jumlah ayat yang sudah hafal dari jumlah ayat juz itu
+        text(done ? "✓" : frac > 0 ? pgFmt(j.cnt) + "/" + pgFmt(j.total) : "", x + jw / 2, cy + 50, "17px", light ? "#ffffff" : C.soft, "center", jw - 8);
       });
       y += juzH + 12;
       [[C.card, "belum"], [C.plum, "sebagian (makin gelap makin banyak)"], [C.good, "tuntas"]].forEach(function (lg, i) {

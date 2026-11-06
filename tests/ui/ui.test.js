@@ -314,6 +314,13 @@ t("progres: Rasib tidak dihitung, rapor satu halaman, tema gelap tetap", async (
   assert.ok(img && img.type === "image/png", "rapor terunduh");
   assert.strictEqual(img.width, 1080);
   assert.ok(img.height < 2200, "rapor harus satu halaman ringkas, tinggi " + img.height);
+  // tidak ada tulisan persen di gambar rapor
+  const pctDrawn = await H.ev(`let found = false; const orig = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText = function (s) { if (String(s).includes("%")) found = true; return orig.apply(this, arguments); };
+    window.__b = []; document.getElementById("pgDownload").click();
+    for (let i = 0; i < 40 && !window.__dl.length; i++) await new Promise((r) => setTimeout(r, 100));
+    CanvasRenderingContext2D.prototype.fillText = orig; return found;`);
+  assert.strictEqual(pctDrawn, false, "gambar rapor tidak boleh memuat tanda %");
   assert.strictEqual(await H.ev("return document.documentElement.getAttribute('data-theme');"), "dark", "tema aplikasi kembali gelap setelah unduh");
 });
 
