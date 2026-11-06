@@ -3265,6 +3265,19 @@
     return C;
   }
 
+  // Warna kedua yang tetap kontras dengan warna utama palet. Pada palet "kurma" warna utama (coklat)
+  // dan emas hampir sama, sehingga batang Murojaah memakai warna pengganti (biru kehijauan).
+  function pgHexRgb(hex) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(hex).trim());
+    return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : null;
+  }
+  function pgContrastColor(base, preferred, fallback) {
+    var a = pgHexRgb(base), b = pgHexRgb(preferred);
+    if (!a || !b) return preferred;
+    var d = Math.sqrt(Math.pow(a[0] - b[0], 2) + Math.pow(a[1] - b[1], 2) + Math.pow(a[2] - b[2], 2));
+    return d < 60 ? fallback : preferred;
+  }
+
   function pgTglPendek(ymd) {
     var p = ymd.split("-");
     return (+p[2]) + " " + BULAN_PENDEK[+p[1] - 1];
@@ -3357,7 +3370,8 @@
 
       // 4. Diagram 6 bulan: hafalan baru + murojaah berdampingan
       title("6 bulan terakhir (ayat)", y);
-      [["Hafalan baru", C.plum], ["Murojaah", C.gold]].forEach(function (lg, i) {
+      var MUR = pgContrastColor(C.plum, C.gold, "#2f7d86");
+      [["Hafalan baru", C.plum], ["Murojaah", MUR]].forEach(function (lg, i) {
         var lx = PAD + CW - (i === 0 ? 330 : 150);
         ctx.fillStyle = lg[1]; pgRoundRect(ctx, lx, y + 14, 20, 20, 5); ctx.fill();
         text(lg[0], lx + 28, y + 32, "22px", C.ink, "left", 140);
@@ -3370,7 +3384,7 @@
       var band = (cR - cL) / R.months.length, bw = Math.min(46, band * 0.3);
       R.months.forEach(function (m, i) {
         var cx = cL + band * (i + 0.5);
-        [[m.thf, C.plum, -1], [m.mur, C.gold, 1]].forEach(function (b) {
+        [[m.thf, C.plum, -1], [m.mur, MUR, 1]].forEach(function (b) {
           var x = b[2] < 0 ? cx - bw - 3 : cx + 3;
           if (b[0] > 0) {
             var h = Math.max(b[0] / maxv * ph, 8);
