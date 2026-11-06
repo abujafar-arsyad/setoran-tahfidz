@@ -333,9 +333,27 @@ t("kirim laporan & rapor ke wali: pesan siap pakai + gambar", async (H) => {
   // guru boleh mengubah pesan sebelum mengirim
   await H.ev("const ta = document.getElementById('waliText'); ta.value = ta.value + '\\nCatatan: semangat!';");
   // browser tanpa Web Share berkas: pesan disalin, gambar diunduh
-  const img = await H.download("#waliSend");
-  assert.ok(img && img.type === "image/png", "gambar laporan ikut terkirim/terunduh");
-  assert.strictEqual(await H.ev("return document.getElementById('waliModalBackdrop').classList.contains('show');"), false);
+  await H.ev(`window.__shareDescriptors = {
+      canShare: Object.getOwnPropertyDescriptor(navigator, "canShare"),
+      share: Object.getOwnPropertyDescriptor(navigator, "share")
+    };
+    window.__shareCalls = 0;
+    Object.defineProperty(navigator, "canShare", { configurable: true, value: () => false });
+    Object.defineProperty(navigator, "share", { configurable: true, value: () => { window.__shareCalls++; return Promise.resolve(); } });`);
+  try {
+    const img = await H.download("#waliSend");
+    assert.ok(img && img.type === "image/png", "gambar laporan ikut terkirim/terunduh");
+    assert.strictEqual(await H.ev("return window.__shareCalls;"), 0, "Web Share tidak digunakan");
+    assert.strictEqual(await H.ev("return document.getElementById('waliModalBackdrop').classList.contains('show');"), false);
+  } finally {
+    await H.ev(`for (const name of ["canShare", "share"]) {
+      const descriptor = window.__shareDescriptors[name];
+      if (descriptor) Object.defineProperty(navigator, name, descriptor);
+      else delete navigator[name];
+    }
+    delete window.__shareDescriptors;
+    delete window.__shareCalls;`);
+  }
   // rapor progres
   await H.tab("progres");
   await H.tap("#pgWali");
