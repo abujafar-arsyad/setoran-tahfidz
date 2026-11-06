@@ -9,8 +9,8 @@ const pureSrc = html.slice(html.indexOf("// PG-PURE-BEGIN"), html.indexOf("// PG
 const pad2 = (n) => String(n).padStart(2, "0");
 const BULAN_ID = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 const api = new Function("pad2", "BULAN_ID", surahSrc + "\n" + pureSrc +
-  "\nreturn {SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgGradeEntryError, pgNormalizeEntryGrades, pgNormalizeEntries, pgRapor, pgMonthAyat, pgCleanHalaqah, pgHalaqahNames, pgGroupStudents, pgNormalizeStudents, PG_NO_HALAQAH, pgWaliLaporanText, pgWaliRaporText};")(pad2, BULAN_ID);
-const { SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgGradeEntryError, pgNormalizeEntryGrades, pgNormalizeEntries, pgRapor, pgMonthAyat, pgCleanHalaqah, pgHalaqahNames, pgGroupStudents, pgNormalizeStudents, PG_NO_HALAQAH, pgWaliLaporanText, pgWaliRaporText } = api;
+  "\nreturn {SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgGradeEntryError, pgNormalizeEntryGrades, pgNormalizeEntries, pgRapor, pgMonthAyat, pgCleanHalaqah, pgHalaqahNames, pgGroupStudents, pgNormalizeStudents, PG_NO_HALAQAH, pgWaliLaporanText, pgWaliRaporText, pgFillTemplate, pgWaliLaporanVals, pgWaliRaporVals, PG_WALI_TPL, PG_WALI_FIELDS, pgMonthHafalan, pgDescribeCoverage};")(pad2, BULAN_ID);
+const { SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgGradeEntryError, pgNormalizeEntryGrades, pgNormalizeEntries, pgRapor, pgMonthAyat, pgCleanHalaqah, pgHalaqahNames, pgGroupStudents, pgNormalizeStudents, PG_NO_HALAQAH, pgWaliLaporanText, pgWaliRaporText, pgFillTemplate, pgWaliLaporanVals, pgWaliRaporVals, PG_WALI_TPL, PG_WALI_FIELDS, pgMonthHafalan, pgDescribeCoverage } = api;
 
 const idx = (n) => pgSurahIndex(n);
 const BAQ = idx("Al-Baqarah"), IMR = idx("Ali 'Imran"), NIS = idx("An-Nisa"), NAS = idx("An-Nas"), FAT = idx("Al-Fatihah");
@@ -500,29 +500,82 @@ t("kelompok halaqah", () => {
   assert.deepStrictEqual(n, [{ id: "a", name: "A", createdAt: 1, halaqah: "Pagi" }, { id: "b", name: "B" }, { id: "c", name: "C" }]);
   assert.deepStrictEqual(pgNormalizeStudents(undefined), []);
 });
-t("pesan kirim ke wali", () => {
-  const lap = pgWaliLaporanText({ name: "Khalisa", bulan: "Oktober 2026", att: { hadir: 11, izin: 4, sakit: 2, ghoib: 0 },
+t("pesan kirim ke wali (template bawaan, tanpa tanda *)", () => {
+  const B = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ";
+  // tanpa uraian surah (d.bulanan) jatuh ke jumlah ayat
+  const lap = pgWaliLaporanText({ name: "Fulan", bulan: "Oktober 2026", att: { hadir: 11, izin: 4, sakit: 2, ghoib: 0 },
     ayat: { tahfidz: 29, murojaah: 1412, tahsin: 0 }, nilai: ["Tahfidz: 3× Mumtaz, 1× Jayyid"], pengajar: "Ustadz Fulan", lembaga: "Ma'had Contoh" });
-  assert.strictEqual(lap, [
-    "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", "",
+  assert.strictEqual(lap, [B, "",
     "Assalamu'alaikum warahmatullahi wabarakatuh.", "",
-    "Berikut laporan setoran ananda *Khalisa* bulan *Oktober 2026*:",
+    "Berikut laporan setoran ananda Fulan bulan Oktober 2026:",
     "• Hadir: 11 hari (Izin 4, Sakit 2)", "• Hafalan baru: 29 ayat", "• Murojaah: 1.412 ayat",
     "• Nilai Tahfidz: 3× Mumtaz, 1× Jayyid", "", "Laporan lengkap ada di gambar terlampir.", "",
-    "Jazakumullahu khairan.", "— Ustadz Fulan, Ma'had Contoh"].join("\n"));
-  // tanpa setoran ayat, tanpa izin, tanpa pengajar/lembaga
+    "Jazakumullahu khairan.", "— Ustadz Fulan"].join("\n"));
+  assert.ok(!lap.includes("*"), "tanpa tanda bintang");
+  // tanpa izin, tanpa tahsin/nilai, tanpa pengajar: baris kosong dibuang
   const kosong = pgWaliLaporanText({ name: "A", bulan: "Mei 2026", att: { hadir: 2, izin: 0, sakit: 0, ghoib: 0 }, ayat: { tahfidz: 0, murojaah: 0, tahsin: 0 } });
   assert.ok(kosong.includes("• Hadir: 2 hari\n"));
-  assert.ok(!kosong.includes("Hafalan baru") && !kosong.includes("—"));
+  assert.ok(kosong.includes("• Hafalan baru: belum ada\n• Murojaah: belum ada\n"));
+  assert.ok(!kosong.includes("Tahsin") && !kosong.includes("Nilai") && !kosong.includes("—"));
   assert.ok(kosong.endsWith("Jazakumullahu khairan."));
-  const rap = pgWaliRaporText({ name: "Ahmad", tanggal: "6 November 2026", unique: 352, pct: 5.645, surahDone: 31, juzDone: 0,
-    bulan: "November", cur: { thf: 25, mur: 86 }, recent: [{ name: "Al-Insyiqaq", cnt: 10, total: 25 }], pengajar: "Ustadz Fulan" });
-  assert.ok(rap.includes("rapor progres hafalan ananda *Ahmad* per 6 November 2026:"));
-  assert.ok(rap.startsWith("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ\n\nAssalamu'alaikum"), "rapor diawali basmalah");
-  assert.ok(rap.includes("• Total hafalan: 352 ayat (5,6% dari Al-Qur'an)"));
-  assert.ok(rap.includes("• Surah tuntas: 31\n"), "juz tuntas 0 tidak ditulis");
-  assert.ok(rap.includes("• Bulan November: hafalan baru 25 ayat, murojaah 86 ayat"));
-  assert.ok(rap.includes("• Hafalan terakhir: Al-Insyiqaq (10/25 ayat)"));
-  assert.ok(rap.endsWith("— Ustadz Fulan"));
+  assert.ok(!/\n\n\n/.test(kosong), "tidak ada baris kosong berlebih");
+  // rapor dari data sungguhan: hafalan disebut per surah, tanpa persentase
+  const ents = {
+    "2026-09-22": { tahsin: "", tahfidz: "Al-Qadr 1-5", murojaah: "", keterangan: "" },
+    "2026-10-06": { tahsin: "Al-Baqarah 106-109", tahfidz: "Al-Bayyinah 1-8", murojaah: "An-Nas 1-6; Al-Falaq 1-5", keterangan: "" },
+    "2026-11-02": { tahsin: "Iqro 5 hal 2", tahfidz: "Al-Alaq 1-4", murojaah: "Al-Qadr 1-5; Al-Bayyinah 1-8", keterangan: "" },
+    "2026-11-03": { tahsin: "", tahfidz: "Al-Alaq 5-6", murojaah: "", keterangan: "" }
+  };
+  const R = pgRapor(ents, "2026-11-06");
+  const rap = pgWaliRaporText({ name: "Amr", tanggal: "6 November 2026", unique: R.unique, surahDone: R.surahDone, juzDone: R.juzDone,
+    bulan: "November", cur: R.cur, recent: R.recent, hafalan: R.hafalan, bulanIni: R.bulanIni, pengajar: "Ustadz Fulan" });
+  assert.strictEqual(rap, [B, "", "Assalamu'alaikum warahmatullahi wabarakatuh.", "",
+    "Berikut rapor progres hafalan ananda Amr per 6 November 2026.", "",
+    "Alhamdulillah, ananda sudah hafal 2 surah dan 6 ayat, yaitu Al-'Alaq ayat 1–6, Al-Qadr, dan Al-Bayyinah.", "",
+    "Bulan November:", "• Hafalan baru: Al-'Alaq ayat 1–6 (6 ayat)", "• Murojaah: Al-Qadr dan Al-Bayyinah (13 ayat)", "",
+    "Rapor lengkap ada di gambar terlampir.", "", "Jazakumullahu khairan.", "— Ustadz Fulan"].join("\n"));
+  assert.ok(!rap.includes("%") && !rap.includes("*"));
+  // laporan bulanan dengan uraian surah; tahsin ayat dan Iqro
+  const okt = pgWaliLaporanText({ name: "Amr", bulan: "Oktober 2026", att: { hadir: 1 }, bulanan: pgMonthHafalan(ents, 2026, 9) });
+  assert.ok(okt.includes("• Hafalan baru: Al-Bayyinah (8 ayat)\n• Murojaah: Al-Falaq dan An-Nas (11 ayat)\n• Tahsin: Al-Baqarah ayat 106–109 (4 ayat)"));
+  const nov = pgWaliLaporanText({ name: "Amr", bulan: "November 2026", att: { hadir: 2 }, bulanan: pgMonthHafalan(ents, 2026, 10) });
+  assert.ok(nov.includes("• Tahsin: Iqro 5 hal 2"), "tahsin Iqro ditulis apa adanya");
 });
+t("uraian hafalan per surah dan juz", () => {
+  // An-Naba (78) s.d. An-Nas (114) = Juz 30 penuh, ditambah Al-Mulk 1-10
+  const ents = { "2026-10-01": { tahfidz: "An-Naba 1 → An-Nas 6; Al-Mulk 1-10", murojaah: "", tahsin: "", keterangan: "" } };
+  const R = pgRapor(ents, "2026-11-06");
+  assert.strictEqual(R.hafalan.text, "Al-Mulk ayat 1–10 dan Juz 30");
+  assert.strictEqual(R.hafalan.jumlah, "37 surah dan 10 ayat");
+  // ayat yang tidak bersambung
+  const R2 = pgRapor({ "2026-10-01": { tahfidz: "Al-Baqarah 1-5; Al-Baqarah 10; Al-Baqarah 12-20", murojaah: "", tahsin: "", keterangan: "" } }, "2026-11-06");
+  assert.strictEqual(R2.hafalan.text, "Al-Baqarah ayat 1–5, 10, 12–20");
+  assert.strictEqual(R2.hafalan.jumlah, "15 ayat");
+  // tanpa hafalan: kalimat "sudah hafal" tidak ditampilkan
+  const R3 = pgRapor({}, "2026-11-06");
+  const txt = pgWaliRaporText({ name: "X", tanggal: "6 November 2026", bulan: "November", hafalan: R3.hafalan, bulanIni: R3.bulanIni });
+  assert.ok(!txt.includes("sudah hafal") && txt.includes("• Hafalan baru: belum ada"));
+});
+t("template pesan wali buatan sendiri", () => {
+  const d = { name: "Fulan", bulan: "Oktober 2026", att: { hadir: 9, izin: 0, sakit: 1, ghoib: 0 }, ayat: { tahfidz: 12, murojaah: 40, tahsin: 0 }, pengajar: "" };
+  const tpl = "Salam, ini laporan {nama} ({bulan}).\r\nHadir {hadir} hari{izin_sakit}.\nTahsin: {tahsin}\nKalimat {tidak_dikenal} tetap.\n\n\n\nTtd. {pengajar}\nWassalam";
+  assert.strictEqual(pgWaliLaporanText(d, tpl),
+    "Salam, ini laporan Fulan (Oktober 2026).\nHadir 9 hari (Sakit 1).\nKalimat {tidak_dikenal} tetap.\n\nWassalam");
+  // template kosong/spasi = bawaan
+  assert.strictEqual(pgWaliLaporanText(d, "   "), pgWaliLaporanText(d));
+  // baris dengan beberapa isian tetap tampil bila salah satunya terisi
+  assert.strictEqual(pgFillTemplate("{a}{b} x", { a: "", b: "1" }), "1 x");
+  assert.strictEqual(pgFillTemplate("{a}{b} x\nlain", { a: "", b: "" }), "lain");
+  // semua isian yang ditawarkan di Setelan memang dikenal pembuat pesan
+  const vl = pgWaliLaporanVals(d), vr = pgWaliRaporVals({});
+  PG_WALI_FIELDS.laporan.forEach(([k]) => assert.ok(k in vl, "isian laporan " + k));
+  PG_WALI_FIELDS.rapor.forEach(([k]) => assert.ok(k in vr, "isian rapor " + k));
+  // template bawaan hanya memakai isian yang dikenal
+  for (const kind of ["laporan", "rapor"]) {
+    const keys = (PG_WALI_TPL[kind].match(/\{([a-z_]+)\}/g) || []).map((x) => x.slice(1, -1));
+    const ok = kind === "laporan" ? vl : vr;
+    keys.forEach((k) => assert.ok(k in ok, kind + ": " + k));
+  }
+});
+
 console.log(n + " tests passed");

@@ -55,8 +55,11 @@ Semua nama dan catatan pada gambar ini fiktif.
 - **Unduh Progres** membuat rapor satu halaman untuk wali santri: total hafalan, perbandingan bulan ini dengan bulan lalu, kehadiran, diagram 6 bulan, peta 30 juz, hafalan terakhir, rekap nilai, dan catatan tahsin terakhir.
 
 **Kirim ke wali**
-- Tombol **Kirim Laporan ke Wali** (tab Laporan) dan **Kirim Rapor ke Wali** (tab Progres) membagikan gambar laporan/rapor **bersama pesan pembuka** yang sudah tersusun: salam, kehadiran, hafalan baru, murojaah, nilai, dan nama pengajar.
+- Tombol **Kirim Laporan ke Wali** (tab Laporan) dan **Kirim Rapor ke Wali** (tab Progres) membagikan gambar laporan/rapor **bersama pesan pembuka** yang sudah tersusun: basmalah, salam, kehadiran, hafalan baru, murojaah, nilai, dan nama pengajar.
+- Hafalan disebut **per surah**, bukan hanya jumlah ayat. Contoh: *"Alhamdulillah, ananda sudah hafal 2 surah dan 6 ayat, yaitu Al-'Alaq ayat 1–6, Al-Qadr, dan Al-Bayyinah."* Juz yang sudah tuntas ditulis singkat, mis. "Juz 30".
 - Pesan bisa diubah dulu, lalu pilih WhatsApp dan kontak wali. WhatsApp memakai pesan itu sebagai keterangan gambar.
+- **Template pesan bisa diedit dan tersimpan** di **Setelan → Pesan untuk wali** (terpisah untuk laporan bulanan dan rapor progres). Isian seperti `{nama}`, `{hafalan_baru}`, atau `{daftar_hafalan}` disisipkan dengan sekali ketuk, ada pratinjau dengan contoh santri "Fulan", dan bisa dikembalikan ke template bawaan.
+- Nama di akhir pesan diambil dari **Setelan → Nama pengajar**.
 
 **Kelompok halaqah (opsional)**
 - Mati secara bawaan. Nyalakan di **Setelan → Pencatatan → Kelompok halaqah** bila lembaga Anda punya beberapa kelompok. Bila dimatikan lagi, halaqah hanya disembunyikan dan tetap tersimpan.
