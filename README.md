@@ -7,7 +7,7 @@ kelancaran, laporan bulanan, dan diagram progres hafalan.
 Aplikasi berjalan **sepenuhnya offline**. Tidak perlu akun, tidak ada iklan,
 dan data tidak pernah dikirim ke server mana pun.
 
-**[⬇️ Unduh APK terbaru](https://github.com/abujafar-arsyad/setoran-tahfidz/releases/latest)** · versi saat ini: 1.2.0 (uji coba) · [Riwayat rilis](https://github.com/abujafar-arsyad/setoran-tahfidz/releases)
+**[⬇️ Unduh APK terbaru](https://github.com/abujafar-arsyad/setoran-tahfidz/releases/latest)** · versi uji coba · [Riwayat rilis](https://github.com/abujafar-arsyad/setoran-tahfidz/releases)
 
 ## Tangkapan layar
 
@@ -17,9 +17,9 @@ Semua nama dan catatan pada gambar ini fiktif.
 | :---: | :---: | :---: | :---: |
 | <img src="docs/screenshots/catat.png" alt="Halaman Catat: rentang ayat dan nilai kelancaran" width="200"> | <img src="docs/screenshots/laporan.png" alt="Halaman Laporan: tabel bulanan dengan label nilai" width="200"> | <img src="docs/screenshots/progres.png" alt="Halaman Progres: ringkasan dan diagram hafalan per bulan" width="200"> | <img src="docs/screenshots/progres-nilai.png" alt="Halaman Progres: sebaran nilai per bulan dan progres per juz" width="200"> |
 
-| Santri | Setelan | Gambar laporan (untuk wali santri) |
-| :---: | :---: | :---: |
-| <img src="docs/screenshots/santri.png" alt="Halaman Santri: daftar santri" width="200"> | <img src="docs/screenshots/setelan.png" alt="Halaman Setelan: tampilan, lembaga, dan laporan" width="200"> | <img src="docs/screenshots/laporan-gambar.png" alt="Contoh gambar laporan bulanan yang diunduh" width="300"> |
+| Santri | Setelan | Laporan bulanan (gambar) | Rapor progres (gambar) |
+| :---: | :---: | :---: | :---: |
+| <img src="docs/screenshots/santri.png" alt="Halaman Santri: daftar santri" width="200"> | <img src="docs/screenshots/setelan.png" alt="Halaman Setelan: tampilan, lembaga, dan laporan" width="200"> | <img src="docs/screenshots/laporan-gambar.png" alt="Contoh gambar laporan bulanan yang diunduh" width="230"> | <img src="docs/screenshots/rapor-progres.png" alt="Contoh rapor progres satu halaman yang diunduh" width="230"> |
 
 ## Fitur
 
@@ -45,13 +45,14 @@ Semua nama dan catatan pada gambar ini fiktif.
 
 **Laporan bulanan**
 - Tabel per bulan dengan total Hadir, Izin, Sakit, dan Ghoib. Ketuk satu hari untuk mengedit.
-- Unduh sebagai gambar untuk dikirim ke wali santri, lengkap dengan nama lembaga, nama pengajar, rekap nilai, dan watermark lembaga (opsional).
+- Unduh sebagai gambar untuk dikirim ke wali santri, lengkap dengan nama lembaga, nama pengajar, ringkasan ayat bulan itu (hafalan baru, murojaah, tahsin), rekap nilai, dan watermark lembaga (opsional).
 
 **Progres hafalan**
 - Ringkasan per santri: ayat tercatat dari 6.236 ayat, surah tuntas, hari setoran, dan rata-rata ayat per hari.
 - Diagram hafalan baru per pekan atau per bulan, total dari waktu ke waktu, dan sebaran nilai per bulan.
 - Progres per surah dan per juz (30 juz, Mushaf Madinah riwayat Hafs).
-- Bisa dilihat untuk Tahsin, Tahfidz, atau Murojaah, dan diunduh sebagai satu gambar.
+- Bisa dilihat untuk Tahsin, Tahfidz, atau Murojaah.
+- **Unduh Progres** membuat rapor satu halaman untuk wali santri: total hafalan, perbandingan bulan ini dengan bulan lalu, kehadiran, diagram 6 bulan, peta 30 juz, hafalan terakhir, rekap nilai, dan catatan tahsin terakhir.
 
 **Setelan dan data**
 - Mode terang, gelap, atau otomatis; lima warna tema; empat ukuran teks; halaman awal saat aplikasi dibuka.
