@@ -1,6 +1,9 @@
 # Kebijakan Privasi — Setoran Tahfidz
 
-*Berlaku sejak: 4 November 2026*
+*Berlaku sejak: 4 November 2026 · diperbarui 6 November 2026*
+
+Versi halaman web: https://abujafar-arsyad.github.io/setoran-tahfidz/privacy-policy.html
+(isi `docs/privacy-policy.html` harus selalu sama dengan file ini).
 
 **Setoran Tahfidz** adalah aplikasi pencatat hafalan Al-Qur'an yang berjalan
 sepenuhnya secara **offline** di perangkat Anda.
@@ -14,14 +17,18 @@ menyertakan SDK analitik, iklan, atau pelacak pihak ketiga.
 
 ## Penyimpanan Data
 
-Seluruh data yang Anda masukkan (misalnya catatan setoran hafalan, progres,
-dan pengaturan) disimpan **hanya di perangkat Anda sendiri**, menggunakan
-mekanisme penyimpanan lokal browser/WebView (`localStorage`). Data tersebut:
+Seluruh data yang Anda masukkan (misalnya nama santri dan halaqah, catatan
+setoran, nilai, dan pengaturan) disimpan **hanya di perangkat Anda sendiri**,
+menggunakan penyimpanan lokal WebView (`localStorage`). Data tersebut:
 
-- Tidak pernah meninggalkan perangkat Anda.
-- Tidak dapat diakses oleh pengembang aplikasi.
+- Tidak pernah dikirim ke server dan tidak dapat diakses oleh pengembang aplikasi.
+- Tidak ikut dicadangkan otomatis oleh Android (cadangan otomatis dimatikan).
 - Akan terhapus jika Anda menghapus data aplikasi (clear app data) atau
   meng-uninstall aplikasi.
+
+Data hanya keluar dari perangkat bila **Anda sendiri** memilih mengekspor file
+cadangan atau membagikan gambar laporan/rapor lewat menu bagikan Android. File
+tersebut dikirim ke aplikasi atau tujuan yang Anda pilih, bukan ke pengembang.
 
 ## Izin Aplikasi
 
@@ -34,6 +41,11 @@ yang otomatis diberikan oleh sistem Android untuk menjalankan aplikasi.
 Aplikasi ini tidak mengintegrasikan layanan pihak ketiga manapun (tidak ada
 Google Analytics, Firebase, AdMob, atau layanan sejenis).
 
+## Anak-anak
+
+Aplikasi ini ditujukan untuk guru/pengajar. Nama santri yang dicatat guru hanya
+tersimpan di perangkat guru dan tidak dikirim ke mana pun.
+
 ## Perubahan pada Kebijakan Ini
 
 Jika kebijakan privasi ini berubah di masa depan (misalnya karena
@@ -43,7 +55,8 @@ di listing aplikasi pada Google Play Store.
 ## Kontak
 
 Jika Anda memiliki pertanyaan tentang kebijakan privasi ini, silakan hubungi
-pengembang melalui repository GitHub proyek ini.
+pengembang melalui halaman Issues repository GitHub proyek ini:
+https://github.com/abujafar-arsyad/setoran-tahfidz/issues
 
 ---
 
@@ -51,7 +64,9 @@ pengembang melalui repository GitHub proyek ini.
 
 Setoran Tahfidz is an offline-only Qur'an memorization tracker. It collects
 **no data whatsoever**. All information you enter is stored exclusively in
-your device's local storage (`localStorage`) and never leaves your device,
-is never transmitted to any server, and cannot be accessed by the developer.
+your device's local storage (`localStorage`), is never transmitted to any
+server, is excluded from Android auto-backup, and cannot be accessed by the
+developer. Data leaves the device only when you yourself export a backup file
+or share a report image.
 The app requests no special permissions and includes no third-party
 analytics, ads, or trackers.

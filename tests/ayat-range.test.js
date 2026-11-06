@@ -9,8 +9,8 @@ const pureSrc = html.slice(html.indexOf("// PG-PURE-BEGIN"), html.indexOf("// PG
 const pad2 = (n) => String(n).padStart(2, "0");
 const BULAN_ID = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 const api = new Function("pad2", "BULAN_ID", surahSrc + "\n" + pureSrc +
-  "\nreturn {SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgGradeEntryError, pgNormalizeEntryGrades, pgNormalizeEntries, pgRapor, pgMonthAyat};")(pad2, BULAN_ID);
-const { SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgGradeEntryError, pgNormalizeEntryGrades, pgNormalizeEntries, pgRapor, pgMonthAyat } = api;
+  "\nreturn {SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgGradeEntryError, pgNormalizeEntryGrades, pgNormalizeEntries, pgRapor, pgMonthAyat, pgCleanHalaqah, pgHalaqahNames, pgGroupStudents, pgNormalizeStudents, PG_NO_HALAQAH, pgWaliLaporanText, pgWaliRaporText};")(pad2, BULAN_ID);
+const { SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgGradeEntryError, pgNormalizeEntryGrades, pgNormalizeEntries, pgRapor, pgMonthAyat, pgCleanHalaqah, pgHalaqahNames, pgGroupStudents, pgNormalizeStudents, PG_NO_HALAQAH, pgWaliLaporanText, pgWaliRaporText } = api;
 
 const idx = (n) => pgSurahIndex(n);
 const BAQ = idx("Al-Baqarah"), IMR = idx("Ali 'Imran"), NIS = idx("An-Nisa"), NAS = idx("An-Nas"), FAT = idx("Al-Fatihah");
@@ -421,7 +421,7 @@ t("menolak nilai tanpa setoran di Catat dan dialog Laporan", () => {
 });
 t("teks laporan bernilai membungkus utuh dan badge disisihkan di kanan atas", () => {
   const start = html.indexOf("  function drawFitted(");
-  const end = html.indexOf("\n  function exportReport()", start);
+  const end = html.indexOf("\n  function exportReport(", start);
   assert.ok(start >= 0 && end > start);
   const drawFitted = new Function("ARABIC_RE", "FONT_FAMILY",
     html.slice(start, end) + "\nreturn drawFitted;")(/[\u0600-\u06FF]/, "Arial");
@@ -477,5 +477,52 @@ t("ringkasan ayat laporan bulanan", () => {
   assert.deepStrictEqual(pgMonthAyat(ents, 2026, 9), { tahfidz: 10, murojaah: 17, tahsin: 4 });
   assert.deepStrictEqual(pgMonthAyat(ents, 2026, 10), { tahfidz: 5, murojaah: 0, tahsin: 0 });
   assert.deepStrictEqual(pgMonthAyat({}, 2026, 9), { tahfidz: 0, murojaah: 0, tahsin: 0 });
+});
+t("kelompok halaqah", () => {
+  assert.strictEqual(pgCleanHalaqah("  Kelas   A  "), "Kelas A");
+  assert.strictEqual(pgCleanHalaqah(5), "");
+  const st = [
+    { id: "a", name: "Ali", halaqah: "Sore" }, { id: "b", name: "Badr", halaqah: "pagi" }, { id: "c", name: "Cici" },
+    { id: "d", name: "Dina", halaqah: "Pagi" }, { id: "e", name: "Eko", halaqah: "Kelas 10" }, { id: "f", name: "Fai", halaqah: "Kelas 2" }
+  ];
+  // unik tanpa beda huruf besar/kecil (ejaan pertama dipakai), urutan alami angka
+  assert.deepStrictEqual(pgHalaqahNames(st), ["Kelas 2", "Kelas 10", "pagi", "Sore"]);
+  const g = pgGroupStudents(st, "");
+  assert.deepStrictEqual(g.map((x) => [x.name, x.students.map((s) => s.id).join("")]),
+    [["Kelas 2", "f"], ["Kelas 10", "e"], ["pagi", "bd"], ["Sore", "a"], ["", "c"]]);
+  assert.deepStrictEqual(pgGroupStudents(st, "PAGI").map((x) => x.students.map((s) => s.id).join("")), ["bd"]);
+  assert.deepStrictEqual(pgGroupStudents(st, PG_NO_HALAQAH).map((x) => x.students.map((s) => s.id).join("")), ["c"]);
+  assert.deepStrictEqual(pgGroupStudents(st, "Tidak ada"), []);
+  // tanpa halaqah sama sekali: satu kelompok tanpa nama berisi semua santri
+  assert.deepStrictEqual(pgGroupStudents([{ id: "x", name: "X" }], "").map((x) => x.name), [""]);
+  // normalisasi data lama/impor: field lain tetap, halaqah kosong/bukan teks dibuang
+  const n = pgNormalizeStudents([{ id: "a", name: "A", createdAt: 1, halaqah: "  Pagi " }, { id: "b", name: "B", halaqah: 7 }, null, "rusak", { id: "c", name: "C", halaqah: "" }]);
+  assert.deepStrictEqual(n, [{ id: "a", name: "A", createdAt: 1, halaqah: "Pagi" }, { id: "b", name: "B" }, { id: "c", name: "C" }]);
+  assert.deepStrictEqual(pgNormalizeStudents(undefined), []);
+});
+t("pesan kirim ke wali", () => {
+  const lap = pgWaliLaporanText({ name: "Khalisa", bulan: "Oktober 2026", att: { hadir: 11, izin: 4, sakit: 2, ghoib: 0 },
+    ayat: { tahfidz: 29, murojaah: 1412, tahsin: 0 }, nilai: ["Tahfidz: 3× Mumtaz, 1× Jayyid"], pengajar: "Ustadz Fulan", lembaga: "Ma'had Contoh" });
+  assert.strictEqual(lap, [
+    "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", "",
+    "Assalamu'alaikum warahmatullahi wabarakatuh.", "",
+    "Berikut laporan setoran ananda *Khalisa* bulan *Oktober 2026*:",
+    "• Hadir: 11 hari (Izin 4, Sakit 2)", "• Hafalan baru: 29 ayat", "• Murojaah: 1.412 ayat",
+    "• Nilai Tahfidz: 3× Mumtaz, 1× Jayyid", "", "Laporan lengkap ada di gambar terlampir.", "",
+    "Jazakumullahu khairan.", "— Ustadz Fulan, Ma'had Contoh"].join("\n"));
+  // tanpa setoran ayat, tanpa izin, tanpa pengajar/lembaga
+  const kosong = pgWaliLaporanText({ name: "A", bulan: "Mei 2026", att: { hadir: 2, izin: 0, sakit: 0, ghoib: 0 }, ayat: { tahfidz: 0, murojaah: 0, tahsin: 0 } });
+  assert.ok(kosong.includes("• Hadir: 2 hari\n"));
+  assert.ok(!kosong.includes("Hafalan baru") && !kosong.includes("—"));
+  assert.ok(kosong.endsWith("Jazakumullahu khairan."));
+  const rap = pgWaliRaporText({ name: "Ahmad", tanggal: "6 November 2026", unique: 352, pct: 5.645, surahDone: 31, juzDone: 0,
+    bulan: "November", cur: { thf: 25, mur: 86 }, recent: [{ name: "Al-Insyiqaq", cnt: 10, total: 25 }], pengajar: "Ustadz Fulan" });
+  assert.ok(rap.includes("rapor progres hafalan ananda *Ahmad* per 6 November 2026:"));
+  assert.ok(rap.startsWith("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ\n\nAssalamu'alaikum"), "rapor diawali basmalah");
+  assert.ok(rap.includes("• Total hafalan: 352 ayat (5,6% dari Al-Qur'an)"));
+  assert.ok(rap.includes("• Surah tuntas: 31\n"), "juz tuntas 0 tidak ditulis");
+  assert.ok(rap.includes("• Bulan November: hafalan baru 25 ayat, murojaah 86 ayat"));
+  assert.ok(rap.includes("• Hafalan terakhir: Al-Insyiqaq (10/25 ayat)"));
+  assert.ok(rap.endsWith("— Ustadz Fulan"));
 });
 console.log(n + " tests passed");

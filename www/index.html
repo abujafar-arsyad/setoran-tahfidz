@@ -132,7 +132,21 @@
     padding: 10px 12px;
     font-size: 15px;
   }
-  select#studentSelect option { color: #1a1020; }
+  select#studentSelect option, select#studentSelect optgroup,
+  select#halaqahSelect option { color: #1a1020; }
+  select#halaqahSelect {
+    flex: 0 1 38%; min-width: 0; appearance: none;
+    background: rgba(255,255,255,0.10); color: #fff;
+    border: 1px solid rgba(255,255,255,0.35); border-radius: 12px;
+    padding: 10px 12px; font-size: 14px;
+  }
+  select#halaqahSelect[hidden] { display: none; }
+  ul.student-list li.halaqah-head {
+    display: block; padding: 14px 2px 6px; border-bottom: 2px solid var(--line);
+    font-size: 13px; font-weight: 700; letter-spacing: .02em; color: var(--plum); text-transform: uppercase;
+  }
+  ul.student-list li.halaqah-head:first-child { padding-top: 2px; }
+  ul.student-list li.halaqah-head span { color: var(--ink-soft); font-weight: 600; text-transform: none; letter-spacing: 0; }
 
   main { flex: 1; padding: 16px 16px 96px; max-width: 640px; margin: 0 auto; width: 100%; }
   .empty-hint {
@@ -195,6 +209,8 @@
     font-family: inherit;
   }
   textarea { resize: vertical; min-height: 46px; }
+  .wali-preview { display: block; max-width: 100%; max-height: 210px; margin: 0 auto 12px; border-radius: 10px; border: 1px solid var(--line); background: #fff; }
+  #waliText { min-height: 210px; font-size: 14px; line-height: 1.45; }
   input:focus, textarea:focus, select:focus { outline: 2px solid var(--plum); outline-offset: 1px; }
 
   .btn {
@@ -441,6 +457,7 @@
   .no-ar .top-ar{display:none}
   input[type="text"], input[type="date"], textarea{font-size:calc(15px*var(--fs))}
   select#studentSelect{font-size:calc(15px*var(--fs))}
+  select#halaqahSelect{font-size:calc(14px*var(--fs))}
   .btn{font-size:calc(15px*var(--fs))}
   .field label{font-size:calc(12.5px*var(--fs))}
   .card h2,.month-nav h2{font-size:calc(16px*var(--fs))}
@@ -535,7 +552,8 @@
     </div>
     <div class="top-sub" id="lembagaLine">Catatan tahsin &middot; tahfidz &middot; murojaah harian</div>
     <div class="student-picker">
-      <select id="studentSelect"></select>
+      <select id="halaqahSelect" aria-label="Pilih halaqah" hidden></select>
+      <select id="studentSelect" aria-label="Pilih santri"></select>
     </div>
   </header>
 
@@ -596,6 +614,12 @@
         <label for="newStudentName">Nama santri</label>
         <input type="text" id="newStudentName" placeholder="Nama santri" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false">
       </div>
+      <div class="field" id="newHalaqahField">
+        <label for="newStudentHalaqah">Halaqah (opsional)</label>
+        <input type="text" id="newStudentHalaqah" list="halaqahNames" maxlength="40" placeholder="mis. Pagi, Sore, Kelas A" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false">
+        <div class="rng-hint" style="margin:6px 0 0">Untuk mengelompokkan santri. Boleh dikosongkan.</div>
+      </div>
+      <datalist id="halaqahNames"></datalist>
       <button class="btn btn-primary" id="btnAddStudent" style="width:100%;">Tambah</button>
       </div>
       <div class="card">
@@ -667,6 +691,7 @@
           <button type="button" class="btn btn-ghost" id="pgMore" style="width:100%; display:none;">Tampilkan semua surah</button>
         </div>
         <button type="button" class="btn btn-ghost" id="pgDownload" style="width:100%; margin-top:12px;">⬇️ Unduh Progres</button>
+        <button type="button" class="btn btn-primary" id="pgWali" style="width:100%; margin-top:10px;">📨 Kirim Rapor ke Wali</button>
         <p class="pg-note" id="pgNote"></p>
       </div>
     </section>
@@ -737,6 +762,7 @@
         <h2>Pencatatan</h2>
         <label class="toggle-row"><span><b>Saran nama surah</b><small>Muncul saat mengetik di kolom tahsin, tahfidz, dan murojaah.</small></span><input type="checkbox" class="sw" role="switch" data-key="suggest"></label>
         <label class="toggle-row"><span><b>Getar saat menyimpan</b><small>Hanya berfungsi di HP yang mendukung getaran.</small></span><input type="checkbox" class="sw" role="switch" data-key="vibrate"></label>
+        <label class="toggle-row"><span><b>Kelompok halaqah</b><small>Kelompokkan santri per halaqah (mis. Pagi, Sore). Bila dimatikan, halaqah disembunyikan tetapi tetap tersimpan.</small></span><input type="checkbox" class="sw" role="switch" data-key="halaqah"></label>
         <div class="set-row">
           <div class="set-label" id="lblStart">Halaman saat aplikasi dibuka</div>
           <div class="seg" role="radiogroup" aria-labelledby="lblStart" data-key="startTab">
@@ -799,12 +825,32 @@
     <button data-tab="setelan"><span class="ic">⚙️</span>Setelan</button>
   </nav>
 
+  <div class="modal-backdrop" id="waliModalBackdrop">
+    <div class="modal">
+      <h2 id="waliTitle">Kirim ke Wali</h2>
+      <img id="waliPreview" class="wali-preview" alt="Pratinjau gambar yang akan dikirim">
+      <div class="field">
+        <label for="waliText">Pesan (boleh diubah)</label>
+        <textarea id="waliText" spellcheck="false"></textarea>
+        <div class="rng-hint" style="margin:6px 0 0">Setelah menekan Kirim, pilih WhatsApp (atau aplikasi lain) lalu pilih kontak wali santri.</div>
+      </div>
+      <div class="row">
+        <button class="btn btn-ghost" id="waliCancel">Batal</button>
+        <button class="btn btn-primary" id="waliSend">📨 Kirim</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="renameModalBackdrop">
     <div class="modal">
-      <h2>Ganti Nama Santri</h2>
+      <h2>Ubah Data Santri</h2>
       <div class="field">
-        <label for="renameInput">Nama baru</label>
+        <label for="renameInput">Nama</label>
         <input type="text" id="renameInput" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false">
+      </div>
+      <div class="field" id="renameHalaqahField">
+        <label for="renameHalaqah">Halaqah (opsional)</label>
+        <input type="text" id="renameHalaqah" list="halaqahNames" maxlength="40" placeholder="mis. Pagi, Sore, Kelas A" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false">
       </div>
       <div class="row">
         <button class="btn btn-ghost" id="renameCancel">Batal</button>
@@ -893,7 +939,7 @@
   "use strict";
 
   var STORAGE_KEY = "tahfidz_webapp_v1";
-  var data = { students: [], entries: {}, selectedStudentId: null };
+  var data = { students: [], entries: {}, selectedStudentId: null, halaqahFilter: "" };
 
   function loadData() {
     try {
@@ -901,7 +947,8 @@
       if (raw) {
         var parsed = JSON.parse(raw);
         if (parsed && typeof parsed === "object") {
-          data.students = Array.isArray(parsed.students) ? parsed.students : [];
+          data.students = pgNormalizeStudents(parsed.students);
+          data.halaqahFilter = typeof parsed.halaqahFilter === "string" ? parsed.halaqahFilter : "";
           data.entries = pgNormalizeEntries(parsed.entries && typeof parsed.entries === "object" ? parsed.entries : {});
           data.selectedStudentId = parsed.selectedStudentId || null;
           data.lastBackupAt = parsed.lastBackupAt || null;
@@ -1041,7 +1088,8 @@
   });
   document.getElementById("importConfirm").addEventListener("click", function () {
     if (!pendingImport) return;
-    data.students = pendingImport.students || [];
+    data.students = pgNormalizeStudents(pendingImport.students);
+    data.halaqahFilter = "";
     data.entries = pgNormalizeEntries(pendingImport.entries || {});
     data.selectedStudentId = pendingImport.selectedStudentId || (data.students[0] && data.students[0].id) || null;
     saveData();
@@ -1078,25 +1126,63 @@
     return data.students.find(function (s) { return s.id === data.selectedStudentId; }) || null;
   }
 
+  function halaqahLabel(name) { return name ? "Halaqah " + name : "Tanpa halaqah"; }
+  function halaqahOn() { return !!(typeof settings !== "undefined" && settings && settings.halaqah); }
+  function studentHalaqah(s) { return halaqahOn() && s && s.halaqah ? s.halaqah : ""; }
+
   function renderStudentSelect() {
     var sel = document.getElementById("studentSelect");
+    var hsel = document.getElementById("halaqahSelect");
     sel.innerHTML = "";
+    hsel.innerHTML = "";
     if (data.students.length === 0) {
       var opt = document.createElement("option");
       opt.textContent = "Belum ada santri";
       sel.appendChild(opt);
       sel.disabled = true;
+      hsel.hidden = true;
       return;
     }
     sel.disabled = false;
-    data.students.forEach(function (s) {
-      var opt = document.createElement("option");
-      opt.value = s.id;
-      opt.textContent = s.name;
-      sel.appendChild(opt);
+
+    // Pilihan halaqah hanya muncul bila ada santri yang diberi halaqah
+    var names = halaqahOn() ? pgHalaqahNames(data.students) : [];
+    var allGroups = pgGroupStudents(data.students, "");
+    if (!names.length) {
+      data.halaqahFilter = "";
+      hsel.hidden = true;
+    } else {
+      hsel.hidden = false;
+      var hopts = [["", "Semua halaqah"]].concat(allGroups.map(function (g) { return [g.name || PG_NO_HALAQAH, halaqahLabel(g.name)]; }));
+      hopts.forEach(function (h) {
+        var o = document.createElement("option");
+        o.value = h[0]; o.textContent = h[1];
+        hsel.appendChild(o);
+      });
+      var valid = hopts.some(function (h) { return h[0].toLowerCase() === String(data.halaqahFilter || "").toLowerCase(); });
+      if (!valid) data.halaqahFilter = "";
+      hopts.forEach(function (h) { if (h[0].toLowerCase() === String(data.halaqahFilter).toLowerCase()) hsel.value = h[0]; });
+    }
+
+    var groups = pgGroupStudents(data.students, data.halaqahFilter);
+    var visible = [];
+    groups.forEach(function (g) {
+      var parent = sel;
+      if (names.length) {
+        parent = document.createElement("optgroup");
+        parent.label = halaqahLabel(g.name);
+        sel.appendChild(parent);
+      }
+      g.students.forEach(function (s) {
+        var opt = document.createElement("option");
+        opt.value = s.id;
+        opt.textContent = s.name;
+        parent.appendChild(opt);
+        visible.push(s);
+      });
     });
-    if (!getSelectedStudent()) {
-      data.selectedStudentId = data.students[0].id;
+    if (!visible.some(function (s) { return s.id === data.selectedStudentId; })) {
+      data.selectedStudentId = (visible[0] || data.students[0]).id;
     }
     sel.value = data.selectedStudentId;
   }
@@ -1112,7 +1198,25 @@
       ul.appendChild(li);
       return;
     }
-    data.students.forEach(function (s) {
+    // saran nama halaqah untuk kolom isian
+    var dl = document.getElementById("halaqahNames");
+    dl.innerHTML = "";
+    pgHalaqahNames(data.students).forEach(function (n) { var o = document.createElement("option"); o.value = n; dl.appendChild(o); });
+
+    var grouped = halaqahOn() && pgHalaqahNames(data.students).length > 0;
+    pgGroupStudents(data.students, "").forEach(function (g) {
+      if (grouped) {
+        var head = document.createElement("li");
+        head.className = "halaqah-head";
+        head.textContent = halaqahLabel(g.name) + " ";
+        var cnt = document.createElement("span");
+        cnt.textContent = "· " + g.students.length + " santri";
+        head.appendChild(cnt);
+        ul.appendChild(head);
+      }
+      g.students.forEach(renderStudentRow);
+    });
+    function renderStudentRow(s) {
       var li = document.createElement("li");
       var nameSpan = document.createElement("span");
       nameSpan.className = "student-name";
@@ -1122,7 +1226,7 @@
       var renameBtn = document.createElement("button");
       renameBtn.className = "icon-btn";
       renameBtn.textContent = "✏️";
-      renameBtn.type = "button"; renameBtn.setAttribute("aria-label", "Ganti nama " + s.name); renameBtn.onclick = function () { openRenameModal(s.id); };
+      renameBtn.type = "button"; renameBtn.setAttribute("aria-label", "Ubah data " + s.name); renameBtn.onclick = function () { openRenameModal(s.id); };
       var delBtn = document.createElement("button");
       delBtn.className = "icon-btn";
       delBtn.textContent = "🗑️";
@@ -1132,7 +1236,7 @@
       li.appendChild(nameSpan);
       li.appendChild(actions);
       ul.appendChild(li);
-    });
+    }
   }
 
   document.getElementById("btnAddStudent").addEventListener("click", function () {
@@ -1141,12 +1245,28 @@
     if (!name) { showToast("Isi nama santri dulu"); return; }
     if (data.students.some(function (x) { return x.name.toLowerCase() === name.toLowerCase(); })) { showToast("Nama itu sudah ada"); return; }
     var s = { id: uid(), name: name, createdAt: Date.now() };
+    var halaqah = halaqahOn() ? pgCleanHalaqah(document.getElementById("newStudentHalaqah").value) : "";
+    if (halaqah) {
+      // pakai ejaan halaqah yang sudah ada bila hanya beda huruf besar/kecil
+      pgHalaqahNames(data.students).forEach(function (n) { if (n.toLowerCase() === halaqah.toLowerCase()) halaqah = n; });
+      s.halaqah = halaqah;
+    }
     data.students.push(s);
     data.selectedStudentId = s.id;
-    input.value = "";
+    if (data.halaqahFilter && pgGroupStudents([s], data.halaqahFilter).length === 0) data.halaqahFilter = "";
+    input.value = "";   // kolom halaqah sengaja tidak dikosongkan agar mudah menambah beberapa santri ke halaqah yang sama
     saveData();
     renderAll();
     showToast("Santri ditambahkan");
+  });
+
+  document.getElementById("halaqahSelect").addEventListener("change", function (e) {
+    data.halaqahFilter = e.target.value;
+    renderStudentSelect();
+    saveData();
+    renderCatatTab();
+    renderLaporanTab();
+    renderProgres();
   });
 
   document.getElementById("studentSelect").addEventListener("change", function (e) {
@@ -1167,6 +1287,7 @@
     if (!s) return;
     renameTargetId = studentId;
     document.getElementById("renameInput").value = s.name;
+    document.getElementById("renameHalaqah").value = s.halaqah || "";
     document.getElementById("renameModalBackdrop").classList.add("show");
     setTimeout(function () { document.getElementById("renameInput").focus(); }, 50);
   }
@@ -1183,13 +1304,22 @@
     var newName = document.getElementById("renameInput").value.trim();
     if (s && newName) {
       s.name = newName;
+      if (halaqahOn()) {   // bila fitur dimatikan, halaqah yang sudah ada tidak diubah
+        var h = pgCleanHalaqah(document.getElementById("renameHalaqah").value);
+        pgHalaqahNames(data.students.filter(function (x) { return x !== s; })).forEach(function (n) { if (n.toLowerCase() === h.toLowerCase()) h = n; });
+        if (h) s.halaqah = h; else delete s.halaqah;
+      }
+      if (data.halaqahFilter && s.id === data.selectedStudentId && pgGroupStudents([s], data.halaqahFilter).length === 0) data.halaqahFilter = "";
       saveData();
       renderAll();
-      showToast("Nama diperbarui");
+      showToast("Data santri diperbarui");
     }
     closeRenameModal();
   });
   document.getElementById("renameInput").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") document.getElementById("renameSave").click();
+  });
+  document.getElementById("renameHalaqah").addEventListener("keydown", function (e) {
     if (e.key === "Enter") document.getElementById("renameSave").click();
   });
 
@@ -2028,7 +2158,7 @@
     lines.forEach(function (l, idx) { ctx.fillText(l, ax, startY + idx * lh); });
   }
 
-  function exportReport() {
+  function exportReport(onReady) {
     var s = getSelectedStudent();
     if (!s) return;
     var yr = currentMonthDate.getFullYear();
@@ -2133,10 +2263,11 @@
       // diletakkan di celah kosong antara garis NAMA/BULAN dan header tabel.
       var lembaga = (settings.lembaga || "").trim();
       var pengajar = (settings.pengajar || "").trim();
-      if (lembaga || pengajar) {
+      if (lembaga || pengajar || studentHalaqah(s)) {
         var infoTop = (TPL.lineY + 4) * S, infoBottom = (TPL.lineY + 30) * S;
         var infoText = [];
         if (lembaga) infoText.push("Lembaga: " + lembaga);
+        if (studentHalaqah(s)) infoText.push("Halaqah: " + studentHalaqah(s));
         if (pengajar) infoText.push("Pengajar: " + pengajar);
         drawFitted(ctx, infoText.join("   |   "), TPL.namaX0 * S, 1173 * S, infoTop, infoBottom,
           S, { sizes: [15, 13, 11], multiline: false, padX: 5 });
@@ -2281,6 +2412,10 @@
       }
 
       var filename = "setoran_" + s.name.replace(/\s+/g, "_") + "_" + BULAN_ID[m0] + "_" + yr + ".png";
+      if (typeof onReady === "function") {
+        onReady({ canvas: canvas, filename: filename, student: s, year: yr, month0: m0, att: tot, ayat: monthAyat, nilai: gradeSummaryRows });
+        return;
+      }
       if (isNativeApp()) {
         exportImageNative(canvas, filename);
         return;
@@ -2334,7 +2469,7 @@
     showToast("Gambar diunduh");
   }
 
-  document.getElementById("btnExport").addEventListener("click", exportReport);
+  document.getElementById("btnExport").addEventListener("click", function () { exportReport(); });
 
   // ---------------- Tabs ----------------
 
@@ -2358,6 +2493,7 @@
 
   after("btnSave", mk("button", { id: "btnSaveNext", type: "button", className: "btn btn-outline", textContent: "Simpan & santri berikutnya" })).style.cssText = "width:100%;margin-top:10px";
   after("btnExport", mk("button", { id: "btnShare", type: "button", className: "btn btn-ghost", textContent: "📤 Bagikan ringkasan (teks)" })).style.cssText = "width:100%;margin-top:10px";
+  after("btnShare", mk("button", { id: "btnWali", type: "button", className: "btn btn-primary", textContent: "📨 Kirim Laporan ke Wali" })).style.cssText = "width:100%;margin-top:10px";
   after("monthTotals", mk("div", { id: "monthRate", className: "rate" }));
   after("importFileInput", mk("p", { id: "backupInfo", className: "meta" }));
 
@@ -2417,7 +2553,7 @@
     if (!s) return "";
     var y = currentMonthDate.getFullYear(), m0 = currentMonthDate.getMonth();
     var t = countMonth(s.id, y, m0);
-    var lines = ["*Laporan Setoran Tahfidz*"];
+    var lines = [PG_BASMALAH, "", "*Laporan Setoran Tahfidz*"];
     if (settings.lembaga.trim()) lines.push(settings.lembaga.trim());
     lines.push(s.name + " - " + BULAN_ID[m0] + " " + y, "",
       "Hadir: " + t.hadir + " | Izin: " + t.izin + " | Sakit: " + t.sakit + " | Ghoib: " + t.ghoib);
@@ -2458,11 +2594,90 @@
     } else copyText(text);
   });
 
+  // ---------------- Kirim ke wali: gambar + pesan pembuka dalam satu kali bagikan ----------------
+
+  var waliPending = null;
+  function openWali(title, canvas, filename, text) {
+    waliPending = { canvas: canvas, filename: filename };
+    document.getElementById("waliTitle").textContent = title;
+    document.getElementById("waliPreview").src = canvas.toDataURL("image/png");
+    document.getElementById("waliText").value = text;
+    document.getElementById("waliModalBackdrop").classList.add("show");
+  }
+  function closeWali() {
+    document.getElementById("waliModalBackdrop").classList.remove("show");
+    document.getElementById("waliPreview").removeAttribute("src");
+    waliPending = null;
+  }
+  function isShareCancel(err) { return !!err && (err.name === "AbortError" || /cancel/i.test(String(err.message || err))); }
+
+  // Android (Capacitor): tulis gambar ke cache lalu buka menu bagikan dengan gambar + teks sekaligus
+  // (WhatsApp memakai teks sebagai keterangan gambar). Browser: Web Share bila bisa mengirim file;
+  // bila tidak, pesan disalin dan gambar diunduh.
+  function shareImageWithText(canvas, filename, text) {
+    if (isNativeApp()) {
+      var plugins = window.Capacitor.Plugins || {};
+      if (!plugins.Filesystem || !plugins.Share) { alert("Plugin Filesystem/Share tidak tersedia"); return; }
+      var name = filename.replace(/\.png$/, "") + "_" + Date.now() + ".png";
+      plugins.Filesystem.writeFile({ path: name, data: canvas.toDataURL("image/png").split(",")[1], directory: "CACHE" })
+        .then(function (res) { return plugins.Share.share({ title: "Kirim ke wali", text: text, files: [res.uri], dialogTitle: "Kirim ke wali" }); })
+        .then(function () { showToast("Pilih WhatsApp lalu kontak wali"); })
+        .catch(function (err) {
+          if (isShareCancel(err)) return;
+          console.error("Gagal membagikan:", err);
+          copyText(text);
+          exportImageNative(canvas, filename);
+        });
+      return;
+    }
+    canvas.toBlob(function (blob) {
+      var file = null;
+      try { file = new File([blob], filename, { type: "image/png" }); } catch (e) { file = null; }
+      if (file && navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], text: text, title: "Kirim ke wali" }).catch(function (err) {
+          if (isShareCancel(err)) return;
+          copyText(text); fallbackDownload(blob, filename);
+        });
+        return;
+      }
+      copyText(text);
+      fallbackDownload(blob, filename);
+      showToast("Pesan disalin & gambar diunduh — tempel pesannya di WhatsApp");
+    }, "image/png");
+  }
+
+  document.getElementById("waliCancel").addEventListener("click", closeWali);
+  document.getElementById("waliModalBackdrop").addEventListener("click", function (e) { if (e.target === this) closeWali(); });
+  document.getElementById("waliSend").addEventListener("click", function () {
+    if (!waliPending) return;
+    var p = waliPending, text = document.getElementById("waliText").value;
+    closeWali();
+    shareImageWithText(p.canvas, p.filename, text);
+  });
+
+  document.getElementById("btnWali").addEventListener("click", function () {
+    exportReport(function (r) {
+      openWali("Kirim Laporan ke Wali", r.canvas, r.filename, pgWaliLaporanText({
+        name: r.student.name, bulan: BULAN_ID[r.month0] + " " + r.year, att: r.att, ayat: r.ayat, nilai: r.nilai,
+        pengajar: settings.pengajar, lembaga: settings.lembaga
+      }));
+    });
+  });
+  document.getElementById("pgWali").addEventListener("click", function () {
+    pgExport(function (r) {
+      var R = r.rapor;
+      openWali("Kirim Rapor ke Wali", r.canvas, r.filename, pgWaliRaporText({
+        name: r.student.name, tanggal: r.tanggal, unique: R.unique, pct: R.pct, surahDone: R.surahDone, juzDone: R.juzDone,
+        bulan: r.bulan, cur: R.cur, recent: R.recent, pengajar: settings.pengajar, lembaga: settings.lembaga
+      }));
+    });
+  });
+
   // ---------------- Setelan ----------------
 
   var SETTINGS_KEY = "tahfidz_settings_v1";
   var DEFAULT_SETTINGS = { mode: "auto", palette: "ungu", fs: 1, arabic: true, lembaga: "", pengajar: "", watermark: "",
-    watermarkScale: 100, detail: true, suggest: true, startTab: "catat", vibrate: false, backupEvery: 7 };
+    watermarkScale: 100, detail: true, suggest: true, startTab: "catat", vibrate: false, backupEvery: 7, halaqah: false };
   var PALETTE_KEYS = ["ungu", "zamrud", "samudra", "kurma", "mawar"];
   var DEFAULT_SUBTITLE = "Catatan tahsin \u00b7 tahfidz \u00b7 murojaah harian";
   var pendingSettings = null;
@@ -2474,7 +2689,7 @@
     if (["auto", "light", "dark"].indexOf(o.mode) >= 0) r.mode = o.mode;
     if (PALETTE_KEYS.indexOf(o.palette) >= 0) r.palette = o.palette;
     if (typeof o.fs === "number" && [0.92, 1, 1.12, 1.25].indexOf(o.fs) >= 0) r.fs = o.fs;
-    ["arabic", "detail", "suggest", "vibrate"].forEach(function (key) { if (typeof o[key] === "boolean") r[key] = o[key]; });
+    ["arabic", "detail", "suggest", "vibrate", "halaqah"].forEach(function (key) { if (typeof o[key] === "boolean") r[key] = o[key]; });
     ["lembaga", "pengajar"].forEach(function (key) { if (typeof o[key] === "string") r[key] = o[key].slice(0, 60); });
     if (typeof o.watermark === "string" && o.watermark.length < 2000000 && /^data:image\//.test(o.watermark)) r.watermark = o.watermark;
     if (typeof o.watermarkScale === "number" && o.watermarkScale >= 30 && o.watermarkScale <= 150) r.watermarkScale = o.watermarkScale;
@@ -2512,6 +2727,7 @@
     root.style.setProperty("--fs", String(settings.fs));
     root.classList.toggle("no-ar", !settings.arabic);
     document.getElementById("lembagaLine").textContent = settings.lembaga.trim() || DEFAULT_SUBTITLE;
+    ["newHalaqahField", "renameHalaqahField"].forEach(function (id) { document.getElementById(id).style.display = settings.halaqah ? "" : "none"; });
     syncThemeColor();
   }
 
@@ -2564,6 +2780,7 @@
     el.addEventListener("change", function () {
       settings[el.getAttribute("data-key")] = el.checked;
       commitSettings();
+      if (el.getAttribute("data-key") === "halaqah") { renderAll(); renderProgres(); }
     });
   });
   document.querySelectorAll('#tab-setelan input[type="text"][data-key]').forEach(function (el) {
@@ -2683,6 +2900,41 @@
   // ---------------- Progres: baca teks setoran -> jumlah ayat -> diagram ----------------
 
   // PG-PURE-BEGIN (fungsi murni tanpa DOM; diuji terpisah)
+  // ---- Kelompok halaqah ----
+  var PG_NO_HALAQAH = "-";   // nilai filter untuk santri tanpa halaqah
+  function pgCleanHalaqah(v) { return typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, 40) : ""; }
+  // Nama halaqah unik (tanpa beda huruf besar/kecil), diurutkan alami: "Kelas 2" sebelum "Kelas 10".
+  function pgHalaqahNames(students) {
+    var seen = {}, out = [];
+    (students || []).forEach(function (s) {
+      var h = pgCleanHalaqah(s && s.halaqah), k = h.toLowerCase();
+      if (h && !seen[k]) { seen[k] = 1; out.push(h); }
+    });
+    return out.sort(function (a, b) { return a.localeCompare(b, "id", { numeric: true, sensitivity: "base" }); });
+  }
+  // Kelompokkan santri per halaqah (urutan santri di dalam kelompok tetap). filter: "" = semua,
+  // PG_NO_HALAQAH = hanya yang tanpa halaqah, selain itu = nama halaqah.
+  function pgGroupStudents(students, filter) {
+    students = students || [];
+    var groups = pgHalaqahNames(students).map(function (name) {
+      return { name: name, students: students.filter(function (s) { return pgCleanHalaqah(s.halaqah).toLowerCase() === name.toLowerCase(); }) };
+    });
+    groups.push({ name: "", students: students.filter(function (s) { return !pgCleanHalaqah(s.halaqah); }) });
+    groups = groups.filter(function (g) { return g.students.length > 0; });
+    if (!filter) return groups;
+    return groups.filter(function (g) { return filter === PG_NO_HALAQAH ? g.name === "" : g.name.toLowerCase() === String(filter).toLowerCase(); });
+  }
+  // Rapikan daftar santri dari penyimpanan/impor: halaqah selalu teks bersih, kosong = tidak disimpan.
+  function pgNormalizeStudents(students) {
+    return (Array.isArray(students) ? students : []).filter(function (s) { return s && typeof s === "object" && !Array.isArray(s); }).map(function (s) {
+      var out = {};
+      Object.keys(s).forEach(function (k) { if (k !== "halaqah") Object.defineProperty(out, k, { value: s[k], enumerable: true, writable: true, configurable: true }); });
+      var h = pgCleanHalaqah(s.halaqah);
+      if (h) out.halaqah = h;
+      return out;
+    });
+  }
+
   var QURAN_AYAT = SURAHS.reduce(function (n, x) { return n + x.ayat; }, 0);
   var BULAN_PENDEK = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
   var PG_GRADES = [
@@ -3184,6 +3436,45 @@
     return list;
   }
 
+  // ---- Pesan "Kirim ke wali" (teks WhatsApp; *tebal*) ----
+  // Setiap pesan yang dibuat aplikasi diawali basmalah.
+  var PG_BASMALAH = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ";
+  function pgNum(n) { return String(Math.round(n * 10) / 10).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+  function pgWaliSign(d) {
+    var who = [d.pengajar, d.lembaga].map(function (x) { return String(x || "").trim(); }).filter(Boolean);
+    return ["", "Jazakumullahu khairan."].concat(who.length ? ["— " + who.join(", ")] : []);
+  }
+  // d: { name, bulan, att:{hadir,izin,sakit,ghoib}, ayat:{tahfidz,murojaah,tahsin}, nilai:["Tahfidz: 2× Mumtaz", ...], pengajar, lembaga }
+  function pgWaliLaporanText(d) {
+    var att = d.att || {}, ay = d.ayat || {};
+    var absent = [["Izin", att.izin], ["Sakit", att.sakit], ["Ghoib", att.ghoib]].filter(function (a) { return a[1] > 0; })
+      .map(function (a) { return a[0] + " " + a[1]; });
+    var lines = [PG_BASMALAH, "", "Assalamu'alaikum warahmatullahi wabarakatuh.", "",
+      "Berikut laporan setoran ananda *" + d.name + "* bulan *" + d.bulan + "*:",
+      "• Hadir: " + pgNum(att.hadir || 0) + " hari" + (absent.length ? " (" + absent.join(", ") + ")" : "")];
+    if (ay.tahfidz || ay.murojaah || ay.tahsin) {
+      lines.push("• Hafalan baru: " + pgNum(ay.tahfidz || 0) + " ayat");
+      lines.push("• Murojaah: " + pgNum(ay.murojaah || 0) + " ayat");
+      if (ay.tahsin) lines.push("• Tahsin: " + pgNum(ay.tahsin) + " ayat");
+    }
+    (d.nilai || []).forEach(function (row) { lines.push("• Nilai " + row); });
+    lines.push("", "Laporan lengkap ada di gambar terlampir.");
+    return lines.concat(pgWaliSign(d)).join("\n");
+  }
+  // d: { name, tanggal, unique, pct, surahDone, juzDone, bulan, cur:{thf,mur}, recent:[{name,cnt,total}], pengajar, lembaga }
+  function pgWaliRaporText(d) {
+    var lines = [PG_BASMALAH, "", "Assalamu'alaikum warahmatullahi wabarakatuh.", "",
+      "Berikut rapor progres hafalan ananda *" + d.name + "* per " + d.tanggal + ":",
+      "• Total hafalan: " + pgNum(d.unique || 0) + " ayat (" + pgNum(Math.round((d.pct || 0) * 10) / 10) + "% dari Al-Qur'an)",
+      "• Surah tuntas: " + pgNum(d.surahDone || 0) + (d.juzDone ? " · Juz tuntas: " + pgNum(d.juzDone) : "")];
+    var cur = d.cur || {};
+    lines.push("• Bulan " + d.bulan + ": hafalan baru " + pgNum(cur.thf || 0) + " ayat, murojaah " + pgNum(cur.mur || 0) + " ayat");
+    var r = (d.recent || [])[0];
+    if (r) lines.push("• Hafalan terakhir: " + r.name + (r.cnt === r.total ? " (tuntas)" : " (" + r.cnt + "/" + r.total + " ayat)"));
+    lines.push("", "Rapor lengkap ada di gambar terlampir.");
+    return lines.concat(pgWaliSign(d)).join("\n");
+  }
+
   // Jumlah ayat dalam satu bulan untuk ringkasan laporan bulanan.
   // tahfidz = ayat hafalan BARU (sama seperti Progres); murojaah & tahsin = ayat yang dibaca (pengulangan ikut dihitung).
   function pgMonthAyat(ents, year, month0) {
@@ -3284,7 +3575,7 @@
   }
 
   var pgExportBusy = false;
-  function pgExport() {
+  function pgExport(onReady) {
     if (pgExportBusy) return;
     var s = getSelectedStudent();
     if (!s) return;
@@ -3331,7 +3622,7 @@
       ctx.fillStyle = C.plum; ctx.fillRect(0, 0, W, HEAD);
       ctx.globalAlpha = 0.85; text((lembaga || "Setoran Tahfidz") + "  ·  Rapor Progres Hafalan", PAD, 58, "24px", "#ffffff"); ctx.globalAlpha = 1;
       text(s.name, PAD, 122, "bold 54px", "#ffffff");
-      ctx.globalAlpha = 0.85; text("Per " + tgl + (pengajar ? "  ·  Pengajar: " + pengajar : ""), PAD, 166, "24px", "#ffffff"); ctx.globalAlpha = 1;
+      ctx.globalAlpha = 0.85; text("Per " + tgl + (studentHalaqah(s) ? "  ·  Halaqah " + studentHalaqah(s) : "") + (pengajar ? "  ·  Pengajar: " + pengajar : ""), PAD, 166, "24px", "#ffffff"); ctx.globalAlpha = 1;
       var y = HEAD + GAP;
 
       // 2. Total hafalan
@@ -3466,6 +3757,11 @@
       text("Dibuat dengan aplikasi Setoran Tahfidz", PAD, H - 14, "17px", C.soft, "left", CW);
 
       var filename = "progres_" + s.name.replace(/\s+/g, "_") + "_" + today + ".png";
+      if (typeof onReady === "function") {
+        pgExportBusy = false;
+        onReady({ canvas: canvas, filename: filename, student: s, rapor: R, tanggal: tgl, bulan: BULAN_ID[curD.getMonth()] });
+        return;
+      }
       if (isNativeApp()) { exportImageNative(canvas, filename); pgExportBusy = false; return; }
       canvas.toBlob(function (blob) { pgExportBusy = false; saveFile(blob, filename); }, "image/png");
     } catch (err) {
