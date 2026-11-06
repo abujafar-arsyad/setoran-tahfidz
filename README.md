@@ -45,7 +45,7 @@ Semua nama dan catatan pada gambar ini fiktif.
 
 **Laporan bulanan**
 - Tabel per bulan dengan total Hadir, Izin, Sakit, dan Ghoib. Ketuk satu hari untuk mengedit.
-- Unduh sebagai gambar untuk dikirim ke wali santri, lengkap dengan nama lembaga, nama pengajar, rekap nilai, dan watermark lembaga (opsional).
+- Unduh sebagai gambar untuk dikirim ke wali santri, lengkap dengan nama lembaga, nama pengajar, ringkasan ayat bulan itu (hafalan baru, murojaah, tahsin), rekap nilai, dan watermark lembaga (opsional).
 
 **Progres hafalan**
 - Ringkasan per santri: ayat tercatat dari 6.236 ayat, surah tuntas, hari setoran, dan rata-rata ayat per hari.

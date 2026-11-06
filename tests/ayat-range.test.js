@@ -9,8 +9,8 @@ const pureSrc = html.slice(html.indexOf("// PG-PURE-BEGIN"), html.indexOf("// PG
 const pad2 = (n) => String(n).padStart(2, "0");
 const BULAN_ID = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 const api = new Function("pad2", "BULAN_ID", surahSrc + "\n" + pureSrc +
-  "\nreturn {SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgGradeEntryError, pgNormalizeEntryGrades, pgNormalizeEntries, pgRapor};")(pad2, BULAN_ID);
-const { SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgGradeEntryError, pgNormalizeEntryGrades, pgNormalizeEntries, pgRapor } = api;
+  "\nreturn {SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgGradeEntryError, pgNormalizeEntryGrades, pgNormalizeEntries, pgRapor, pgMonthAyat};")(pad2, BULAN_ID);
+const { SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgGradeEntryError, pgNormalizeEntryGrades, pgNormalizeEntries, pgRapor, pgMonthAyat } = api;
 
 const idx = (n) => pgSurahIndex(n);
 const BAQ = idx("Al-Baqarah"), IMR = idx("Ali 'Imran"), NIS = idx("An-Nisa"), NAS = idx("An-Nas"), FAT = idx("Al-Fatihah");
@@ -464,5 +464,18 @@ t("rapor progres: ringkasan satu halaman", () => {
   assert.strictEqual(r.grades.murojaah.counts.M, 1);
   const empty = pgRapor({}, "2026-11-06");
   assert.strictEqual(empty.unique, 0); assert.strictEqual(empty.recent.length, 0); assert.strictEqual(empty.tahsinLast, null);
+});
+t("ringkasan ayat laporan bulanan", () => {
+  const ents = {
+    "2026-09-30": { tahsin: "", tahfidz: "Al-Mulk 1-10", murojaah: "", keterangan: "" },
+    "2026-10-01": { tahsin: "Al-Baqarah 106-109", tahfidz: "Al-Mulk 1-15", murojaah: "An-Nas 1-6; Al-Falaq 1-5", keterangan: "" },
+    "2026-10-02": { tahsin: "Iqro 4 hal 3", tahfidz: "Al-Mulk 11-20", murojaah: "An-Nas 1-6", keterangan: "" },
+    "2026-10-03": { tahsin: "", tahfidz: "Al-Qalam 1-5", murojaah: "", keterangan: "", nilai: { tahsin: "", tahfidz: "R", murojaah: "" } },
+    "2026-11-01": { tahsin: "", tahfidz: "Al-Qalam 1-5", murojaah: "", keterangan: "" }
+  };
+  // Oktober: hafalan baru 11-15 (5) + 16-20 (5) = 10; Rasib tidak dihitung; murojaah 11 + 6 = 17; tahsin 4 (Iqro diabaikan)
+  assert.deepStrictEqual(pgMonthAyat(ents, 2026, 9), { tahfidz: 10, murojaah: 17, tahsin: 4 });
+  assert.deepStrictEqual(pgMonthAyat(ents, 2026, 10), { tahfidz: 5, murojaah: 0, tahsin: 0 });
+  assert.deepStrictEqual(pgMonthAyat({}, 2026, 9), { tahfidz: 0, murojaah: 0, tahsin: 0 });
 });
 console.log(n + " tests passed");

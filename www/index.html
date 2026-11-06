@@ -2074,8 +2074,18 @@
           return item.count + "× " + grade.label;
         }).join(", "));
       });
+      // Ringkasan ayat bulan ini (di bawah baris TOTAL)
+      var monthAyat = pgMonthAyat(data.entries[s.id], yr, m0);
+      var ayatParts = [];
+      if (monthAyat.tahfidz || monthAyat.murojaah || monthAyat.tahsin) {
+        ayatParts.push("Hafalan baru: " + pgFmt(monthAyat.tahfidz) + " ayat");
+        ayatParts.push("Murojaah: " + pgFmt(monthAyat.murojaah) + " ayat");
+        if (monthAyat.tahsin) ayatParts.push("Tahsin: " + pgFmt(monthAyat.tahsin) + " ayat");
+      }
+      var ayatLine = ayatParts.length ? "Ringkasan " + BULAN_ID[m0] + ": " + ayatParts.join("   ·   ") : "";
       var summaryTop = (TPL.row1Top + nDays * TPL.rowH + 12 + 38 + 18) * S;
-      var summaryHeight = gradeSummaryRows.length ? (gradeSummaryRows.length + 1) * 22 * S + 12 * S : 0;
+      var summaryHeight = (ayatLine ? 30 * S : 0) +
+        (gradeSummaryRows.length ? (gradeSummaryRows.length + 1) * 22 * S : 0) + (ayatLine || gradeSummaryRows.length ? 12 * S : 0);
       canvas.height = Math.max(img.naturalHeight, Math.ceil(summaryTop + summaryHeight));
       var ctx = canvas.getContext("2d");
       ctx.fillStyle = "#ffffff";
@@ -2085,6 +2095,13 @@
       // Hapus logo/watermark bawaan (baked-in) template, lalu gambar ulang
       // garis kisi tabel secara terprogram sebelum elemen lain digambar.
       redrawTableGrid(ctx, S);
+
+      // Template menulis "NAMA:" tapi "BULAN" tanpa titik dua: salin titik dua dari "NAMA:"
+      // (piksel template asli, jadi huruf & warnanya sama persis) ke belakang "BULAN".
+      if (img.naturalWidth === 1655) {
+        var kc = canvas.width / img.naturalWidth;
+        ctx.drawImage(img, 179, 258, 8, 26, 982 * kc, 258 * kc, 8 * kc, 26 * kc);
+      }
 
       // Warna laporan mengikuti palet "Warna aplikasi" yang dipilih di Setelan.
       var reportPal = REPORT_PALETTE[settings.palette] || REPORT_PALETTE.ungu;
@@ -2246,8 +2263,13 @@
       });
       ctx.textAlign = "left";
 
+      var summaryY = summaryTop;
+      if (ayatLine) {
+        ctx.fillStyle = PURPLE;
+        drawFitted(ctx, ayatLine, 60 * S, 1173 * S, summaryY, summaryY + 24 * S, S, { sizes: [18, 16, 14], multiline: false, padX: 0, bold: true });
+        summaryY += 30 * S;
+      }
       if (gradeSummaryRows.length) {
-        var summaryY = summaryTop;
         ctx.fillStyle = "#333333";
         ctx.font = "bold " + (15 * S) + "px " + FONT_FAMILY;
         gradeSummaryRows.forEach(function (text) {
@@ -3160,6 +3182,16 @@
     var run = baseline;
     list.forEach(function (b) { run += b.v; b.cum = run; });
     return list;
+  }
+
+  // Jumlah ayat dalam satu bulan untuk ringkasan laporan bulanan.
+  // tahfidz = ayat hafalan BARU (sama seperti Progres); murojaah & tahsin = ayat yang dibaca (pengulangan ikut dihitung).
+  function pgMonthAyat(ents, year, month0) {
+    var key = year + "-" + pad2(month0 + 1), out = {};
+    [["tahfidz", "fresh"], ["murojaah", "raw"], ["tahsin", "raw"]].forEach(function (f) {
+      out[f[0]] = pgAnalyze(ents, f[0]).daily.reduce(function (n, x) { return x.date.slice(0, 7) === key ? n + x[f[1]] : n; }, 0);
+    });
+    return out;
   }
 
   // Angka untuk rapor progres satu halaman (gambar unduhan). today = "YYYY-MM-DD".
