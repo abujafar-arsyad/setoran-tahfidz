@@ -532,14 +532,28 @@ t("pesan kirim ke wali (template bawaan, tanpa tanda *)", () => {
   assert.strictEqual(rap, [B, "", "Assalamu'alaikum warahmatullahi wabarakatuh.", "",
     "Berikut rapor progres hafalan ananda Amr per 6 November 2026.", "",
     "Alhamdulillah, ananda sudah hafal 2 surah dan 6 ayat, yaitu Al-'Alaq ayat 1–6, Al-Qadr, dan Al-Bayyinah.", "",
-    "Bulan November:", "• Hafalan baru: Al-'Alaq ayat 1–6 (6 ayat)", "• Murojaah: Al-Qadr dan Al-Bayyinah (13 ayat)", "",
+    "Bulan November:", "• Hafalan baru: Al-'Alaq ayat 1–6", "• Murojaah: Al-Qadr dan Al-Bayyinah", "",
     "Rapor lengkap ada di gambar terlampir.", "", "Jazakumullahu khairan.", "— Ustadz Fulan"].join("\n"));
   assert.ok(!rap.includes("%") && !rap.includes("*"));
   // laporan bulanan dengan uraian surah; tahsin ayat dan Iqro
   const okt = pgWaliLaporanText({ name: "Amr", bulan: "Oktober 2026", att: { hadir: 1 }, bulanan: pgMonthHafalan(ents, 2026, 9) });
-  assert.ok(okt.includes("• Hafalan baru: Al-Bayyinah (8 ayat)\n• Murojaah: Al-Falaq dan An-Nas (11 ayat)\n• Tahsin: Al-Baqarah ayat 106–109 (4 ayat)"));
+  assert.ok(okt.includes("• Hafalan baru: Al-Bayyinah\n• Murojaah: Al-Falaq dan An-Nas\n• Tahsin: Al-Baqarah ayat 106–109"));
   const nov = pgWaliLaporanText({ name: "Amr", bulan: "November 2026", att: { hadir: 2 }, bulanan: pgMonthHafalan(ents, 2026, 10) });
   assert.ok(nov.includes("• Tahsin: Iqro 5 hal 2"), "tahsin Iqro ditulis apa adanya");
+});
+t("isian pesan wali: surah penuh tanpa jumlah ayat", () => {
+  const ents = {
+    "2026-11-01": { tahfidz: "Al-Qadr 1-5; Al-Alaq 1-6", murojaah: "Al-Qadr 1-5", tahsin: "Al-Bayyinah 1-8" },
+    "2026-11-02": { tahfidz: "", murojaah: "Al-Qadr 1-5", tahsin: "" }
+  };
+  const bulanan = pgMonthHafalan(ents, 2026, 10);
+  const R = pgRapor(ents, "2026-11-06");
+  const lap = pgWaliLaporanText({ bulanan }, "{hafalan_baru}\n{murojaah}\n{tahsin}");
+  assert.strictEqual(lap, "Al-'Alaq ayat 1–6 dan Al-Qadr\nAl-Qadr\nAl-Bayyinah");
+  const rap = pgWaliRaporText({ hafalan: R.hafalan, bulanIni: R.bulanIni, recent: [{ name: "Al-Qadr", cnt: 5, total: 5 }] },
+    "{jumlah_hafalan}\n{daftar_hafalan}\n{hafalan_baru}\n{murojaah}\n{hafalan_terakhir}");
+  assert.strictEqual(rap, "1 surah dan 6 ayat\nAl-'Alaq ayat 1–6 dan Al-Qadr\nAl-'Alaq ayat 1–6 dan Al-Qadr\nAl-Qadr\nAl-Qadr");
+  assert.strictEqual(pgWaliRaporVals({ recent: [{ name: "Al-'Alaq", cnt: 6, total: 19 }] }).hafalan_terakhir, "Al-'Alaq (6/19 ayat)");
 });
 t("uraian hafalan per surah dan juz", () => {
   // An-Naba (78) s.d. An-Nas (114) = Juz 30 penuh, ditambah Al-Mulk 1-10
