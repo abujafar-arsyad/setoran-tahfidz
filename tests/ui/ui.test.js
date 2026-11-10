@@ -263,6 +263,24 @@ t("catat rentang lintas surah dengan ketukan (kolom Sampai bisa diganti)", async
   assert.strictEqual(e.nilai.tahfidz, "JJ");
 });
 
+t("nama surah yang diketik dalam huruf Arab tetap Arab setelah memilih saran", async (H) => {
+  await H.open(SEED);
+  await H.ev("const d = document.getElementById('entryDate'); d.value = '2026-11-03'; d.dispatchEvent(new Event('change'));");
+  const row = "#rngTahfidz .rng-row";
+  await H.pickSurah(row + " .rs1", "الك"); await H.type("1");
+  assert.strictEqual(await H.ev(`return document.querySelector('${row} .rs1').value;`), "الكهف", "kolom Mulai tetap huruf Arab");
+  assert.strictEqual(await H.ev(`return document.querySelector('${row} .rs2').value;`), "الكهف", "kolom Sampai ikut huruf Arab");
+  await H.tap(row + " .ra2"); await H.type("10");
+  assert.match(await H.rowInfo(row), /10 ayat/);
+  await H.tap('#gradeTahfidz button[data-code="M"]');
+  await H.tap("#btnSave");
+  const e = (await H.store()).entries.a["2026-11-03"];
+  assert.ok(e && /Al-Kahf 1/.test(e.tahfidz), "tersimpan dengan nama baku: " + (e && e.tahfidz));
+  // dibuka lagi: tetap tampil huruf Arab
+  await H.ev("const d = document.getElementById('entryDate'); d.value = '2026-11-02'; d.dispatchEvent(new Event('change')); d.value = '2026-11-03'; d.dispatchEvent(new Event('change'));");
+  assert.strictEqual(await H.ev(`return document.querySelector('${row} .rs1').value;`), "الكهف");
+});
+
 t("rentang ayat salah dan nilai tanpa setoran ditolak", async (H) => {
   await H.open(SEED);
   await H.ev("const d = document.getElementById('entryDate'); d.value = '2026-11-03'; d.dispatchEvent(new Event('change'));");
