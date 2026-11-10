@@ -1615,6 +1615,7 @@
     if (s2 && i2 < 0) return { msg: "Surah akhir belum dikenali" };
     if (i1 < 0) return { msg: "Pilih surah awal" };
     var w = pgResolveRow(i1, a1 ? rngNum(a1) : null, i2, a2 ? rngNum(a2) : null);
+    if (pgIsArabic(s1)) w.ar = true;
     var r = pgRangeCheck(w.i1, w.a1, w.i2, w.a2);
     if (!r.ok) return { msg: r.msg };
     return { ok: true, count: r.count, row: w };
@@ -1696,10 +1697,6 @@
 
   // Nama surah ditulis dalam huruf yang sama dengan yang diketik: Arab tetap Arab, Latin tetap Latin.
   function rsName(i, ar) { return ar && SURAHS[i].ar ? SURAHS[i].ar : SURAHS[i].name; }
-  // Huruf terakhir yang dipakai, agar setoran yang dibuka lagi tampil dengan huruf yang sama.
-  var RS_AR_KEY = "tahfidz_surah_ar";
-  function rsPrefAr() { try { return localStorage.getItem(RS_AR_KEY) === "1"; } catch (e) { return false; } }
-  function rsSetPrefAr(ar) { try { localStorage.setItem(RS_AR_KEY, ar ? "1" : "0"); } catch (e) {} }
 
   function rsPick(k) {
     var inp = rsActive;
@@ -1751,10 +1748,10 @@
       '<input type="number" class="ra ra2" inputmode="numeric" min="1" step="1" placeholder="Ayat"></div>' +
       '<div class="rng-info"></div><button type="button" class="rng-del" aria-label="Hapus rentang">✕</button>';
     var q = function (c) { return row.querySelector("." + c); };
-    if (v) { var ar0 = rsPrefAr(); q("rs1").value = rsName(v.i1, ar0); q("ra1").value = v.a1; q("rs2").value = rsName(v.i2, ar0); q("ra2").value = v.a2; }
+    if (v) { var ar0 = !!v.ar; q("rs1").value = rsName(v.i1, ar0); q("ra1").value = v.a1; q("rs2").value = rsName(v.i2, ar0); q("ra2").value = v.a2; }
     function canon(inp) {
       var i = pgSurahIndex(inp.value); if (i < 0) return;
-      var ar = pgIsArabic(inp.value); inp.value = rsName(i, ar); rsSetPrefAr(ar);
+      inp.value = rsName(i, pgIsArabic(inp.value));
     }
     var rs2Touched = !!v;
     q("rs1").addEventListener("change", function () {
@@ -3323,7 +3320,13 @@
     return { ok: true, count: count, ranges: ranges };
   }
 
-  function pgFormatRange(i1, a1, i2, a2) {
+  // ar = true: nama surah dan angka ditulis huruf Arab, mis. "البلد ١-٧" dan "الشمس ١ - العلق ١٩".
+  function pgArDigits(n) { return String(n).replace(/\d/g, function (d) { return String.fromCharCode(0x660 + +d); }); }
+  function pgFormatRange(i1, a1, i2, a2, ar) {
+    if (ar) {
+      if (i1 === i2) return SURAHS[i1].ar + " " + pgArDigits(a1 === a2 ? a1 : a1 + "-" + a2);
+      return SURAHS[i1].ar + " " + pgArDigits(a1) + " - " + SURAHS[i2].ar + " " + pgArDigits(a2);
+    }
     if (i1 === i2) return SURAHS[i1].name + " " + (a1 === a2 ? a1 : a1 + "-" + a2);
     return SURAHS[i1].name + " " + a1 + " → " + SURAHS[i2].name + " " + a2;
   }
@@ -3377,11 +3380,13 @@
     String(text || "").split(/;\s*/).forEach(function (piece) {
       var t = piece.trim();
       if (!t) return;
-      var m = /^(.+?) (\d+)(?:-(\d+))?$/.exec(t), n = /^(.+?) (\d+) → (.+?) (\d+)$/.exec(t), row = null;
-      function exact(name) { for (var i = 0; i < SURAHS.length; i++) if (SURAHS[i].name === name) return i; return -1; }
+      var ar = pgIsArabic(t), u = ar ? t.replace(/[٠-٩]/g, function (c) { return String(c.charCodeAt(0) - 0x660); }) : t;
+      var m = /^(.+?) (\d+)(?:-(\d+))?$/.exec(u), n = (ar ? /^(.+?) (\d+) - (.+?) (\d+)$/ : /^(.+?) (\d+) → (.+?) (\d+)$/).exec(u), row = null;
+      function exact(name) { for (var i = 0; i < SURAHS.length; i++) if ((ar ? SURAHS[i].ar : SURAHS[i].name) === name) return i; return -1; }
       if (n) { var x = exact(n[1]), y = exact(n[3]); if (x >= 0 && y >= 0) row = { i1: x, a1: +n[2], i2: y, a2: +n[4] }; }
-      else if (m) { var z = exact(m[1]); if (z >= 0) row = { i1: z, a1: +m[2], i2: z, a2: m[3] !== undefined ? +m[3] : +m[2] }; }
-      if (row && pgRangeCheck(row.i1, row.a1, row.i2, row.a2).ok && pgFormatRange(row.i1, row.a1, row.i2, row.a2) === t) rows.push(row);
+      if (!row && m) { var z = exact(m[1]); if (z >= 0) row = { i1: z, a1: +m[2], i2: z, a2: m[3] !== undefined ? +m[3] : +m[2] }; }
+      if (row && ar) row.ar = true;
+      if (row && pgRangeCheck(row.i1, row.a1, row.i2, row.a2).ok && pgFormatRange(row.i1, row.a1, row.i2, row.a2, ar) === t) rows.push(row);
       else if (!row && (row = pgLegacyRow(t))) rows.push(row);
       else rest.push(t);
     });
@@ -3401,7 +3406,7 @@
   function pgDisplayText(text) {
     return String(text || "").split(/;\s*/).map(function (piece) {
       var r = pgLegacyRow(piece);
-      return r ? pgFormatRange(r.i1, r.a1, r.i2, r.a2) : piece;
+      return r ? pgFormatRange(r.i1, r.a1, r.i2, r.a2, pgIsArabic(piece)) : piece;
     }).join("; ");
   }
 
@@ -3420,7 +3425,7 @@
   }
 
   function pgTextFromRows(rows, rest) {
-    var parts = rows.map(function (r) { return pgFormatRange(r.i1, r.a1, r.i2, r.a2); });
+    var parts = rows.map(function (r) { return pgFormatRange(r.i1, r.a1, r.i2, r.a2, !!r.ar); });
     if (rest && String(rest).trim()) parts.push(String(rest).trim());
     return parts.join("; ");
   }

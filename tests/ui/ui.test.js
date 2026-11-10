@@ -275,10 +275,14 @@ t("nama surah yang diketik dalam huruf Arab tetap Arab setelah memilih saran", a
   await H.tap('#gradeTahfidz button[data-code="M"]');
   await H.tap("#btnSave");
   const e = (await H.store()).entries.a["2026-11-03"];
-  assert.ok(e && /Al-Kahf 1/.test(e.tahfidz), "tersimpan dengan nama baku: " + (e && e.tahfidz));
+  assert.strictEqual(e && e.tahfidz, "الكهف ١-١٠", "tersimpan dalam huruf Arab");
   // dibuka lagi: tetap tampil huruf Arab
   await H.ev("const d = document.getElementById('entryDate'); d.value = '2026-11-02'; d.dispatchEvent(new Event('change')); d.value = '2026-11-03'; d.dispatchEvent(new Event('change'));");
   assert.strictEqual(await H.ev(`return document.querySelector('${row} .rs1').value;`), "الكهف");
+  // tabel Laporan menampilkan huruf yang sama dengan yang dicatat
+  await H.tab("laporan");
+  for (let i = 0; i < 24 && !/November 2026/.test(await H.text("#monthLabel")); i++) await H.ev("document.getElementById(/Desember|202[7-9]/.test(document.getElementById('monthLabel').textContent) ? 'prevMonth' : 'nextMonth').click();");
+  assert.match(await H.ev(`return document.querySelector('#monthTable tr[data-date="2026-11-03"]').textContent;`), /الكهف ١-١٠/);
 });
 
 t("rentang ayat salah dan nilai tanpa setoran ditolak", async (H) => {
