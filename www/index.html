@@ -191,6 +191,14 @@
   .rng-info.ok { color: var(--good); font-weight: 600; }
   .rng-del { position: absolute; right: 6px; bottom: 6px; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--danger); background: transparent; color: var(--danger); font-size: 15px; cursor: pointer; }
   .rng-add { margin-bottom: 10px; }
+  /* Satu blok berwarna per kategori, supaya Tahsin / Tahfidz / Murojaah mudah dibedakan saat menggulir. */
+  .cat-block { --cat: #2e9b5a; --cat-bg: rgba(46,155,90,.13); border: 1px solid var(--line); border-left: 5px solid var(--cat); border-radius: 14px; padding: 0 10px 10px; margin-bottom: 14px; overflow: hidden; }
+  .cat-tahfidz { --cat: #2f74c9; --cat-bg: rgba(47,116,201,.13); }
+  .cat-murojaah { --cat: #d4882a; --cat-bg: rgba(212,136,42,.15); }
+  .cat-head { margin: 0 -10px 10px; padding: 9px 12px; background: var(--cat-bg); color: var(--ink); font-weight: 800; font-size: calc(16.5px*var(--fs)); letter-spacing: .2px; }
+  .cat-block textarea { min-height: 42px; }
+  .cat-block .rng-add { margin-bottom: 2px; }
+  .cat-block .rng-free { display: block; margin-top: 10px; }
   .rs-panel { position: fixed; z-index: 1000; max-height: 260px; overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.28); touch-action: pan-y; }
   .rs-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 14px; min-height: 44px; cursor: pointer; border-bottom: 1px solid var(--line); color: var(--ink); font-size: 14px; -webkit-tap-highlight-color: transparent; }
   .rs-item:last-child { border-bottom: none; }
@@ -582,30 +590,30 @@
             <div class="day-nav"><button type="button" id="dayPrev" aria-label="Hari sebelumnya">‹</button><input type="date" id="entryDate"><button type="button" id="dayNext" aria-label="Hari berikutnya">›</button><button type="button" id="dayToday">Hari ini</button></div>
             <div id="entryStatusBadge" style="margin-top:6px; font-size:12.5px; font-weight:600;"></div>
           </div>
-          <div class="field">
-            <label>📗 Tahsin — rentang ayat (surah)</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
+          <div class="field cat-block cat-tahsin">
+            <div class="cat-head">📗 Tahsin</div>
             <div class="rng" id="rngTahsin"></div>
             <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahsin">+ Tambah rentang</button>
-            <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="gradeTahsin" role="radiogroup" aria-label="Nilai kelancaran Tahsin"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
-            <label for="fTahsin" class="rng-free">Iqro / catatan lain / teks bebas (tidak dibaca sistem)</label>
-            <textarea id="fTahsin" placeholder="Iqro 3 halaman 12" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+            <div class="grade-picker"><div class="grade-title">Nilai</div><div class="grade-options" id="gradeTahsin" role="radiogroup" aria-label="Nilai kelancaran Tahsin"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
+            <label for="fTahsin" class="rng-free">Iqro / catatan</label>
+            <textarea id="fTahsin" placeholder="mis. Iqro 3 hal. 12" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
           </div>
           <datalist id="surahList"></datalist>
-          <div class="field">
-            <label>📘 Tahfidz — rentang ayat</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
+          <div class="field cat-block cat-tahfidz">
+            <div class="cat-head">📘 Tahfidz</div>
             <div class="rng" id="rngTahfidz"></div>
             <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahfidz">+ Tambah rentang</button>
-            <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="gradeTahfidz" role="radiogroup" aria-label="Nilai kelancaran Tahfidz"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
-            <label for="fTahfidz" class="rng-free">Catatan lain / teks bebas (opsional)</label>
-            <textarea id="fTahfidz" placeholder="Teks lama atau catatan tambahan" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+            <div class="grade-picker"><div class="grade-title">Nilai</div><div class="grade-options" id="gradeTahfidz" role="radiogroup" aria-label="Nilai kelancaran Tahfidz"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
+            <label for="fTahfidz" class="rng-free">Catatan</label>
+            <textarea id="fTahfidz" placeholder="Opsional" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
           </div>
-          <div class="field">
-            <label>🔁 Murojaah — rentang ayat</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
+          <div class="field cat-block cat-murojaah">
+            <div class="cat-head">🔁 Murojaah</div>
             <div class="rng" id="rngMurojaah"></div>
             <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Murojaah">+ Tambah rentang</button>
-            <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="gradeMurojaah" role="radiogroup" aria-label="Nilai kelancaran Murojaah"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
-            <label for="fMurojaah" class="rng-free">Catatan lain / teks bebas (opsional)</label>
-            <textarea id="fMurojaah" placeholder="Teks lama atau catatan tambahan" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+            <div class="grade-picker"><div class="grade-title">Nilai</div><div class="grade-options" id="gradeMurojaah" role="radiogroup" aria-label="Nilai kelancaran Murojaah"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
+            <label for="fMurojaah" class="rng-free">Catatan</label>
+            <textarea id="fMurojaah" placeholder="Opsional" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
           </div>
           <div class="field">
             <label for="fKeterangan">📝 Keterangan</label>
@@ -904,29 +912,29 @@
   <div class="modal-backdrop" id="dayModalBackdrop">
     <div class="modal">
       <h2 id="dayModalTitle">Detail Hari</h2>
-      <div class="field">
-        <label>📗 Tahsin — rentang ayat (surah)</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
+      <div class="field cat-block cat-tahsin">
+        <div class="cat-head">📗 Tahsin</div>
         <div class="rng" id="mrngTahsin"></div>
         <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahsin" data-m="1">+ Tambah rentang</button>
-        <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="mgradeTahsin" role="radiogroup" aria-label="Nilai kelancaran Tahsin"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
-        <label for="mTahsin" class="rng-free">Iqro / catatan lain / teks bebas (tidak dibaca sistem)</label>
-        <textarea id="mTahsin" placeholder="Iqro 3 halaman 12" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+        <div class="grade-picker"><div class="grade-title">Nilai</div><div class="grade-options" id="mgradeTahsin" role="radiogroup" aria-label="Nilai kelancaran Tahsin"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
+        <label for="mTahsin" class="rng-free">Iqro / catatan</label>
+        <textarea id="mTahsin" placeholder="mis. Iqro 3 hal. 12" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
       </div>
-      <div class="field">
-        <label>📘 Tahfidz — rentang ayat</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
+      <div class="field cat-block cat-tahfidz">
+        <div class="cat-head">📘 Tahfidz</div>
         <div class="rng" id="mrngTahfidz"></div>
         <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahfidz" data-m="1">+ Tambah rentang</button>
-        <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="mgradeTahfidz" role="radiogroup" aria-label="Nilai kelancaran Tahfidz"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
-        <label for="mTahfidz" class="rng-free">Catatan lain / teks bebas (opsional)</label>
-        <textarea id="mTahfidz" placeholder="Teks lama atau catatan tambahan" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+        <div class="grade-picker"><div class="grade-title">Nilai</div><div class="grade-options" id="mgradeTahfidz" role="radiogroup" aria-label="Nilai kelancaran Tahfidz"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
+        <label for="mTahfidz" class="rng-free">Catatan</label>
+        <textarea id="mTahfidz" placeholder="Opsional" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
       </div>
-      <div class="field">
-        <label>🔁 Murojaah — rentang ayat</label><div class="rng-hint">Ayat boleh dikosongkan: surah tanpa ayat = satu surah penuh</div>
+      <div class="field cat-block cat-murojaah">
+        <div class="cat-head">🔁 Murojaah</div>
         <div class="rng" id="mrngMurojaah"></div>
         <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Murojaah" data-m="1">+ Tambah rentang</button>
-        <div class="grade-picker"><div class="grade-title">Nilai kelancaran</div><div class="grade-options" id="mgradeMurojaah" role="radiogroup" aria-label="Nilai kelancaran Murojaah"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
-        <label for="mMurojaah" class="rng-free">Catatan lain / teks bebas (opsional)</label>
-        <textarea id="mMurojaah" placeholder="Teks lama atau catatan tambahan" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+        <div class="grade-picker"><div class="grade-title">Nilai</div><div class="grade-options" id="mgradeMurojaah" role="radiogroup" aria-label="Nilai kelancaran Murojaah"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
+        <label for="mMurojaah" class="rng-free">Catatan</label>
+        <textarea id="mMurojaah" placeholder="Opsional" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
       </div>
       <div class="field"><label>📝 Keterangan</label><textarea id="mKeterangan" autocomplete="off" autocorrect="off" spellcheck="false"></textarea><div class="chips" data-target="mKeterangan"><button type="button" class="chip izin" data-st="Izin">Izin</button><button type="button" class="chip sakit" data-st="Sakit">Sakit</button><button type="button" class="chip ghoib" data-st="Ghoib">Ghoib</button></div></div>
       <div class="row">
@@ -1686,10 +1694,17 @@
     rsHighlight(-1);
   }
 
+  // Nama surah ditulis dalam huruf yang sama dengan yang diketik: Arab tetap Arab, Latin tetap Latin.
+  function rsName(i, ar) { return ar && SURAHS[i].ar ? SURAHS[i].ar : SURAHS[i].name; }
+  // Huruf terakhir yang dipakai, agar setoran yang dibuka lagi tampil dengan huruf yang sama.
+  var RS_AR_KEY = "tahfidz_surah_ar";
+  function rsPrefAr() { try { return localStorage.getItem(RS_AR_KEY) === "1"; } catch (e) { return false; } }
+  function rsSetPrefAr(ar) { try { localStorage.setItem(RS_AR_KEY, ar ? "1" : "0"); } catch (e) {} }
+
   function rsPick(k) {
     var inp = rsActive;
     if (!inp || rsItems[k] === undefined) return;
-    inp.value = SURAHS[rsItems[k]].name;
+    inp.value = rsName(rsItems[k], pgIsArabic(inp.value));
     rsHide();
     inp.dispatchEvent(new Event("change", { bubbles: true }));
     var row = inp.closest(".rng-row");
@@ -1730,20 +1745,23 @@
     var row = document.createElement("div");
     row.className = "rng-row";
     row.innerHTML =
-      '<div class="rng-line"><span class="rng-lbl">Mulai</span><input type="text" class="rs rs1" placeholder="Surah" autocomplete="off" autocorrect="off" spellcheck="false" role="combobox" aria-autocomplete="list">' +
+      '<div class="rng-line"><span class="rng-lbl">Mulai</span><input type="text" class="rs rs1" dir="auto" placeholder="Surah" autocomplete="off" autocorrect="off" spellcheck="false" role="combobox" aria-autocomplete="list">' +
       '<input type="number" class="ra ra1" inputmode="numeric" min="1" step="1" placeholder="Ayat"></div>' +
-      '<div class="rng-line"><span class="rng-lbl">Sampai</span><input type="text" class="rs rs2" placeholder="Surah" autocomplete="off" autocorrect="off" spellcheck="false" role="combobox" aria-autocomplete="list">' +
+      '<div class="rng-line"><span class="rng-lbl">Sampai</span><input type="text" class="rs rs2" dir="auto" placeholder="Surah" autocomplete="off" autocorrect="off" spellcheck="false" role="combobox" aria-autocomplete="list">' +
       '<input type="number" class="ra ra2" inputmode="numeric" min="1" step="1" placeholder="Ayat"></div>' +
       '<div class="rng-info"></div><button type="button" class="rng-del" aria-label="Hapus rentang">✕</button>';
     var q = function (c) { return row.querySelector("." + c); };
-    if (v) { q("rs1").value = SURAHS[v.i1].name; q("ra1").value = v.a1; q("rs2").value = SURAHS[v.i2].name; q("ra2").value = v.a2; }
-    function canon(inp) { var i = pgSurahIndex(inp.value); if (i >= 0) inp.value = SURAHS[i].name; }
+    if (v) { var ar0 = rsPrefAr(); q("rs1").value = rsName(v.i1, ar0); q("ra1").value = v.a1; q("rs2").value = rsName(v.i2, ar0); q("ra2").value = v.a2; }
+    function canon(inp) {
+      var i = pgSurahIndex(inp.value); if (i < 0) return;
+      var ar = pgIsArabic(inp.value); inp.value = rsName(i, ar); rsSetPrefAr(ar);
+    }
     var rs2Touched = !!v;
     q("rs1").addEventListener("change", function () {
       canon(q("rs1"));
       var i1 = pgSurahIndex(q("rs1").value);
       // Surah akhir mengikuti surah awal sampai pengguna memilihnya sendiri; keduanya bebas dipilih terpisah.
-      if (i1 >= 0 && (!q("rs2").value.trim() || !rs2Touched)) q("rs2").value = SURAHS[i1].name;
+      if (i1 >= 0 && (!q("rs2").value.trim() || !rs2Touched)) q("rs2").value = rsName(i1, pgIsArabic(q("rs1").value));
       rngRefresh(row);
     });
     q("rs2").addEventListener("input", function () { rs2Touched = true; });
