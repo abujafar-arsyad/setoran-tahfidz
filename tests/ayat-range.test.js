@@ -88,6 +88,21 @@ t("multiple rows are all counted (none overwritten) in progress", () => {
   const an = pgAnalyze({ "2026-01-01": { tahfidz: text } }, "tahfidz");
   assert.strictEqual(an.unique, 8); assert.strictEqual(an.total, 8);
 });
+t("rows typed in Arabic are stored, reloaded and displayed in Arabic, and still counted", () => {
+  const BALAD = 89, SYAMS = 90, ALAQ = 95;
+  const rows = [{ i1: BALAD, a1: 1, i2: BALAD, a2: 7, ar: true }, { i1: SYAMS, a1: 1, i2: ALAQ, a2: 19, ar: true }];
+  const text = pgTextFromRows(rows, "");
+  assert.strictEqual(text, "البلد ١-٧; الشمس ١ - العلق ١٩");
+  const back = pgRowsFromText(text);
+  assert.strictEqual(back.rest, ""); assert.strictEqual(back.rows.length, 2);
+  assert.ok(back.rows.every((r) => r.ar));
+  assert.strictEqual(pgTextFromRows(back.rows, back.rest), text);
+  assert.strictEqual(pgDisplayText(text), text);
+  const an = pgAnalyze({ "2026-01-01": { tahfidz: text } }, "tahfidz");
+  assert.strictEqual(an.total, 7 + 82);
+  // Latin rows stay Latin
+  assert.strictEqual(pgTextFromRows([{ i1: BALAD, a1: 1, i2: BALAD, a2: 7 }], ""), "Al-Balad 1-7");
+});
 t("progress for cross-surah range is exact", () => {
   const text = pgTextFromRows([{ i1: BAQ, a1: 200, i2: IMR, a2: 23 }], "");
   const an = pgAnalyze({ "2026-01-01": { tahfidz: text } }, "tahfidz");
