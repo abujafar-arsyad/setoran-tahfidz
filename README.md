@@ -199,6 +199,25 @@ agar perubahannya disalin ke `android/app/src/main/assets/public`.
    bernama `setoran-tahfidz-vX.Y.Z-debug.apk`, dan tandai sebagai
    **Latest release** agar tautan unduh di atas ikut berpindah.
 
+### Rilis otomatis
+
+Alur [`.github/workflows/rilis-apk.yml`](.github/workflows/rilis-apk.yml) membuat APK dan
+GitHub Release sendiri. Setiap ada perubahan di `main`, alur ini membaca `versionName`;
+bila rilis `vX.Y.Z-debug` belum ada, ia menjalankan tes, membuild APK, memeriksa bahwa
+tanda tangannya sama dengan rilis sebelumnya, lalu merilisnya. Jadi cukup naikkan versi
+dan gabungkan ke `main`.
+
+Syaratnya, `debug.keystore` dari PC pemilik disimpan **sekali** sebagai secret
+`DEBUG_KEYSTORE_BASE64`. Jalankan di PowerShell pada PC itu (perlu GitHub CLI yang sudah login):
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("$env:USERPROFILE\.android\debug.keystore")) | gh secret set DEBUG_KEYSTORE_BASE64 -R abujafar-arsyad/setoran-tahfidz
+```
+
+Selama secret belum diisi, alur ini hanya memberi peringatan dan tidak membuat apa pun.
+Bila tanda tangan APK ternyata berbeda, rilis dibatalkan agar data pengguna tidak hilang.
+Alur juga bisa dijalankan manual dari tab **Actions → Rilis APK → Run workflow**.
+
 ### Membuat Release AAB
 
 Google Play mewajibkan **Android App Bundle (.aab)** yang ditandatangani
