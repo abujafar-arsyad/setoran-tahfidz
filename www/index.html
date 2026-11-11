@@ -558,9 +558,51 @@
   .pg-note { font-size: 12.5px; line-height: 1.6; color: var(--ink-soft); margin: 10px 0 0; }
   .pg-warn { border: 1px dashed var(--gold); border-radius: 12px; padding: 10px 12px; font-size: 12.5px; line-height: 1.6; color: var(--ink-soft); margin-bottom: 12px; }
   .pg-warn b { color: var(--gold); }
+
+  /* ---------- v1.4: ikon garis + perapian tampilan ---------- */
+  svg.i { width: 1.15em; height: 1.15em; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.18em; }
+  .btn svg.i { margin-right: 7px; }
+  nav.tabbar { padding-top: 6px; }
+  nav.tabbar button { gap: 2px; }
+  nav.tabbar button .ic { display: flex; align-items: center; justify-content: center; width: 56px; height: 30px; border-radius: 15px; font-size: 21px; transition: background .15s; }
+  nav.tabbar button.active .ic { background: var(--plum-tint); }
+  nav.tabbar button.active::after { display: none; }
+  .icon-btn { display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 18px; }
+  .icon-btn:active { background: var(--plum-tint); }
+  .icon-btn.danger { color: var(--st-ghoib); }
+  ul.student-list li { gap: 12px; justify-content: flex-start; padding: 10px 2px; }
+  .student-avatar { width: 38px; height: 38px; flex: none; border-radius: 50%; background: var(--plum-tint); color: var(--plum-deep); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; }
+  .student-main { flex: 1; min-width: 0; }
+  .student-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .student-sub { display: block; font-size: calc(12px*var(--fs)); color: var(--ink-soft); margin-top: 1px; }
+  .cat-head { display: flex; align-items: center; gap: 8px; }
+  .cat-head::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--cat); flex: none; }
+  .last-line { display: flex; align-items: center; gap: 8px; margin: -2px 0 8px; font-size: calc(12.5px*var(--fs)); color: var(--ink-soft); }
+  .last-line[hidden] { display: none; }
+  .last-info { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .last-go { flex: none; border: none; border-radius: 999px; padding: 7px 13px; min-height: 34px; background: var(--cat); color: #fff; font: inherit; font-weight: 700; font-size: calc(12.5px*var(--fs)); cursor: pointer; }
+  .cat-block .rng-add { background: none; padding: 6px 2px; min-height: 36px; color: var(--plum); font-weight: 700; }
+  .cat-block .rng-free.note-toggle { display: inline-block; padding: 6px 2px; color: var(--plum); font-weight: 700 !important; cursor: pointer; }
+  .rng-del { display: inline-flex; align-items: center; justify-content: center; font-size: 15px; }
+  #entryStatusBadge { display: flex; align-items: center; gap: 6px; }
+  #entryStatusBadge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
 </style>
 </head>
 <body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+</svg>
 <div id="app">
 
   <header class="top">
@@ -591,7 +633,7 @@
             <div id="entryStatusBadge" style="margin-top:6px; font-size:12.5px; font-weight:600;"></div>
           </div>
           <div class="field cat-block cat-tahsin">
-            <div class="cat-head">📗 Tahsin</div>
+            <div class="cat-head">Tahsin</div><div class="last-line" id="lastTahsin" hidden></div>
             <div class="rng" id="rngTahsin"></div>
             <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahsin">+ Tambah rentang</button>
             <div class="grade-picker"><div class="grade-title">Nilai</div><div class="grade-options" id="gradeTahsin" role="radiogroup" aria-label="Nilai kelancaran Tahsin"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
@@ -600,7 +642,7 @@
           </div>
           <datalist id="surahList"></datalist>
           <div class="field cat-block cat-tahfidz">
-            <div class="cat-head">📘 Tahfidz</div>
+            <div class="cat-head">Tahfidz</div><div class="last-line" id="lastTahfidz" hidden></div>
             <div class="rng" id="rngTahfidz"></div>
             <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahfidz">+ Tambah rentang</button>
             <div class="grade-picker"><div class="grade-title">Nilai</div><div class="grade-options" id="gradeTahfidz" role="radiogroup" aria-label="Nilai kelancaran Tahfidz"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
@@ -608,7 +650,7 @@
             <textarea id="fTahfidz" placeholder="Opsional" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
           </div>
           <div class="field cat-block cat-murojaah">
-            <div class="cat-head">🔁 Murojaah</div>
+            <div class="cat-head">Murojaah</div><div class="last-line" id="lastMurojaah" hidden></div>
             <div class="rng" id="rngMurojaah"></div>
             <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Murojaah">+ Tambah rentang</button>
             <div class="grade-picker"><div class="grade-title">Nilai</div><div class="grade-options" id="gradeMurojaah" role="radiogroup" aria-label="Nilai kelancaran Murojaah"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
@@ -616,11 +658,11 @@
             <textarea id="fMurojaah" placeholder="Opsional" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
           </div>
           <div class="field">
-            <label for="fKeterangan">📝 Keterangan</label>
+            <label for="fKeterangan">Keterangan</label>
             <textarea id="fKeterangan" placeholder="Pilih di bawah, atau tulis sendiri" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
             <div class="chips" data-target="fKeterangan"><button type="button" class="chip izin" data-st="Izin">Izin</button><button type="button" class="chip sakit" data-st="Sakit">Sakit</button><button type="button" class="chip ghoib" data-st="Ghoib">Ghoib</button></div>
           </div>
-          <button class="btn btn-primary" id="btnSave">✅ Simpan Setoran</button>
+          <button class="btn btn-primary" id="btnSave"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg>Simpan Setoran</button>
         </div>
       </div>
     </section>
@@ -663,7 +705,7 @@
         </div>
         <div class="totals" id="monthTotals"></div>
         <div class="legend"><span><i style="background:var(--plum-tint);border:1px solid var(--plum)"></i>Ada setoran</span><span><i style="background:var(--card);border:1px solid var(--line)"></i>Kosong</span><span><i style="background:var(--st-izin)"></i>Izin</span><span><i style="background:var(--st-sakit)"></i>Sakit</span><span><i style="background:var(--st-ghoib)"></i>Ghoib</span></div>
-        <button class="btn btn-ghost" id="btnExport" style="width:100%; margin-top:14px;">⬇️ Unduh Laporan (Gambar)</button>
+        <button class="btn btn-ghost" id="btnExport" style="width:100%; margin-top:14px;"><svg class="i" aria-hidden="true"><use href="#i-down"/></svg>Unduh Laporan (Gambar)</button>
       </div>
     </section>
 
@@ -708,8 +750,8 @@
           <div id="pgSurahList"></div>
           <button type="button" class="btn btn-ghost" id="pgMore" style="width:100%; display:none;">Tampilkan semua surah</button>
         </div>
-        <button type="button" class="btn btn-ghost" id="pgDownload" style="width:100%; margin-top:12px;">⬇️ Unduh Progres</button>
-        <button type="button" class="btn btn-primary" id="pgWali" style="width:100%; margin-top:10px;">📨 Kirim Rapor ke Wali</button>
+        <button type="button" class="btn btn-ghost" id="pgDownload" style="width:100%; margin-top:12px;"><svg class="i" aria-hidden="true"><use href="#i-down"/></svg>Unduh Progres</button>
+        <button type="button" class="btn btn-primary" id="pgWali" style="width:100%; margin-top:10px;"><svg class="i" aria-hidden="true"><use href="#i-send"/></svg>Kirim Rapor ke Wali</button>
         <p class="pg-note" id="pgNote"></p>
       </div>
     </section>
@@ -835,8 +877,8 @@
           Simpan semua data (santri + setoran) jadi satu file, buat cadangan atau pindah ke HP lain.
         </p>
         <div class="row">
-          <button class="btn btn-ghost" id="btnExportData">⬇️ Ekspor Data</button>
-          <button class="btn btn-ghost" id="btnImportData">⬆️ Impor Data</button>
+          <button class="btn btn-ghost" id="btnExportData"><svg class="i" aria-hidden="true"><use href="#i-down"/></svg>Ekspor Data</button>
+          <button class="btn btn-ghost" id="btnImportData"><svg class="i" aria-hidden="true"><use href="#i-up"/></svg>Impor Data</button>
         </div>
         <input type="file" id="importFileInput" accept="application/json,.json" style="display:none;">
       </div>
@@ -856,11 +898,11 @@
   </main>
 
   <nav class="tabbar">
-    <button data-tab="catat" class="active"><span class="ic">✍️</span>Catat</button>
-    <button data-tab="santri"><span class="ic">👤</span>Santri</button>
-    <button data-tab="laporan"><span class="ic">📊</span>Laporan</button>
-    <button data-tab="progres"><span class="ic">📈</span>Progres</button>
-    <button data-tab="setelan"><span class="ic">⚙️</span>Setelan</button>
+    <button data-tab="catat" class="active"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-pen"/></svg></span>Catat</button>
+    <button data-tab="santri"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-users"/></svg></span>Santri</button>
+    <button data-tab="laporan"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-cal"/></svg></span>Laporan</button>
+    <button data-tab="progres"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-chart"/></svg></span>Progres</button>
+    <button data-tab="setelan"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-sliders"/></svg></span>Setelan</button>
   </nav>
 
   <div class="modal-backdrop" id="waliModalBackdrop">
@@ -872,10 +914,10 @@
         <textarea id="waliText" spellcheck="false"></textarea>
         <div class="rng-hint" style="margin:6px 0 0">Setelah menekan Kirim, pilih WhatsApp (atau aplikasi lain) lalu pilih kontak wali santri.</div>
       </div>
-      <button class="btn btn-ghost" id="waliEditTpl" type="button" style="width:100%; margin-bottom:10px;">✏️ Ubah template pesan</button>
+      <button class="btn btn-ghost" id="waliEditTpl" type="button" style="width:100%; margin-bottom:10px;"><svg class="i" aria-hidden="true"><use href="#i-pen"/></svg>Ubah template pesan</button>
       <div class="row">
         <button class="btn btn-ghost" id="waliCancel">Batal</button>
-        <button class="btn btn-primary" id="waliSend">📨 Kirim</button>
+        <button class="btn btn-primary" id="waliSend"><svg class="i" aria-hidden="true"><use href="#i-send"/></svg>Kirim</button>
       </div>
     </div>
   </div>
@@ -913,7 +955,7 @@
     <div class="modal">
       <h2 id="dayModalTitle">Detail Hari</h2>
       <div class="field cat-block cat-tahsin">
-        <div class="cat-head">📗 Tahsin</div>
+        <div class="cat-head">Tahsin</div>
         <div class="rng" id="mrngTahsin"></div>
         <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahsin" data-m="1">+ Tambah rentang</button>
         <div class="grade-picker"><div class="grade-title">Nilai</div><div class="grade-options" id="mgradeTahsin" role="radiogroup" aria-label="Nilai kelancaran Tahsin"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
@@ -921,7 +963,7 @@
         <textarea id="mTahsin" placeholder="mis. Iqro 3 hal. 12" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
       </div>
       <div class="field cat-block cat-tahfidz">
-        <div class="cat-head">📘 Tahfidz</div>
+        <div class="cat-head">Tahfidz</div>
         <div class="rng" id="mrngTahfidz"></div>
         <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahfidz" data-m="1">+ Tambah rentang</button>
         <div class="grade-picker"><div class="grade-title">Nilai</div><div class="grade-options" id="mgradeTahfidz" role="radiogroup" aria-label="Nilai kelancaran Tahfidz"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
@@ -929,14 +971,14 @@
         <textarea id="mTahfidz" placeholder="Opsional" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
       </div>
       <div class="field cat-block cat-murojaah">
-        <div class="cat-head">🔁 Murojaah</div>
+        <div class="cat-head">Murojaah</div>
         <div class="rng" id="mrngMurojaah"></div>
         <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Murojaah" data-m="1">+ Tambah rentang</button>
         <div class="grade-picker"><div class="grade-title">Nilai</div><div class="grade-options" id="mgradeMurojaah" role="radiogroup" aria-label="Nilai kelancaran Murojaah"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
         <label for="mMurojaah" class="rng-free">Catatan</label>
         <textarea id="mMurojaah" placeholder="Opsional" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
       </div>
-      <div class="field"><label>📝 Keterangan</label><textarea id="mKeterangan" autocomplete="off" autocorrect="off" spellcheck="false"></textarea><div class="chips" data-target="mKeterangan"><button type="button" class="chip izin" data-st="Izin">Izin</button><button type="button" class="chip sakit" data-st="Sakit">Sakit</button><button type="button" class="chip ghoib" data-st="Ghoib">Ghoib</button></div></div>
+      <div class="field"><label>Keterangan</label><textarea id="mKeterangan" autocomplete="off" autocorrect="off" spellcheck="false"></textarea><div class="chips" data-target="mKeterangan"><button type="button" class="chip izin" data-st="Izin">Izin</button><button type="button" class="chip sakit" data-st="Sakit">Sakit</button><button type="button" class="chip ghoib" data-st="Ghoib">Ghoib</button></div></div>
       <div class="row">
         <button class="btn btn-ghost" id="mCancel">Tutup</button>
         <button class="btn btn-primary" id="mSave">Simpan</button>
@@ -1144,6 +1186,7 @@
     return "s" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   }
 
+  function ICON(name) { return '<svg class="i" aria-hidden="true"><use href="#i-' + name + '"/></svg>'; }
   function todayStr() {
     var d = new Date();
     var m = String(d.getMonth() + 1).padStart(2, "0");
@@ -1257,22 +1300,34 @@
     });
     function renderStudentRow(s) {
       var li = document.createElement("li");
+      var av = document.createElement("span");
+      av.className = "student-avatar"; av.setAttribute("aria-hidden", "true");
+      av.textContent = (String(s.name).trim().charAt(0) || "?").toUpperCase();
+      var main = document.createElement("span");
+      main.className = "student-main";
       var nameSpan = document.createElement("span");
       nameSpan.className = "student-name";
       nameSpan.textContent = s.name;
+      var sub = document.createElement("span");
+      sub.className = "student-sub";
+      var lastD = Object.keys(data.entries[s.id] || {}).sort().pop();
+      if (lastD) { var ld = new Date(lastD + "T00:00:00"); sub.textContent = "Terakhir: " + ld.getDate() + " " + BULAN_ID[ld.getMonth()].slice(0, 3) + " " + ld.getFullYear(); }
+      else sub.textContent = "Belum ada catatan";
+      main.appendChild(nameSpan); main.appendChild(sub);
       var actions = document.createElement("div");
       actions.className = "student-actions";
       var renameBtn = document.createElement("button");
       renameBtn.className = "icon-btn";
-      renameBtn.textContent = "✏️";
+      renameBtn.innerHTML = ICON("pen");
       renameBtn.type = "button"; renameBtn.setAttribute("aria-label", "Ubah data " + s.name); renameBtn.onclick = function () { openRenameModal(s.id); };
       var delBtn = document.createElement("button");
-      delBtn.className = "icon-btn";
-      delBtn.textContent = "🗑️";
+      delBtn.className = "icon-btn danger";
+      delBtn.innerHTML = ICON("trash");
       delBtn.type = "button"; delBtn.setAttribute("aria-label", "Hapus " + s.name); delBtn.onclick = function () { openDeleteModal(s.id); };
       actions.appendChild(renameBtn);
       actions.appendChild(delBtn);
-      li.appendChild(nameSpan);
+      li.appendChild(av);
+      li.appendChild(main);
       li.appendChild(actions);
       ul.appendChild(li);
     }
@@ -1746,7 +1801,7 @@
       '<input type="number" class="ra ra1" inputmode="numeric" min="1" step="1" placeholder="Ayat"></div>' +
       '<div class="rng-line"><span class="rng-lbl">Sampai</span><input type="text" class="rs rs2" dir="auto" placeholder="Surah" autocomplete="off" autocorrect="off" spellcheck="false" role="combobox" aria-autocomplete="list">' +
       '<input type="number" class="ra ra2" inputmode="numeric" min="1" step="1" placeholder="Ayat"></div>' +
-      '<div class="rng-info"></div><button type="button" class="rng-del" aria-label="Hapus rentang">✕</button>';
+      '<div class="rng-info"></div><button type="button" class="rng-del" aria-label="Hapus rentang">' + ICON("x") + '</button>';
     var q = function (c) { return row.querySelector("." + c); };
     if (v) { var ar0 = !!v.ar; q("rs1").value = rsName(v.i1, ar0); q("ra1").value = v.a1; q("rs2").value = rsName(v.i2, ar0); q("ra2").value = v.a2; }
     function canon(inp) {
@@ -1778,7 +1833,23 @@
     p.rows.forEach(function (r) { rngAddRow(cat, r, m); });
     if (!p.rows.length) rngAddRow(cat, null, m);
     rngRest(cat, m).value = p.rest;
+    noteSync(rngRest(cat, m), false);
   }
+  // Catatan Tahfidz/Murojaah disembunyikan selama kosong; ketuk "+ Catatan" untuk membukanya.
+  function noteSync(ta, open) {
+    var lbl = document.querySelector('label[for="' + ta.id + '"]');
+    if (!lbl || /Tahsin$/.test(ta.id)) return;
+    ta.hidden = !open && !ta.value.trim();
+    lbl.classList.toggle("note-toggle", ta.hidden);
+    lbl.textContent = ta.hidden ? "+ Catatan" : "Catatan";
+  }
+  ["fTahfidz", "fMurojaah", "mTahfidz", "mMurojaah"].forEach(function (id) {
+    var ta = document.getElementById(id);
+    document.querySelector('label[for="' + id + '"]').addEventListener("click", function (ev) {
+      if (!ta.hidden) return;
+      ev.preventDefault(); noteSync(ta, true); ta.focus();
+    });
+  });
 
   // -> {text} atau {error, row}
   function rngCollect(cat, m) {
@@ -1796,6 +1867,40 @@
     b.addEventListener("click", function () { rngAddRow(b.getAttribute("data-cat"), null, b.getAttribute("data-m") === "1").querySelector(".rs1").focus(); });
   });
 
+  // Baris "Terakhir: ..." per kategori + tombol lanjut/ulang untuk Tahfidz (hanya saat kolom tanggal itu masih kosong).
+  function renderLastLines(s, dateStr) {
+    var ents = data.entries[s.id] || {}, cur = ents[dateStr] || {};
+    [["Tahsin", "tahsin"], ["Tahfidz", "tahfidz"], ["Murojaah", "murojaah"]].forEach(function (c) {
+      var el = document.getElementById("last" + c[0]), L = pgLastSetoran(ents, c[1], dateStr);
+      el.textContent = "";
+      if (!L) { el.hidden = true; return; }
+      el.hidden = false;
+      var d = new Date(L.date + "T00:00:00");
+      var info = document.createElement("span");
+      info.className = "last-info";
+      info.textContent = "Terakhir: " + L.text + " · " + d.getDate() + " " + BULAN_ID[d.getMonth()].slice(0, 3);
+      el.appendChild(info);
+      if (c[0] !== "Tahfidz" || String(cur.tahfidz || "").trim() || (!L.next && !L.repeat)) return;
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "last-go"; b.id = "lastGo";
+      b.textContent = L.repeat ? "Ulang" : "Lanjut ayat " + L.next.a;
+      b.addEventListener("click", function () {
+        var box = rngBox("Tahfidz"), row;
+        box.textContent = "";
+        if (L.repeat) { L.repeat.forEach(function (r) { row = rngAddRow("Tahfidz", r); }); }
+        else {
+          row = rngAddRow("Tahfidz", null);
+          var nm = rsName(L.next.i, L.next.ar);
+          row.querySelector(".rs1").value = nm; row.querySelector(".ra1").value = L.next.a; row.querySelector(".rs2").value = nm;
+          rngRefresh(row);
+          row.querySelector(".ra2").focus();
+        }
+        b.remove();
+      });
+      el.appendChild(b);
+    });
+  }
+
   function loadEntryIntoForm() {
     var s = getSelectedStudent();
     if (!s) return;
@@ -1809,14 +1914,15 @@
     setGradeValue("Murojaah", false, e.nilai && e.nilai.murojaah || "");
     document.getElementById("fKeterangan").value = e.keterangan || "";
     syncChips("fKeterangan");
+    renderLastLines(s, dateStr);
     var badge = document.getElementById("entryStatusBadge");
     var d = new Date(dateStr + "T00:00:00");
     var tanggalLabel = d.getDate() + " " + BULAN_ID[d.getMonth()] + " " + d.getFullYear();
     if (getEntry(s.id, dateStr)) {
-      badge.textContent = "✏️ Mengedit data yang sudah ada — " + tanggalLabel;
+      badge.textContent = "Mengedit data yang sudah ada — " + tanggalLabel;
       badge.style.color = "var(--gold)";
     } else {
-      badge.textContent = "🆕 Entri baru — " + tanggalLabel;
+      badge.textContent = "Entri baru — " + tanggalLabel;
       badge.style.color = "var(--good)";
     }
   }
@@ -2538,8 +2644,8 @@
   function mk(tag, props) { var el = document.createElement(tag); for (var k in props) el[k] = props[k]; return el; }
 
   after("btnSave", mk("button", { id: "btnSaveNext", type: "button", className: "btn btn-outline", textContent: "Simpan & santri berikutnya" })).style.cssText = "width:100%;margin-top:10px";
-  after("btnExport", mk("button", { id: "btnShare", type: "button", className: "btn btn-ghost", textContent: "📤 Bagikan ringkasan (teks)" })).style.cssText = "width:100%;margin-top:10px";
-  after("btnShare", mk("button", { id: "btnWali", type: "button", className: "btn btn-primary", textContent: "📨 Kirim Laporan ke Wali" })).style.cssText = "width:100%;margin-top:10px";
+  after("btnExport", mk("button", { id: "btnShare", type: "button", className: "btn btn-ghost", innerHTML: ICON("share") + "Bagikan ringkasan (teks)" })).style.cssText = "width:100%;margin-top:10px";
+  after("btnShare", mk("button", { id: "btnWali", type: "button", className: "btn btn-primary", innerHTML: ICON("send") + "Kirim Laporan ke Wali" })).style.cssText = "width:100%;margin-top:10px";
   after("monthTotals", mk("div", { id: "monthRate", className: "rate" }));
   after("importFileInput", mk("p", { id: "backupInfo", className: "meta" }));
 
@@ -3422,6 +3528,26 @@
       else if (p > 0 || pn > 0 || pa > 0) has.push(i);
     });
     return starts.concat(has).slice(0, max || 8);
+  }
+
+  // Setoran terakhir satu kolom sebelum tanggal tertentu, untuk baris "Terakhir: ..." di formulir Catat.
+  // next = lanjutan hafalan: {i, a} ayat berikutnya di surah yang sama (null bila surah sudah habis atau teks tak terbaca);
+  // bila nilai terakhir Rasib, repeat = rentang yang sama untuk disetor ulang.
+  function pgLastSetoran(ents, field, beforeDate) {
+    var best = null;
+    Object.keys(ents || {}).forEach(function (d) {
+      if (d >= beforeDate || (best && d <= best)) return;
+      if (String(ents[d] && ents[d][field] || "").trim()) best = d;
+    });
+    if (!best) return null;
+    var e = ents[best], text = String(e[field]).trim(), grade = e.nilai && e.nilai[field] || "";
+    var out = { date: best, text: pgDisplayText(text), grade: grade, next: null, repeat: null };
+    var parsed = pgRowsFromText(text);
+    if (!parsed.rows.length) return out;
+    var last = parsed.rows[parsed.rows.length - 1];
+    if (grade === "R") out.repeat = parsed.rows;
+    else if (last.a2 < SURAHS[last.i2].ayat) out.next = { i: last.i2, a: last.a2 + 1, ar: !!last.ar };
+    return out;
   }
 
   function pgTextFromRows(rows, rest) {
