@@ -1,0 +1,116 @@
+# Membuat APK uji coba dan rilis GitHub secara otomatis.
+#
+# Setiap ada perubahan di main, alur ini membaca versionName dari android/app/build.gradle.
+# Bila rilis "v<versi>-debug" belum ada, APK dibuild, diperiksa tanda tangannya, lalu dirilis.
+# Bila rilis untuk versi itu sudah ada, tidak ada yang dikerjakan.
+#
+# Syarat (sekali saja): secret DEBUG_KEYSTORE_BASE64 berisi debug.keystore dari PC pemilik,
+# agar tanda tangan APK tetap sama dan aplikasi di HP bisa diperbarui tanpa kehilangan data.
+# Cara mengisinya ada di README bagian "Rilis otomatis".
+name: Rilis APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rilis-apk
+  cancel-in-progress: false
+
+env:
+  # Sidik jari SHA-256 sertifikat yang dipakai semua rilis sejak v1.0. APK dengan sertifikat lain tidak dirilis.
+  SIDIK_JARI: 3cf7a0727e4ee10b835084a4f924264173ac02aef23aa461705db291efe25d17
+
+jobs:
+  rilis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Baca versi dan cek rilis
+        id: versi
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KEYSTORE: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          versi=$(sed -n 's/.*versionName "\(.*\)".*/\1/p' android/app/build.gradle | head -1)
+          tag="v${versi}-debug"
+          echo "versi=$versi" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Rilis $tag sudah ada, tidak ada yang perlu dibuat." >> "$GITHUB_STEP_SUMMARY"
+            echo "lanjut=tidak" >> "$GITHUB_OUTPUT"
+          elif [ -z "$KEYSTORE" ]; then
+            echo "::warning::Secret DEBUG_KEYSTORE_BASE64 belum diisi, jadi APK $tag tidak dibuat. Lihat README bagian Rilis otomatis."
+            echo "Secret DEBUG_KEYSTORE_BASE64 belum diisi, jadi APK $tag tidak dibuat." >> "$GITHUB_STEP_SUMMARY"
+            echo "lanjut=tidak" >> "$GITHUB_OUTPUT"
+          else
+            echo "lanjut=ya" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.versi.outputs.lanjut == 'ya'
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        if: steps.versi.outputs.lanjut == 'ya'
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Pasang dependensi dan jalankan tes
+        if: steps.versi.outputs.lanjut == 'ya'
+        run: |
+          npm ci
+          npm test
+          npm run test:ui
+
+      - name: Pasang kunci tanda tangan
+        if: steps.versi.outputs.lanjut == 'ya'
+        env:
+          KEYSTORE: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          mkdir -p "$HOME/.android"
+          printf '%s' "$KEYSTORE" | tr -d ' \r\n' | base64 -d > "$HOME/.android/debug.keystore"
+
+      - name: Build APK
+        if: steps.versi.outputs.lanjut == 'ya'
+        run: |
+          npx cap sync android
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Periksa tanda tangan APK
+        if: steps.versi.outputs.lanjut == 'ya'
+        run: |
+          apk=android/app/build/outputs/apk/debug/app-debug.apk
+          apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          jari=$("$apksigner" verify --print-certs "$apk" | sed -n 's/.*certificate SHA-256 digest: //p' | head -1)
+          echo "Sidik jari APK: $jari"
+          if [ "$jari" != "$SIDIK_JARI" ]; then
+            echo "::error::Tanda tangan APK berbeda dari rilis sebelumnya. Rilis dibatalkan agar data pengguna tidak hilang. Periksa secret DEBUG_KEYSTORE_BASE64."
+            exit 1
+          fi
+          cp "$apk" "setoran-tahfidz-${{ steps.versi.outputs.tag }}.apk"
+
+      - name: Buat rilis
+        if: steps.versi.outputs.lanjut == 'ya'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${{ steps.versi.outputs.tag }}"
+          gh release create "$tag" "setoran-tahfidz-$tag.apk" --title "$tag" --target "$GITHUB_SHA" --generate-notes
+          echo "Rilis $tag dibuat." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Hapus kunci
+        if: always()
+        run: rm -f "$HOME/.android/debug.keystore"
