@@ -29,7 +29,7 @@ Semua nama dan catatan pada gambar ini fiktif.
 - Ayat boleh dikosongkan: surah tanpa nomor ayat dihitung satu surah penuh.
 - Nama surah muncul sebagai saran saat mengetik, dan jumlah ayat dicek otomatis (mis. Al-Ikhlas hanya 1–4).
 - Nama surah yang diketik dengan huruf Arab tersimpan dan tampil dalam huruf Arab (mis. البلد ١-٧).
-- **Lanjut dari ayat terakhir:** tiap kategori menampilkan setoran terakhir santri; untuk Tahfidz ada tombol **Lanjut ayat N** yang langsung mengisi surah dan ayat awal (atau **Ulang** bila setoran terakhir bernilai Rasib).
+- **Lanjut dari ayat terakhir:** tiap kategori (Tahsin, Tahfidz, Murojaah) menampilkan setoran terakhir santri dan tombol **Lanjut ayat N** yang langsung mengisi surah dan ayat awal. Bila surah terakhir sudah habis, tombolnya menawarkan surah berikutnya searah urutan setoran selama ini; bila nilai terakhir Rasib, tombolnya **Ulang**. Tersedia di tab Catat dan dialog edit di Laporan.
 - Catatan Iqro atau buku lain tetap bisa ditulis sebagai teks bebas.
 
 **Nilai kelancaran**

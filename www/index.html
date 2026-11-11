@@ -955,7 +955,7 @@
     <div class="modal">
       <h2 id="dayModalTitle">Detail Hari</h2>
       <div class="field cat-block cat-tahsin">
-        <div class="cat-head">Tahsin</div>
+        <div class="cat-head">Tahsin</div><div class="last-line" id="mlastTahsin" hidden></div>
         <div class="rng" id="mrngTahsin"></div>
         <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahsin" data-m="1">+ Tambah rentang</button>
         <div class="grade-picker"><div class="grade-title">Nilai</div><div class="grade-options" id="mgradeTahsin" role="radiogroup" aria-label="Nilai kelancaran Tahsin"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
@@ -963,7 +963,7 @@
         <textarea id="mTahsin" placeholder="mis. Iqro 3 hal. 12" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
       </div>
       <div class="field cat-block cat-tahfidz">
-        <div class="cat-head">Tahfidz</div>
+        <div class="cat-head">Tahfidz</div><div class="last-line" id="mlastTahfidz" hidden></div>
         <div class="rng" id="mrngTahfidz"></div>
         <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Tahfidz" data-m="1">+ Tambah rentang</button>
         <div class="grade-picker"><div class="grade-title">Nilai</div><div class="grade-options" id="mgradeTahfidz" role="radiogroup" aria-label="Nilai kelancaran Tahfidz"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
@@ -971,7 +971,7 @@
         <textarea id="mTahfidz" placeholder="Opsional" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
       </div>
       <div class="field cat-block cat-murojaah">
-        <div class="cat-head">Murojaah</div>
+        <div class="cat-head">Murojaah</div><div class="last-line" id="mlastMurojaah" hidden></div>
         <div class="rng" id="mrngMurojaah"></div>
         <button type="button" class="btn btn-ghost btn-small rng-add" data-cat="Murojaah" data-m="1">+ Tambah rentang</button>
         <div class="grade-picker"><div class="grade-title">Nilai</div><div class="grade-options" id="mgradeMurojaah" role="radiogroup" aria-label="Nilai kelancaran Murojaah"><button type="button" class="grade-option" role="radio" data-code="M" aria-checked="false" aria-label="Mumtaz">M</button><button type="button" class="grade-option" role="radio" data-code="JJ" aria-checked="false" aria-label="Jayyid Jiddan">JJ</button><button type="button" class="grade-option" role="radio" data-code="J" aria-checked="false" aria-label="Jayyid">J</button><button type="button" class="grade-option" role="radio" data-code="MQ" aria-checked="false" aria-label="Maqbul">Mq</button><button type="button" class="grade-option" role="radio" data-code="R" aria-checked="false" aria-label="Rasib">R</button></div></div>
@@ -1868,10 +1868,10 @@
   });
 
   // Baris "Terakhir: ..." per kategori + tombol lanjut/ulang untuk Tahfidz (hanya saat kolom tanggal itu masih kosong).
-  function renderLastLines(s, dateStr) {
+  function renderLastLines(s, dateStr, m) {
     var ents = data.entries[s.id] || {}, cur = ents[dateStr] || {};
     [["Tahsin", "tahsin"], ["Tahfidz", "tahfidz"], ["Murojaah", "murojaah"]].forEach(function (c) {
-      var el = document.getElementById("last" + c[0]), L = pgLastSetoran(ents, c[1], dateStr);
+      var el = document.getElementById((m ? "mlast" : "last") + c[0]), L = pgLastSetoran(ents, c[1], dateStr);
       el.textContent = "";
       if (!L) { el.hidden = true; return; }
       el.hidden = false;
@@ -1880,16 +1880,16 @@
       info.className = "last-info";
       info.textContent = "Terakhir: " + L.text + " · " + d.getDate() + " " + BULAN_ID[d.getMonth()].slice(0, 3);
       el.appendChild(info);
-      if (c[0] !== "Tahfidz" || String(cur.tahfidz || "").trim() || (!L.next && !L.repeat)) return;
+      if (String(cur[c[1]] || "").trim() || (!L.next && !L.repeat)) return;
       var b = document.createElement("button");
-      b.type = "button"; b.className = "last-go"; b.id = "lastGo";
-      b.textContent = L.repeat ? "Ulang" : "Lanjut ayat " + L.next.a;
+      b.type = "button"; b.className = "last-go";
+      b.textContent = L.repeat ? "Ulang" : L.next.newSurah ? "Lanjut " + rsName(L.next.i, L.next.ar) : "Lanjut ayat " + L.next.a;
       b.addEventListener("click", function () {
-        var box = rngBox("Tahfidz"), row;
+        var box = rngBox(c[0], m), row;
         box.textContent = "";
-        if (L.repeat) { L.repeat.forEach(function (r) { row = rngAddRow("Tahfidz", r); }); }
+        if (L.repeat) { L.repeat.forEach(function (r) { row = rngAddRow(c[0], r, m); }); }
         else {
-          row = rngAddRow("Tahfidz", null);
+          row = rngAddRow(c[0], null, m);
           var nm = rsName(L.next.i, L.next.ar);
           row.querySelector(".rs1").value = nm; row.querySelector(".ra1").value = L.next.a; row.querySelector(".rs2").value = nm;
           rngRefresh(row);
@@ -2197,6 +2197,7 @@
     var d = new Date(dateStr + "T00:00:00");
     document.getElementById("dayModalTitle").textContent =
       d.getDate() + " " + BULAN_ID[d.getMonth()] + " " + d.getFullYear();
+    renderLastLines(s, dateStr, true);
     rngLoad("Tahsin", e.tahsin || "", true);
     rngLoad("Tahfidz", e.tahfidz || "", true);
     rngLoad("Murojaah", e.murojaah || "", true);
@@ -3544,9 +3545,21 @@
     var out = { date: best, text: pgDisplayText(text), grade: grade, next: null, repeat: null };
     var parsed = pgRowsFromText(text);
     if (!parsed.rows.length) return out;
-    var last = parsed.rows[parsed.rows.length - 1];
+    var first = parsed.rows[0], last = parsed.rows[parsed.rows.length - 1];
     if (grade === "R") out.repeat = parsed.rows;
     else if (last.a2 < SURAHS[last.i2].ayat) out.next = { i: last.i2, a: last.a2 + 1, ar: !!last.ar };
+    else {
+      // Surah habis: lanjut ke surah sebelah, searah dengan urutan setoran selama ini (maju ke An-Nas atau
+      // mundur ke Al-Fatihah). Arah dibaca dari setoran ini, lalu dari setoran-setoran sebelumnya.
+      var dir = last.i2 - first.i1;
+      var dates = Object.keys(ents).filter(function (d) { return d < best; }).sort();
+      for (var k = dates.length - 1; k >= 0 && !dir; k--) {
+        var pr = pgRowsFromText(String(ents[dates[k]] && ents[dates[k]][field] || "")).rows;
+        if (pr.length) dir = first.i1 - pr[pr.length - 1].i2;
+      }
+      var ni = last.i2 + (dir > 0 ? 1 : -1);
+      if (dir && ni >= 0 && ni < SURAHS.length) out.next = { i: ni, a: 1, ar: !!last.ar, newSurah: true };
+    }
     return out;
   }
 
