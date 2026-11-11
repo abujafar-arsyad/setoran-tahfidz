@@ -290,11 +290,11 @@ t("lanjut dari ayat terakhir: tombol mengisi surah dan ayat awal, catatan bisa d
     entries: { a: { "2026-11-02": { tahsin: "", tahfidz: "Al-Balad 1-7", murojaah: "", keterangan: "", nilai: { tahsin: "", tahfidz: "JJ", murojaah: "" } } } } });
   await H.ev("const d = document.getElementById('entryDate'); d.value = '2026-11-03'; d.dispatchEvent(new Event('change'));");
   assert.match(await H.text("#lastTahfidz"), /Terakhir: Al-Balad 1-7 · 2 Nov/);
-  assert.strictEqual(await H.text("#lastGo"), "Lanjut ayat 8");
-  await H.tap("#lastGo"); await H.type("12");
+  assert.strictEqual(await H.text("#lastTahfidz .last-go"), "Lanjut ayat 8");
+  await H.tap("#lastTahfidz .last-go"); await H.type("12");
   const row = "#rngTahfidz .rng-row";
   assert.match(await H.rowInfo(row), /Al-Balad 8-12 = 5 ayat/);
-  assert.strictEqual(await H.ev("return !!document.getElementById('lastGo');"), false, "tombol hilang setelah dipakai");
+  assert.strictEqual(await H.ev("return !!document.querySelector('#lastTahfidz .last-go');"), false, "tombol hilang setelah dipakai");
   // catatan tersembunyi sampai dibuka
   assert.strictEqual(await H.ev("return document.getElementById('fTahfidz').hidden;"), true);
   await H.tap('label[for="fTahfidz"]'); await H.type("lancar");
@@ -302,7 +302,27 @@ t("lanjut dari ayat terakhir: tombol mengisi surah dan ayat awal, catatan bisa d
   await H.tap("#btnSave");
   assert.strictEqual((await H.store()).entries.a["2026-11-03"].tahfidz, "Al-Balad 8-12; lancar");
   // tanggal yang sudah terisi tidak menawarkan tombol lanjut
-  assert.strictEqual(await H.ev("return !!document.getElementById('lastGo');"), false);
+  assert.strictEqual(await H.ev("return !!document.querySelector('#lastTahfidz .last-go');"), false);
+});
+
+t("lanjut juga ada di Tahsin, Murojaah, dan dialog edit di Laporan", async (H) => {
+  await H.open({ students: [{ id: "a", name: "Ali" }], selectedStudentId: "a",
+    entries: { a: { "2026-11-10": { tahsin: "Al-Baqarah 229-230", tahfidz: "Al-Balad 1-7", murojaah: "Asy-Syams 1 → Al-'Alaq 19", keterangan: "",
+      nilai: { tahsin: "", tahfidz: "JJ", murojaah: "" } } } } });
+  await H.ev("const d = document.getElementById('entryDate'); d.value = '2026-11-11'; d.dispatchEvent(new Event('change'));");
+  assert.strictEqual(await H.text("#lastTahsin .last-go"), "Lanjut ayat 231");
+  assert.strictEqual(await H.text("#lastMurojaah .last-go"), "Lanjut Al-Qadr", "surah habis: lanjut ke surah berikutnya searah setoran");
+  await H.tap("#lastMurojaah .last-go");
+  assert.strictEqual(await H.ev("return document.querySelector('#rngMurojaah .rs1').value + ' ' + document.querySelector('#rngMurojaah .ra1').value;"), "Al-Qadr 1");
+  // dialog edit di Laporan
+  await H.tab("laporan");
+  for (let i = 0; i < 24 && !/November 2026/.test(await H.text("#monthLabel")); i++) await H.ev("document.getElementById(/Desember|202[7-9]/.test(document.getElementById('monthLabel').textContent) ? 'prevMonth' : 'nextMonth').click();");
+  await H.tap('#monthTable tr[data-date="2026-11-11"]');
+  assert.match(await H.text("#mlastTahfidz"), /Terakhir: Al-Balad 1-7 · 10 Nov/);
+  await H.tap("#mlastTahfidz .last-go"); await H.type("12");
+  await H.tap('#mgradeTahfidz button[data-code="M"]');
+  await H.tap("#mSave");
+  assert.strictEqual((await H.store()).entries.a["2026-11-11"].tahfidz, "Al-Balad 8-12");
 });
 
 t("rentang ayat salah dan nilai tanpa setoran ditolak", async (H) => {

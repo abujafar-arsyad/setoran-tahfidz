@@ -115,7 +115,7 @@ t("pgLastSetoran: last entry before a date, with next ayat / repeat / nothing", 
   let L = pgLastSetoran(ents, "tahfidz", "2026-11-02");
   assert.strictEqual(L.date, "2026-11-01"); assert.strictEqual(L.text, "Al-Balad 1-7");
   assert.deepStrictEqual(L.next, { i: BALAD, a: 8, ar: false }); assert.strictEqual(L.repeat, null);
-  L = pgLastSetoran(ents, "tahfidz", "2026-11-04"); // surah finished: nothing to continue
+  L = pgLastSetoran(ents, "tahfidz", "2026-11-04"); // surah finished, no direction known yet: nothing to continue
   assert.strictEqual(L.next, null); assert.strictEqual(L.repeat, null);
   L = pgLastSetoran(ents, "tahfidz", "2026-11-06"); // Rasib: repeat the same range
   assert.strictEqual(L.next, null); assert.strictEqual(L.repeat.length, 1); assert.strictEqual(L.repeat[0].a2, 7);
@@ -123,6 +123,22 @@ t("pgLastSetoran: last entry before a date, with next ayat / repeat / nothing", 
   assert.deepStrictEqual(L.next, { i: BALAD, a: 8, ar: true });
   L = pgLastSetoran(ents, "tahsin", "2026-11-08"); // free text: info only
   assert.strictEqual(L.text, "Iqro 3 hal 5"); assert.strictEqual(L.next, null);
+});
+t("pgLastSetoran: finished surah continues to the neighbouring surah in the direction of past setoran", () => {
+  const SYAMS = 90, QADR = 96, NAS = 113;
+  // forward, read from a cross-surah range
+  let L = pgLastSetoran({ "2026-11-10": { murojaah: "Asy-Syams 1 → Al-'Alaq 19" } }, "murojaah", "2026-11-11");
+  assert.deepStrictEqual(L.next, { i: QADR, a: 1, ar: false, newSurah: true });
+  // backward (An-Nas towards An-Naba), read from earlier entries
+  L = pgLastSetoran({ "2026-11-01": { tahfidz: "An-Nas 1-6" }, "2026-11-03": { tahfidz: "Al-Falaq 1-5" } }, "tahfidz", "2026-11-05");
+  assert.deepStrictEqual(L.next, { i: NAS - 2, a: 1, ar: false, newSurah: true });
+  // forward from earlier entries
+  L = pgLastSetoran({ "2026-11-01": { tahfidz: "Al-Lail 1-21" }, "2026-11-03": { tahfidz: "Ad-Duha 1-11" } }, "tahfidz", "2026-11-05");
+  assert.strictEqual(L.next.i, 93); assert.strictEqual(L.next.a, 1);
+  // end of the mushaf: nothing after An-Nas
+  L = pgLastSetoran({ "2026-11-01": { tahfidz: "Al-Falaq 1-5" }, "2026-11-03": { tahfidz: "An-Nas 1-6" } }, "tahfidz", "2026-11-05");
+  assert.strictEqual(L.next, null);
+  assert.ok(SYAMS);
 });
 t("progress for cross-surah range is exact", () => {
   const text = pgTextFromRows([{ i1: BAQ, a1: 200, i2: IMR, a2: 23 }], "");
