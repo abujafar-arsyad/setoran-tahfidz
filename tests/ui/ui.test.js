@@ -398,8 +398,8 @@ t("kirim laporan & rapor ke wali: pesan siap pakai + gambar", async (H) => {
   assert.ok(!msg.includes("*"), "pesan tanpa tanda bintang");
   assert.match(msg, /Hadir: 3 hari \(Izin 1\)/);
   // Al-Mulk 30 + An-Naba 1-20 (Rasib lalu Maqbul), disebut per surah
-  assert.match(msg, /• Hafalan baru: Al-Mulk dan An-Naba ayat 1–20 \(50 ayat\)/);
-  assert.match(msg, /• Murojaah: Al-Mulk \(30 ayat\)/);
+  assert.match(msg, /• Hafalan baru: Al-Mulk dan An-Naba ayat 1–20\n/);
+  assert.match(msg, /• Murojaah: Al-Mulk\n/);
   assert.match(msg, /— Ustadz Uji$/);
   assert.strictEqual(await H.ev("return document.getElementById('waliPreview').naturalWidth > 0;"), true, "pratinjau gambar tampil");
   // guru boleh mengubah pesan sebelum mengirim
@@ -444,6 +444,7 @@ t("template pesan wali: ubah, tersimpan, dipakai saat kirim, bisa dikembalikan",
   const awal = await H.ev("return document.getElementById('waliTplText').value;");
   assert.match(awal, /^بِسْمِ اللَّهِ/, "template bawaan diawali basmalah");
   assert.match(await H.text("#waliTplPreview"), /ananda Fulan bulan/, "pratinjau memakai contoh Fulan");
+  assert.match(await H.text("#waliTplPreview"), /• Hafalan baru: Al-'Alaq ayat 1–6\n• Murojaah: Al-Qadr dan Al-Bayyinah\n/);
   // tulis template sendiri lalu sisipkan {nama} lewat tombol
   await H.ev(`const ta = document.getElementById('waliTplText'); ta.value = 'Laporan untuk '; ta.dispatchEvent(new Event('input'));
     ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);`);
@@ -470,6 +471,7 @@ t("template pesan wali: ubah, tersimpan, dipakai saat kirim, bisa dikembalikan",
   // template rapor terpisah
   await H.tap('#waliTplKind button[data-v="rapor"]');
   assert.match(await H.text("#waliTplPreview"), /rapor progres hafalan ananda Fulan/);
+  assert.match(await H.text("#waliTplPreview"), /• Hafalan baru: Al-'Alaq ayat 1–6\n• Murojaah: Al-Qadr dan Al-Bayyinah\n/);
 });
 
 t("ekspor lalu impor data: semua kembali termasuk halaqah", async (H) => {

@@ -3781,7 +3781,7 @@
       surah_tuntas: pgNum(d.surahDone || 0), juz_tuntas: d.juzDone ? pgNum(d.juzDone) : "",
       hafalan_baru: b ? (pgHafalanPhrase(b.baru.desc, b.baru.count) || "belum ada") : (cur.thf ? pgNum(cur.thf) + " ayat" : "belum ada"),
       murojaah: b ? (pgHafalanPhrase(b.murojaah.desc, b.murojaah.count) || "belum ada") : (cur.mur ? pgNum(cur.mur) + " ayat" : "belum ada"),
-      hafalan_terakhir: r ? r.name + (r.cnt === r.total ? " (tuntas)" : " (" + r.cnt + "/" + r.total + " ayat)") : "",
+      hafalan_terakhir: r ? r.name + (r.cnt === r.total ? "" : " (" + r.cnt + "/" + r.total + " ayat)") : "",
       pengajar: String(d.pengajar || "").trim(), lembaga: String(d.lembaga || "").trim()
     };
   }
@@ -3843,8 +3843,8 @@
     if (partialAyat) jumlah.push(pgNum(partialAyat) + " ayat");
     return { text: pgListJoin(items), jumlah: jumlah.join(" dan "), fullCount: fullCount, partialAyat: partialAyat, total: total };
   }
-  // "Al-Mulk dan An-Naba ayat 1–20 (50 ayat)"; kosong bila tidak ada
-  function pgHafalanPhrase(desc, count) { return count > 0 && desc.text ? desc.text + " (" + pgNum(count) + " ayat)" : ""; }
+  // "Al-Mulk dan An-Naba ayat 1–20"; kosong bila tidak ada
+  function pgHafalanPhrase(desc, count) { return count > 0 && desc.text ? desc.text : ""; }
 
   // Hafalan baru, murojaah, dan tahsin dalam satu bulan, diuraikan per surah.
   function pgMonthHafalan(ents, year, month0) {
