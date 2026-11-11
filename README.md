@@ -28,6 +28,8 @@ Semua nama dan catatan pada gambar ini fiktif.
 - Rentang ayat diisi per baris: surah dan ayat awal sampai surah dan ayat akhir. Bisa lebih dari satu baris, dan bisa lintas surah (mis. Al-Baqarah 200 → Ali 'Imran 23).
 - Ayat boleh dikosongkan: surah tanpa nomor ayat dihitung satu surah penuh.
 - Nama surah muncul sebagai saran saat mengetik, dan jumlah ayat dicek otomatis (mis. Al-Ikhlas hanya 1–4).
+- Nama surah yang diketik dengan huruf Arab tersimpan dan tampil dalam huruf Arab (mis. البلد ١-٧).
+- **Lanjut dari ayat terakhir:** tiap kategori menampilkan setoran terakhir santri; untuk Tahfidz ada tombol **Lanjut ayat N** yang langsung mengisi surah dan ayat awal (atau **Ulang** bila setoran terakhir bernilai Rasib).
 - Catatan Iqro atau buku lain tetap bisa ditulis sebagai teks bebas.
 
 **Nilai kelancaran**

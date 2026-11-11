@@ -9,8 +9,8 @@ const pureSrc = html.slice(html.indexOf("// PG-PURE-BEGIN"), html.indexOf("// PG
 const pad2 = (n) => String(n).padStart(2, "0");
 const BULAN_ID = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 const api = new Function("pad2", "BULAN_ID", surahSrc + "\n" + pureSrc +
-  "\nreturn {SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgGradeEntryError, pgNormalizeEntryGrades, pgNormalizeEntries, pgRapor, pgMonthAyat, pgCleanHalaqah, pgHalaqahNames, pgGroupStudents, pgNormalizeStudents, PG_NO_HALAQAH, pgWaliLaporanText, pgWaliRaporText, pgFillTemplate, pgWaliLaporanVals, pgWaliRaporVals, PG_WALI_TPL, PG_WALI_FIELDS, pgMonthHafalan, pgDescribeCoverage};")(pad2, BULAN_ID);
-const { SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgGradeEntryError, pgNormalizeEntryGrades, pgNormalizeEntries, pgRapor, pgMonthAyat, pgCleanHalaqah, pgHalaqahNames, pgGroupStudents, pgNormalizeStudents, PG_NO_HALAQAH, pgWaliLaporanText, pgWaliRaporText, pgFillTemplate, pgWaliLaporanVals, pgWaliRaporVals, PG_WALI_TPL, PG_WALI_FIELDS, pgMonthHafalan, pgDescribeCoverage } = api;
+  "\nreturn {SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgGradeEntryError, pgNormalizeEntryGrades, pgNormalizeEntries, pgRapor, pgMonthAyat, pgCleanHalaqah, pgHalaqahNames, pgGroupStudents, pgNormalizeStudents, PG_NO_HALAQAH, pgWaliLaporanText, pgWaliRaporText, pgFillTemplate, pgWaliLaporanVals, pgWaliRaporVals, PG_WALI_TPL, PG_WALI_FIELDS, pgMonthHafalan, pgDescribeCoverage, pgLastSetoran};")(pad2, BULAN_ID);
+const { SURAHS, pgParseText, pgAnalyze, pgRangeCheck, pgFormatRange, pgRowsFromText, pgTextFromRows, pgSurahIndex, pgJuzOf, pgJuzSplit, pgJuzStats, pgSuggestSurah, pgDisplayText, pgResolveRow, PG_GRADES, pgGradeSummary, pgGradeBuckets, pgGradeEntryError, pgNormalizeEntryGrades, pgNormalizeEntries, pgRapor, pgMonthAyat, pgCleanHalaqah, pgHalaqahNames, pgGroupStudents, pgNormalizeStudents, PG_NO_HALAQAH, pgWaliLaporanText, pgWaliRaporText, pgFillTemplate, pgWaliLaporanVals, pgWaliRaporVals, PG_WALI_TPL, PG_WALI_FIELDS, pgMonthHafalan, pgDescribeCoverage, pgLastSetoran } = api;
 
 const idx = (n) => pgSurahIndex(n);
 const BAQ = idx("Al-Baqarah"), IMR = idx("Ali 'Imran"), NIS = idx("An-Nisa"), NAS = idx("An-Nas"), FAT = idx("Al-Fatihah");
@@ -102,6 +102,27 @@ t("rows typed in Arabic are stored, reloaded and displayed in Arabic, and still 
   assert.strictEqual(an.total, 7 + 82);
   // Latin rows stay Latin
   assert.strictEqual(pgTextFromRows([{ i1: BALAD, a1: 1, i2: BALAD, a2: 7 }], ""), "Al-Balad 1-7");
+});
+t("pgLastSetoran: last entry before a date, with next ayat / repeat / nothing", () => {
+  const BALAD = 89;
+  const ents = {
+    "2026-11-01": { tahfidz: "Al-Balad 1-7", nilai: { tahfidz: "JJ" }, tahsin: "Iqro 3 hal 5" },
+    "2026-11-03": { tahfidz: "Al-Balad 8-20", nilai: { tahfidz: "M" } },
+    "2026-11-05": { tahfidz: "Al-Balad 1-7", nilai: { tahfidz: "R" } },
+    "2026-11-07": { tahfidz: "البلد ١-٧", nilai: { tahfidz: "J" } },
+  };
+  assert.strictEqual(pgLastSetoran(ents, "tahfidz", "2026-11-01"), null);
+  let L = pgLastSetoran(ents, "tahfidz", "2026-11-02");
+  assert.strictEqual(L.date, "2026-11-01"); assert.strictEqual(L.text, "Al-Balad 1-7");
+  assert.deepStrictEqual(L.next, { i: BALAD, a: 8, ar: false }); assert.strictEqual(L.repeat, null);
+  L = pgLastSetoran(ents, "tahfidz", "2026-11-04"); // surah finished: nothing to continue
+  assert.strictEqual(L.next, null); assert.strictEqual(L.repeat, null);
+  L = pgLastSetoran(ents, "tahfidz", "2026-11-06"); // Rasib: repeat the same range
+  assert.strictEqual(L.next, null); assert.strictEqual(L.repeat.length, 1); assert.strictEqual(L.repeat[0].a2, 7);
+  L = pgLastSetoran(ents, "tahfidz", "2026-11-08"); // Arabic row keeps its script
+  assert.deepStrictEqual(L.next, { i: BALAD, a: 8, ar: true });
+  L = pgLastSetoran(ents, "tahsin", "2026-11-08"); // free text: info only
+  assert.strictEqual(L.text, "Iqro 3 hal 5"); assert.strictEqual(L.next, null);
 });
 t("progress for cross-surah range is exact", () => {
   const text = pgTextFromRows([{ i1: BAQ, a1: 200, i2: IMR, a2: 23 }], "");
