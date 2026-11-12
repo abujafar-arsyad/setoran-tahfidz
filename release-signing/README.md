@@ -1,4 +1,4 @@
-# Panduan Tanda Tangan Rilis — Setoran Tahfidz
+# Panduan Tanda Tangan Rilis — Catatan Tahfidz
 
 Google Play mewajibkan setiap aplikasi ditandatangani, dan aplikasi baru harus
 diunggah sebagai **Android App Bundle (`.aab`)** yang ditandatangani dengan

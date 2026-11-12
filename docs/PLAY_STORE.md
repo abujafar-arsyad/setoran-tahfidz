@@ -1,6 +1,6 @@
 # Rilis ke Google Play Store
 
-Panduan lengkap merilis **Setoran Tahfidz** di Google Play. Bahan yang bisa
+Panduan lengkap merilis **Catatan Tahfidz** di Google Play. Bahan yang bisa
 disiapkan dari repo **sudah siap** di folder [`docs/play-store/`](play-store/).
 Yang tersisa adalah langkah yang harus dilakukan sendiri lewat akun Google:
 membuat akun developer, membuat kunci upload, dan mengisi Play Console.
@@ -66,12 +66,12 @@ bertanda tangan** dan akan ditolak Play Console — ulangi langkah 1.
 
 ## Langkah 4 — Buat aplikasi dan isi Store listing
 
-Play Console → **Create app**: nama `Setoran Tahfidz`, bahasa default
+Play Console → **Create app**: nama `Catatan Tahfidz`, bahasa default
 Indonesia, jenis **App**, **Free**.
 
 **Main store listing**
 
-- **App name** (maks. 30): `Setoran Tahfidz`
+- **App name** (maks. 30): `Catatan Tahfidz`
 - **Short description** (maks. 80):
 
   ```
@@ -81,7 +81,7 @@ Indonesia, jenis **App**, **Free**.
 - **Full description** (maks. 4000):
 
   ```
-  Setoran Tahfidz membantu guru tahfidz mencatat setoran hafalan Al-Qur'an santri setiap hari — tahsin, tahfidz, dan murojaah — langsung dari HP, tanpa internet.
+  Catatan Tahfidz membantu guru tahfidz mencatat setoran hafalan Al-Qur'an santri setiap hari — tahsin, tahfidz, dan murojaah — langsung dari HP, tanpa internet.
 
   PENCATATAN HARIAN
   • Isi rentang ayat per baris: surah dan ayat awal sampai surah dan ayat akhir, termasuk lintas surah (mis. An-Naba 1 sampai An-Nazi'at 10).

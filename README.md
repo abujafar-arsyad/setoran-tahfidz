@@ -1,4 +1,6 @@
-# Setoran Tahfidz
+# Catatan Tahfidz
+
+> Sebelumnya bernama **Setoran Tahfidz**. Nama repo dan ID aplikasi (`id.tahfidz.setoran`) sengaja tidak diubah agar aplikasi yang sudah terpasang tetap bisa diperbarui tanpa kehilangan data.
 
 Aplikasi Android untuk **guru tahfidz** mencatat setoran hafalan Al-Qur'an
 santri setiap hari: tahsin, tahfidz, dan murojaah, lengkap dengan nilai

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Setoran Tahfidz</string>
-    <string name="title_activity_main">Setoran Tahfidz</string>
+    <string name="app_name">Catatan Tahfidz</string>
+    <string name="title_activity_main">Catatan Tahfidz</string>
     <string name="package_name">id.tahfidz.setoran</string>
     <string name="custom_url_scheme">id.tahfidz.setoran</string>
 </resources>
