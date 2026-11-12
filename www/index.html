@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Setoran Tahfidz</title>
+<title>Catatan Tahfidz</title>
 <meta name="theme-color" content="#5b2a6b">
 <script>try{var _s=JSON.parse(localStorage.getItem("tahfidz_settings_v1")||"{}"),_r=document.documentElement;if(_s.mode==="light"||_s.mode==="dark")_r.setAttribute("data-theme",_s.mode);if(/^(zamrud|samudra|kurma|mawar)$/.test(_s.palette))_r.setAttribute("data-palette",_s.palette);}catch(e){}</script>
 <style>
@@ -607,7 +607,7 @@
 
   <header class="top">
     <div class="top-row">
-      <h1>Setoran Tahfidz</h1>
+      <h1>Catatan Tahfidz</h1>
       <div class="top-ar" lang="ar" dir="rtl">سجل التحفيظ</div>
     </div>
     <div class="top-sub" id="lembagaLine">Catatan tahsin &middot; tahfidz &middot; murojaah harian</div>
@@ -891,7 +891,7 @@
 
       <div class="card">
         <h2>Tentang</h2>
-        <p style="margin:0;font-size:13px;line-height:1.6;color:var(--ink-soft)">Setoran Tahfidz. Semua catatan disimpan di penyimpanan browser perangkat ini dan tidak dikirim ke mana pun. Gunakan Ekspor Data secara berkala sebagai cadangan.</p>
+        <p style="margin:0;font-size:13px;line-height:1.6;color:var(--ink-soft)">Catatan Tahfidz. Semua catatan disimpan di penyimpanan browser perangkat ini dan tidak dikirim ke mana pun. Gunakan Ekspor Data secara berkala sebagai cadangan.</p>
       </div>
     </section>
 
@@ -1142,7 +1142,7 @@
       }
       var incoming = parsed && parsed.data ? parsed.data : parsed;
       if (!incoming || !Array.isArray(incoming.students) || typeof incoming.entries !== "object") {
-        showToast("File ini bukan file backup Setoran Tahfidz");
+        showToast("File ini bukan file backup Catatan Tahfidz");
         return;
       }
       pendingImport = incoming;
@@ -4012,7 +4012,7 @@
 
       // 1. Kepala
       ctx.fillStyle = C.plum; ctx.fillRect(0, 0, W, HEAD);
-      ctx.globalAlpha = 0.85; text((lembaga || "Setoran Tahfidz") + "  ·  Rapor Progres Hafalan", PAD, 58, "24px", "#ffffff"); ctx.globalAlpha = 1;
+      ctx.globalAlpha = 0.85; text((lembaga || "Catatan Tahfidz") + "  ·  Rapor Progres Hafalan", PAD, 58, "24px", "#ffffff"); ctx.globalAlpha = 1;
       text(s.name, PAD, 122, "bold 54px", "#ffffff");
       ctx.globalAlpha = 0.85; text("Per " + tgl + (studentHalaqah(s) ? "  ·  Halaqah " + studentHalaqah(s) : "") + (pengajar ? "  ·  Pengajar: " + pengajar : ""), PAD, 166, "24px", "#ffffff"); ctx.globalAlpha = 1;
       var y = HEAD + GAP;
@@ -4147,7 +4147,7 @@
       var note = "Dihitung dari rentang ayat yang dicatat; setoran bernilai Rasib baru dihitung setelah lulus." +
         (R.bad ? " " + R.bad + " catatan tidak terbaca sebagai ayat." : "") + " Juz: Mushaf Madinah (Hafs).";
       text(note, PAD, H - 40, "19px", C.soft, "left", CW);
-      text("Dibuat dengan aplikasi Setoran Tahfidz", PAD, H - 14, "17px", C.soft, "left", CW);
+      text("Dibuat dengan aplikasi Catatan Tahfidz", PAD, H - 14, "17px", C.soft, "left", CW);
 
       var filename = "progres_" + s.name.replace(/\s+/g, "_") + "_" + today + ".png";
       if (typeof onReady === "function") {

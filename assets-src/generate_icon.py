@@ -1,5 +1,5 @@
 """
-Generates placeholder brand assets for the Setoran Tahfidz app:
+Generates placeholder brand assets for the Catatan Tahfidz app:
  - icon-1024.png: 1024x1024 master app icon (plum-purple background, book + checkmark motif, "ST" monogram)
  - icon-foreground-1024.png: transparent-background version of the motif, for use as an Android adaptive icon foreground
  - icon-background-1024.png: solid plum-purple 1024x1024, for use as an Android adaptive icon background
@@ -148,7 +148,7 @@ def build_splash():
     scale = size / SIZE
     draw_book_checkmark(draw, size // 2, int(size * 0.46), scale=1.5 * scale)
     font = try_load_font(int(size * 0.09))
-    text = "Setoran Tahfidz"
+    text = "Catatan Tahfidz"
     bbox = draw.textbbox((0, 0), text, font=font)
     tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
     draw.text(

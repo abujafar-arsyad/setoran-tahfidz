@@ -1,11 +1,11 @@
-# Kebijakan Privasi — Setoran Tahfidz
+# Kebijakan Privasi — Catatan Tahfidz
 
 *Berlaku sejak: 4 November 2026 · diperbarui 6 November 2026*
 
 Versi halaman web: https://abujafar-arsyad.github.io/setoran-tahfidz/privacy-policy.html
 (isi `docs/privacy-policy.html` harus selalu sama dengan file ini).
 
-**Setoran Tahfidz** adalah aplikasi pencatat hafalan Al-Qur'an yang berjalan
+**Catatan Tahfidz** adalah aplikasi pencatat hafalan Al-Qur'an yang berjalan
 sepenuhnya secara **offline** di perangkat Anda.
 
 ## Data yang Dikumpulkan
@@ -60,9 +60,9 @@ https://github.com/abujafar-arsyad/setoran-tahfidz/issues
 
 ---
 
-# Privacy Policy — Setoran Tahfidz (English summary)
+# Privacy Policy — Catatan Tahfidz (English summary)
 
-Setoran Tahfidz is an offline-only Qur'an memorization tracker. It collects
+Catatan Tahfidz is an offline-only Qur'an memorization tracker. It collects
 **no data whatsoever**. All information you enter is stored exclusively in
 your device's local storage (`localStorage`), is never transmitted to any
 server, is excluded from Android auto-backup, and cannot be accessed by the
