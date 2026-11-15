@@ -325,6 +325,97 @@ t("lanjut juga ada di Tahsin, Murojaah, dan dialog edit di Laporan", async (H) =
   assert.strictEqual((await H.store()).entries.a["2026-11-11"].tahfidz, "Al-Balad 8-12");
 });
 
+const NILAI_SEED = { students: [{ id: "a", name: "Ali" }], selectedStudentId: "a",
+  entries: { a: { "2026-11-02": { tahsin: "Al-Baqarah 1-5", tahfidz: "Al-Balad 1-7", murojaah: "An-Nas 1-6", keterangan: "",
+    nilai: { tahsin: "J", tahfidz: "M", murojaah: "R" } } } } };
+const keNov2026 = async (H) => {
+  await H.tab("laporan");
+  for (let i = 0; i < 24 && !/November 2026/.test(await H.text("#monthLabel")); i++) await H.ev("document.getElementById(/Desember|202[7-9]/.test(document.getElementById('monthLabel').textContent) ? 'prevMonth' : 'nextMonth').click();");
+};
+
+t("nilai di tabel Laporan berupa pita nama nilai; bisa diganti ke bintang 1-5 di Setelan", async (H) => {
+  await H.open(NILAI_SEED);
+  await keNov2026(H);
+  const cells = `return [...document.querySelectorAll('#monthTable tr[data-date="2026-11-02"] .grade-badge')].map((b) => b.textContent + '|' + (b.getAttribute('data-stars') || '') + '|' + getComputedStyle(b).position);`;
+  assert.deepStrictEqual(await H.ev(cells), ["Jayyid||absolute", "Mumtaz||absolute", "Rasib||absolute"]);
+  // pita menempel di dasar sel dan sejajar antar kolom
+  const bottoms = await H.ev(`return [...document.querySelectorAll('#monthTable tr[data-date="2026-11-02"] .grade-badge')].map((b) => Math.round(b.getBoundingClientRect().bottom));`);
+  assert.ok(bottoms.every((b) => b === bottoms[0]), "pita sejajar: " + bottoms);
+  await H.tab("setelan");
+  await H.tap('[data-key="nilaiStyle"] button[data-v="bintang"]');
+  assert.strictEqual((await H.ev("return JSON.parse(localStorage.getItem('tahfidz_settings_v1')).nilaiStyle;")), "bintang");
+  await keNov2026(H);
+  assert.deepStrictEqual(await H.ev(cells), ["★★★★★|3|absolute", "★★★★★|5|absolute", "★★★★★|1|absolute"]);
+  const bg = await H.ev(`return [...document.querySelectorAll('#monthTable tr[data-date="2026-11-02"] .grade-badge')].map((b) => getComputedStyle(b).backgroundImage.slice(0, 15));`);
+  assert.ok(/gradient/.test(bg[1]) && !/gradient/.test(bg[0]), "hanya 5 bintang yang berpita emas: " + bg);
+  // tombol nilai di formulir ikut berubah, kode yang tersimpan tetap
+  await H.tab("catat");
+  assert.strictEqual(await H.text('#gradeTahfidz button[data-code="M"]'), "5★");
+  assert.strictEqual(await H.text('#gradeTahfidz button[data-code="R"]'), "1★");
+  assert.strictEqual((await H.store()).entries.a["2026-11-02"].nilai.tahfidz, "M");
+});
+
+const NATIVE_MOCK = `window.__w = []; window.__del = []; window.__fw = []; window.__shareFail = false;
+  window.Capacitor = { isNativePlatform: () => true, Plugins: {
+    Filesystem: {
+      writeFile: (o) => { window.__w.push(o); return Promise.resolve({ uri: "file:///x/" + o.path }); },
+      readdir: () => Promise.resolve({ files: ["20261101","20261102","20261103","20261104","20261105","20261106","20261107","20261108","20261109"].map((d) => ({ name: "catatan-tahfidz-otomatis-" + d + ".json" })).concat([{ name: "lain.json" }]) }),
+      deleteFile: (o) => { window.__del.push(o.path); return Promise.resolve(); } },
+    Share: { share: () => window.__shareFail ? Promise.reject(new Error("Share canceled")) : Promise.resolve({}) },
+    FolderBackup: {
+      pickFolder: () => Promise.resolve({ uri: "content://com.android.externalstorage.documents/tree/1234-5678%3ACadangan", name: "Kartu SD/Cadangan" }),
+      write: (o) => { window.__fw.push(o); return Promise.resolve(); } } } };`;
+
+t("cadangan otomatis: menulis ke Documents, menghapus yang lama, bisa pilih folder dan dimatikan", async (H) => {
+  await H.open(NILAI_SEED);
+  await H.ev(NATIVE_MOCK);
+  await H.ev("const d = document.getElementById('entryDate'); d.value = '2026-11-02'; d.dispatchEvent(new Event('change'));");
+  await H.tap('#gradeTahfidz button[data-code="JJ"]');
+  await H.tap("#btnSave");
+  await H.ev("await new Promise((r) => setTimeout(r, 4700));");
+  const w = await H.ev("return window.__w.map((o) => ({ path: o.path, directory: o.directory, ok: JSON.parse(o.data).data.students[0].name }));");
+  assert.strictEqual(w.length, 1, "satu berkas ditulis");
+  assert.match(w[0].path, /^CatatanTahfidz\/catatan-tahfidz-otomatis-\d{8}\.json$/);
+  assert.strictEqual(w[0].directory, "DOCUMENTS"); assert.strictEqual(w[0].ok, "Ali");
+  assert.deepStrictEqual(await H.ev("return window.__del;"), ["CatatanTahfidz/catatan-tahfidz-otomatis-20261102.json", "CatatanTahfidz/catatan-tahfidz-otomatis-20261101.json"]);
+  await H.tab("setelan");
+  await H.ev("document.querySelector('input[data-key=\"suggest\"]').click(); document.querySelector('input[data-key=\"suggest\"]').click();"); // gambar ulang status
+  assert.match(await H.text("#abStatus"), /Cadangan otomatis terakhir: hari ini pukul \d\d\.\d\d/);
+  assert.strictEqual(await H.text("#abWhere"), "Documents/CatatanTahfidz");
+  // pilih folder sendiri
+  await H.tap("#abPick");
+  await H.ev("await new Promise((r) => setTimeout(r, 300));");
+  assert.strictEqual(await H.text("#abWhere"), "Kartu SD/Cadangan");
+  const fw = await H.ev("return window.__fw.map((o) => [o.treeUri.slice(0, 10), o.prefix, o.keep, /otomatis-\\d{8}\\.json$/.test(o.name)]);");
+  assert.deepStrictEqual(fw, [["content://", "catatan-tahfidz-otomatis-", 7, true]]);
+  assert.strictEqual(await H.ev("return window.__w.length;"), 1, "tidak lagi menulis ke folder bawaan");
+  // kembali ke folder bawaan
+  await H.tap("#abDefault");
+  await H.ev("await new Promise((r) => setTimeout(r, 300));");
+  assert.strictEqual(await H.ev("return window.__w.length;"), 2);
+  // dimatikan: tidak ada tulisan baru
+  await H.tap('input[data-key="autoBackup"]');
+  assert.strictEqual(await H.ev("return getComputedStyle(document.getElementById('abBox')).display;"), "none");
+  await H.tab("catat");
+  await H.tap('#gradeTahfidz button[data-code="M"]'); await H.tap("#btnSave");
+  await H.ev("await new Promise((r) => setTimeout(r, 4700));");
+  assert.strictEqual(await H.ev("return window.__w.length + window.__fw.length;"), 3, "tidak ada cadangan baru setelah dimatikan");
+});
+
+t("ekspor yang dibatalkan tidak dicatat sebagai sudah dicadangkan", async (H) => {
+  await H.open(NILAI_SEED, { autoBackup: false });
+  await H.ev(NATIVE_MOCK + "window.__shareFail = true;");
+  await H.tab("setelan");
+  await H.tap("#btnExportData");
+  await H.ev("await new Promise((r) => setTimeout(r, 500));");
+  assert.ok(!(await H.store()).lastBackupAt, "dibatalkan: belum dicadangkan");
+  assert.match(await H.text("#backupInfo"), /Belum pernah dicadangkan/);
+  await H.ev("window.__shareFail = false;");
+  await H.tap("#btnExportData");
+  await H.ev("await new Promise((r) => setTimeout(r, 500));");
+  assert.ok((await H.store()).lastBackupAt > 0, "terkirim: tercatat");
+});
+
 t("rentang ayat salah dan nilai tanpa setoran ditolak", async (H) => {
   await H.open(SEED);
   await H.ev("const d = document.getElementById('entryDate'); d.value = '2026-11-03'; d.dispatchEvent(new Event('change'));");

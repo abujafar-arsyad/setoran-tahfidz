@@ -316,7 +316,15 @@
   .grade-option { min-width: 0; min-height: 40px; padding: 6px 2px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); color: var(--ink-soft); font-family: inherit; font-size: 13px; font-weight: 700; line-height: 1; cursor: pointer; }
   .grade-option[aria-checked="true"] { border-color: var(--plum); background: var(--plum); color: var(--on-plum, #fff); }
   .grade-option[data-code="R"][aria-checked="true"] { border-color: var(--danger); background: var(--danger); color: var(--on-danger, #fff); }
-  .grade-badge { display: block; width: max-content; max-width: 100%; margin-top: 4px; padding: 2px 6px; border-radius: 6px; color: #fff; font-size: 10px; font-weight: 700; line-height: 1.3; }
+  /* Nilai tampil sebagai pita di dasar sel, selebar sel, supaya lurus dalam satu baris. */
+  table.month-table td.has-grade { position: relative; padding-bottom: 27px; }
+  .grade-badge { position: absolute; left: 0; right: 0; bottom: 0; padding: 3px 6px; color: #fff; font-size: 10px; font-weight: 700; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .grade-badge.stars { background: var(--card) !important; border-top: 1px solid var(--line); color: #c2933a; font-size: 9.5px; letter-spacing: 0; padding: 4px 1px; text-align: center; text-overflow: clip; }
+  .grade-badge.stars i { font-style: normal; color: var(--ink-soft); opacity: .3; }
+  .grade-badge.stars[data-stars="1"] { color: var(--grade-r); }
+  /* Lima bintang (Mumtaz): pita emas dengan bintang putih. */
+  .grade-badge.stars[data-stars="5"] { background: linear-gradient(90deg, #b8862b, #e6c36a 55%, #c2933a) !important; border-top-color: #b8862b; color: #fff; text-shadow: 0 1px 1px rgba(90, 55, 0, .45); }
+  .grade-option.star5[aria-checked="true"] { border-color: #b8862b; background: linear-gradient(90deg, #b8862b, #e6c36a 55%, #c2933a); color: #fff; text-shadow: 0 1px 1px rgba(90, 55, 0, .45); }
   .grade-badge[data-code="M"] { background: var(--grade-m); }
   .grade-badge[data-code="JJ"] { background: var(--grade-jj); }
   .grade-badge[data-code="J"] { background: var(--grade-j); }
@@ -844,6 +852,14 @@
         <label class="toggle-row"><span><b>Getar saat menyimpan</b><small>Hanya berfungsi di HP yang mendukung getaran.</small></span><input type="checkbox" class="sw" role="switch" data-key="vibrate"></label>
         <label class="toggle-row"><span><b>Kelompok halaqah</b><small>Kelompokkan santri per halaqah (mis. Pagi, Sore). Bila dimatikan, halaqah disembunyikan tetapi tetap tersimpan.</small></span><input type="checkbox" class="sw" role="switch" data-key="halaqah"></label>
         <div class="set-row">
+          <div class="set-label" id="lblNilai">Tampilan nilai</div>
+          <p class="set-desc">Bintang: Mumtaz = 5 bintang sampai Rasib = 1 bintang. Nilai yang sudah tercatat tidak berubah, hanya cara menampilkannya.</p>
+          <div class="seg" role="radiogroup" aria-labelledby="lblNilai" data-key="nilaiStyle">
+            <button type="button" role="radio" data-v="huruf">Mumtaz – Rasib</button>
+            <button type="button" role="radio" data-v="bintang">Bintang 1–5</button>
+          </div>
+        </div>
+        <div class="set-row">
           <div class="set-label" id="lblStart">Halaman saat aplikasi dibuka</div>
           <div class="seg" role="radiogroup" aria-labelledby="lblStart" data-key="startTab">
             <button type="button" role="radio" data-v="catat">Catat</button>
@@ -881,6 +897,19 @@
           <button class="btn btn-ghost" id="btnImportData"><svg class="i" aria-hidden="true"><use href="#i-up"/></svg>Impor Data</button>
         </div>
         <input type="file" id="importFileInput" accept="application/json,.json" style="display:none;">
+        <label class="toggle-row" style="margin-top:14px"><span><b>Cadangan otomatis</b><small>Setiap ada perubahan, salinan data disimpan sendiri ke folder di HP. Tujuh hari terakhir disimpan.</small></span><input type="checkbox" class="sw" role="switch" data-key="autoBackup"></label>
+        <div id="abBox">
+          <div class="set-row">
+            <div class="set-label">Folder cadangan</div>
+            <p class="set-desc" id="abWhere" style="font-weight:600;color:var(--ink)"></p>
+            <div class="row">
+              <button type="button" class="btn btn-ghost btn-small" id="abPick">Pilih folder</button>
+              <button type="button" class="btn btn-ghost btn-small" id="abDefault">Pakai folder bawaan</button>
+            </div>
+            <p class="set-desc" id="abStatus" style="margin-top:8px"></p>
+            <p class="set-desc">Folder di HP ikut terhapus bila HP disetel ulang ke pabrik. Agar tetap aman, pilih folder di kartu SD, atau kirim Ekspor Data ke Google Drive/WhatsApp secara berkala.</p>
+          </div>
+        </div>
       </div>
 
       <div class="card">
@@ -1043,10 +1072,94 @@
   function saveData() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      abSchedule();
     } catch (e) {
       console.error("Gagal menyimpan data lokal:", e);
       showToast("Gagal menyimpan (penyimpanan penuh?)");
     }
+  }
+
+  function backupPayload() {
+    return JSON.stringify({ app: "setoran-tahfidz", version: 1, exportedAt: new Date().toISOString(), data: data, settings: settings }, null, 2);
+  }
+
+  // ---------------- Cadangan otomatis ----------------
+  // Setiap data berubah, salinan ditulis ke folder di HP (bawaan: Documents/CatatanTahfidz, atau folder pilihan
+  // pengguna). Satu berkas per hari, AB_KEEP hari terakhir disimpan. Hanya berjalan di aplikasi Android.
+  var AB_DIR = "CatatanTahfidz", AB_PREFIX = "catatan-tahfidz-otomatis-", AB_KEEP = 7, AB_STATE_KEY = "tahfidz_autobackup_v1";
+  var abTimer = null, abBusy = false, abAgain = false;
+
+  function abState() { try { return JSON.parse(localStorage.getItem(AB_STATE_KEY) || "null") || {}; } catch (e) { return {}; } }
+  function abSetState(o) { try { localStorage.setItem(AB_STATE_KEY, JSON.stringify(o)); } catch (e) {} renderAutoBackup(); }
+  function abPlugins() { return (window.Capacitor && window.Capacitor.Plugins) || {}; }
+  function abFileName() { return AB_PREFIX + todayStr().replace(/-/g, "") + ".json"; }
+  function abOld(names) { // berkas cadangan otomatis yang sudah melewati batas simpan
+    return names.filter(function (n) { return n.indexOf(AB_PREFIX) === 0 && /\.json$/.test(n); }).sort().reverse().slice(AB_KEEP);
+  }
+
+  function abSchedule() {
+    if (typeof settings === "undefined" || !settings.autoBackup || !isNativeApp()) return;
+    clearTimeout(abTimer);
+    abTimer = setTimeout(abRun, 4000);
+  }
+
+  function abRun() {
+    clearTimeout(abTimer); abTimer = null;
+    if (!settings.autoBackup || !isNativeApp()) return Promise.resolve(false);
+    if (abBusy) { abAgain = true; return Promise.resolve(false); }
+    abBusy = true;
+    var P = abPlugins(), name = abFileName(), text = backupPayload(), job;
+    if (settings.abUri) {
+      job = P.FolderBackup ? P.FolderBackup.write({ treeUri: settings.abUri, name: name, text: text, prefix: AB_PREFIX, keep: AB_KEEP })
+        : Promise.reject(new Error("Pemilih folder tidak tersedia"));
+    } else if (P.Filesystem) {
+      job = P.Filesystem.writeFile({ path: AB_DIR + "/" + name, data: text, directory: "DOCUMENTS", encoding: "utf8", recursive: true })
+        .then(function () {
+          return P.Filesystem.readdir({ path: AB_DIR, directory: "DOCUMENTS" }).then(function (r) {
+            var names = (r.files || []).map(function (f) { return typeof f === "string" ? f : f.name; });
+            return Promise.all(abOld(names).map(function (n) {
+              return P.Filesystem.deleteFile({ path: AB_DIR + "/" + n, directory: "DOCUMENTS" }).catch(function () {});
+            }));
+          }).catch(function () {});
+        });
+    } else job = Promise.reject(new Error("Plugin Filesystem tidak tersedia"));
+    return job.then(function () {
+      abSetState({ at: Date.now(), ok: true, file: name });
+      return true;
+    }).catch(function (err) {
+      console.error("Cadangan otomatis gagal:", err);
+      var prev = abState();
+      abSetState({ at: prev.ok ? prev.at : null, ok: false, file: prev.file || "", msg: String(err && err.message ? err.message : err).slice(0, 160) });
+      return false;
+    }).then(function (ok) {
+      abBusy = false;
+      if (abAgain) { abAgain = false; abSchedule(); }
+      return ok;
+    });
+  }
+  // Saat aplikasi ditutup atau pindah ke aplikasi lain, cadangan yang masih menunggu langsung ditulis.
+  document.addEventListener("visibilitychange", function () { if (document.hidden && abTimer) abRun(); });
+
+  function abWhere() { return settings.abUri ? (settings.abName || "Folder pilihan") : "Documents/" + AB_DIR; }
+
+  function renderAutoBackup() {
+    var box = document.getElementById("abBox");
+    if (!box || typeof settings === "undefined") return;
+    var native = isNativeApp(), st = abState(), el = document.getElementById("abStatus");
+    box.style.display = settings.autoBackup ? "" : "none";
+    document.getElementById("abWhere").textContent = abWhere();
+    document.getElementById("abDefault").style.display = settings.abUri ? "" : "none";
+    document.getElementById("abPick").disabled = !native;
+    el.style.color = "var(--ink-soft)";
+    if (!native) { el.textContent = "Cadangan otomatis hanya berjalan di aplikasi Android."; return; }
+    if (st.ok === false) {
+      el.style.color = "var(--danger)";
+      el.textContent = "Cadangan otomatis gagal" + (settings.abUri ? "" : " ditulis ke folder bawaan") + ". Ketuk \u201cPilih folder\u201d untuk menentukan folder lain." + (st.msg ? " (" + st.msg + ")" : "");
+    } else if (st.at) {
+      var d = new Date(st.at), same = new Date().toDateString() === d.toDateString();
+      el.textContent = "Cadangan otomatis terakhir: " + (same ? "hari ini" : d.getDate() + " " + BULAN_ID[d.getMonth()]) + " pukul " +
+        String(d.getHours()).padStart(2, "0") + "." + String(d.getMinutes()).padStart(2, "0");
+    } else el.textContent = "Belum ada cadangan otomatis. Cadangan dibuat saat data berikutnya disimpan.";
   }
 
   // ---------------- Backup (ekspor) & Pulihkan (impor) ----------------
@@ -1086,39 +1199,47 @@
       });
   }
 
+  // Mengembalikan Promise<boolean>: true bila berkas benar-benar disimpan/dibagikan, false bila dibatalkan atau gagal.
   function saveFile(blob, filename) {
     if (isNativeApp()) {
-      blobToBase64(blob).then(function (base64) {
+      return blobToBase64(blob).then(function (base64) {
         return saveNative(base64, filename);
       }).then(function () {
         showToast("Siap disimpan/dibagikan");
+        return true;
       }).catch(function (err) {
+        var msg = String(err && err.message ? err.message : err);
+        if (/cancel|batal/i.test(msg)) { showToast("Dibatalkan, berkas belum dikirim"); return false; }
         console.error("Gagal menyimpan berkas (native):", err);
-        alert("Gagal menyimpan berkas: " + (err && err.message ? err.message : err));
+        alert("Gagal menyimpan berkas: " + msg);
+        return false;
       });
-      return;
     }
     if (window.claude && typeof window.claude.use === "function") {
-      window.claude.use("downloads").then(function (downloads) {
-        if (!downloads) { fallbackDownload(blob, filename); return; }
-        downloads.save({ filename: filename, data: blob }).then(function () {
+      return window.claude.use("downloads").then(function (downloads) {
+        if (!downloads) { fallbackDownload(blob, filename); return true; }
+        return downloads.save({ filename: filename, data: blob }).then(function () {
           showToast("File disimpan");
+          return true;
         }).catch(function (err) {
-          if (err && err.code === "declined") return;
+          if (err && err.code === "declined") return false;
           fallbackDownload(blob, filename);
+          return true;
         });
-      }).catch(function () { fallbackDownload(blob, filename); });
-    } else {
-      fallbackDownload(blob, filename);
+      }).catch(function () { fallbackDownload(blob, filename); return true; });
     }
+    fallbackDownload(blob, filename);
+    return Promise.resolve(true);
   }
 
   document.getElementById("btnExportData").addEventListener("click", function () {
-    var payload = JSON.stringify({ app: "setoran-tahfidz", version: 1, exportedAt: new Date().toISOString(), data: data, settings: settings }, null, 2);
-    var blob = new Blob([payload], { type: "application/json" });
+    var blob = new Blob([backupPayload()], { type: "application/json" });
     var stamp = todayStr().replace(/-/g, "");
-    saveFile(blob, "backup_setoran_tahfidz_" + stamp + ".json");
-    data.lastBackupAt = Date.now(); saveData(); renderBackupInfo();
+    // Baru dicatat "sudah dicadangkan" bila berkasnya benar-benar keluar (tidak dibatalkan).
+    saveFile(blob, "backup_catatan_tahfidz_" + stamp + ".json").then(function (ok) {
+      if (!ok) return;
+      data.lastBackupAt = Date.now(); saveData(); renderBackupInfo();
+    });
   });
 
   var pendingImport = null;
@@ -2151,8 +2272,16 @@
             var badge = document.createElement("span");
             badge.className = "grade-badge";
             badge.setAttribute("data-code", grade.code);
-            badge.setAttribute("aria-label", grade.label);
-            badge.textContent = grade.short;
+            badge.setAttribute("aria-label", gradeLabel(grade));
+            if (starsOn()) {
+              badge.classList.add("stars");
+              badge.setAttribute("data-stars", grade.stars);
+              badge.textContent = "\u2605".repeat(grade.stars);
+              var off = document.createElement("i");
+              off.textContent = "\u2605".repeat(5 - grade.stars);
+              badge.appendChild(off);
+            } else badge.textContent = grade.label;
+            td.classList.add("has-grade");
             td.appendChild(badge);
           }
         }
@@ -2488,7 +2617,7 @@
             var cellLeft = TPL.colX[c] * S, cellRight = TPL.colX[c + 1] * S;
             var badgeX = cellRight - badgeW - 6 * S, badgeY = top + 5 * S;
             drawFitted(ctx, val || "", cellLeft, badgeX - badgeGap, top, bottom, S, {});
-            ctx.fillStyle = gradeColor;
+            ctx.fillStyle = starsOn() && grade.stars === 5 ? "#b8862b" : gradeColor;
             ctx.beginPath();
             ctx.moveTo(badgeX + badgeR, badgeY);
             ctx.arcTo(badgeX + badgeW, badgeY, badgeX + badgeW, badgeY + badgeH, badgeR);
@@ -2500,7 +2629,7 @@
             ctx.fillStyle = "#ffffff";
             ctx.textAlign = "center";
             ctx.font = "bold " + (13 * S) + "px " + FONT_FAMILY;
-            ctx.fillText(grade.short, badgeX + badgeW / 2, badgeY + 14 * S);
+            ctx.fillText(gradeShort(grade), badgeX + badgeW / 2, badgeY + 14 * S);
             ctx.textAlign = "left";
             ctx.fillStyle = st ? STATUS[st].color : PURPLE;
           } else {
@@ -2560,7 +2689,7 @@
           drawFitted(ctx, text, 60 * S, 1173 * S, summaryY, summaryY + 20 * S, S, { sizes: [15, 13, 11], multiline: false, padX: 0 });
           summaryY += 22 * S;
         });
-        drawFitted(ctx, "Keterangan nilai: M = Mumtaz, JJ = Jayyid Jiddan, J = Jayyid, Mq = Maqbul, R = Rasib",
+        drawFitted(ctx, gradeLegendText(),
           60 * S, 1173 * S, summaryY, summaryY + 20 * S, S, { sizes: [14, 12, 10], multiline: false, padX: 0 });
       }
 
@@ -2831,7 +2960,8 @@
 
   var SETTINGS_KEY = "tahfidz_settings_v1";
   var DEFAULT_SETTINGS = { mode: "auto", palette: "ungu", fs: 1, arabic: true, lembaga: "", pengajar: "", watermark: "",
-    watermarkScale: 100, detail: true, suggest: true, startTab: "catat", vibrate: false, backupEvery: 7, halaqah: false,
+    watermarkScale: 100, detail: true, suggest: true, startTab: "catat", vibrate: false, backupEvery: 7, halaqah: false, nilaiStyle: "huruf",
+    autoBackup: true, abUri: "", abName: "",
     waliTplLaporan: "", waliTplRapor: "" };
   var PALETTE_KEYS = ["ungu", "zamrud", "samudra", "kurma", "mawar"];
   var DEFAULT_SUBTITLE = "Catatan tahsin \u00b7 tahfidz \u00b7 murojaah harian";
@@ -2844,12 +2974,14 @@
     if (["auto", "light", "dark"].indexOf(o.mode) >= 0) r.mode = o.mode;
     if (PALETTE_KEYS.indexOf(o.palette) >= 0) r.palette = o.palette;
     if (typeof o.fs === "number" && [0.92, 1, 1.12, 1.25].indexOf(o.fs) >= 0) r.fs = o.fs;
-    ["arabic", "detail", "suggest", "vibrate", "halaqah"].forEach(function (key) { if (typeof o[key] === "boolean") r[key] = o[key]; });
+    ["arabic", "detail", "suggest", "vibrate", "halaqah", "autoBackup"].forEach(function (key) { if (typeof o[key] === "boolean") r[key] = o[key]; });
     ["lembaga", "pengajar"].forEach(function (key) { if (typeof o[key] === "string") r[key] = o[key].slice(0, 60); });
+    if (typeof o.abUri === "string" && /^content:\/\//.test(o.abUri) && o.abUri.length < 1000) { r.abUri = o.abUri; r.abName = typeof o.abName === "string" ? o.abName.slice(0, 120) : ""; }
     ["waliTplLaporan", "waliTplRapor"].forEach(function (key) { if (typeof o[key] === "string") r[key] = o[key].slice(0, 3000); });
     if (typeof o.watermark === "string" && o.watermark.length < 2000000 && /^data:image\//.test(o.watermark)) r.watermark = o.watermark;
     if (typeof o.watermarkScale === "number" && o.watermarkScale >= 30 && o.watermarkScale <= 150) r.watermarkScale = o.watermarkScale;
     if (["catat", "laporan"].indexOf(o.startTab) >= 0) r.startTab = o.startTab;
+    if (["huruf", "bintang"].indexOf(o.nilaiStyle) >= 0) r.nilaiStyle = o.nilaiStyle;
     if (typeof o.backupEvery === "number" && [0, 7, 14, 30].indexOf(o.backupEvery) >= 0) r.backupEvery = o.backupEvery;
     return r;
   }
@@ -2884,7 +3016,24 @@
     root.classList.toggle("no-ar", !settings.arabic);
     document.getElementById("lembagaLine").textContent = settings.lembaga.trim() || DEFAULT_SUBTITLE;
     ["newHalaqahField", "renameHalaqahField"].forEach(function (id) { document.getElementById(id).style.display = settings.halaqah ? "" : "none"; });
+    syncGradeButtons();
     syncThemeColor();
+  }
+  function syncGradeButtons() {
+    if (!PG_GRADES) return; // dipanggil lagi di bagian Init setelah daftar nilai siap
+    document.querySelectorAll(".grade-option").forEach(function (b) {
+      var g = pgGradeByCode(b.getAttribute("data-code"));
+      if (g) { b.textContent = gradeShort(g); b.setAttribute("aria-label", gradeLabel(g)); b.classList.toggle("star5", starsOn() && g.stars === 5); }
+    });
+  }
+
+  // Cara menampilkan nilai: huruf (M, JJ, J, Mq, R) atau bintang (5 sampai 1). Kode yang tersimpan tetap sama.
+  function starsOn() { return settings.nilaiStyle === "bintang"; }
+  function gradeShort(g) { return starsOn() ? g.stars + "\u2605" : g.short; }
+  function gradeLabel(g) { return starsOn() ? g.stars + " bintang" : g.label; }
+  function gradeLegendText() {
+    return starsOn() ? "Keterangan nilai: 5\u2605 = Mumtaz, 4\u2605 = Jayyid Jiddan, 3\u2605 = Jayyid, 2\u2605 = Maqbul, 1\u2605 = Rasib"
+      : "Keterangan nilai: M = Mumtaz, JJ = Jayyid Jiddan, J = Jayyid, Mq = Maqbul, R = Rasib";
   }
 
   function syncSettingsUI() {
@@ -2919,7 +3068,7 @@
   }
 
   function commitSettings() {
-    saveSettings(); applySettings(); syncSettingsUI(); renderBackupInfo();
+    saveSettings(); applySettings(); syncSettingsUI(); renderBackupInfo(); renderAutoBackup();
     if (document.getElementById("waliTplPreview")) renderWaliTplPreview();
   }
 
@@ -2930,6 +3079,7 @@
         var v = b.getAttribute("data-v");
         settings[key] = (key === "fs" || key === "backupEvery") ? Number(v) : v;
         commitSettings();
+        if (key === "nilaiStyle") { renderAll(); renderProgres(); }
       });
     });
   });
@@ -2938,6 +3088,7 @@
       settings[el.getAttribute("data-key")] = el.checked;
       commitSettings();
       if (el.getAttribute("data-key") === "halaqah") { renderAll(); renderProgres(); }
+      if (el.getAttribute("data-key") === "autoBackup" && el.checked) abRun();
     });
   });
   document.querySelectorAll('#tab-setelan input[type="text"][data-key]').forEach(function (el) {
@@ -2945,6 +3096,22 @@
       settings[el.getAttribute("data-key")] = el.value;
       commitSettings();
     });
+  });
+
+  document.getElementById("abPick").addEventListener("click", function () {
+    var FB = abPlugins().FolderBackup;
+    if (!FB) { showToast("Pemilih folder tidak tersedia di perangkat ini"); return; }
+    FB.pickFolder().then(function (r) {
+      if (!r || !r.uri) return;
+      settings.abUri = r.uri; settings.abName = r.name || "Folder pilihan";
+      commitSettings();
+      abRun().then(function (ok) { showToast(ok ? "Cadangan disimpan ke " + abWhere() : "Gagal menulis ke folder itu"); });
+    }).catch(function (err) { if (!/batal|cancel/i.test(String(err && err.message))) showToast("Folder tidak bisa dipakai"); });
+  });
+  document.getElementById("abDefault").addEventListener("click", function () {
+    settings.abUri = ""; settings.abName = "";
+    commitSettings();
+    abRun();
   });
 
   // ---------------- Template pesan untuk wali (Setelan) ----------------
@@ -3121,6 +3288,7 @@
 
   applySettings();
   syncSettingsUI();
+  renderAutoBackup();
 
   // ---------------- Progres: baca teks setoran -> jumlah ayat -> diagram ----------------
 
@@ -3163,11 +3331,11 @@
   var QURAN_AYAT = SURAHS.reduce(function (n, x) { return n + x.ayat; }, 0);
   var BULAN_PENDEK = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
   var PG_GRADES = [
-    { code: "M", label: "Mumtaz", short: "M", color: "--grade-m" },
-    { code: "JJ", label: "Jayyid Jiddan", short: "JJ", color: "--grade-jj" },
-    { code: "J", label: "Jayyid", short: "J", color: "--grade-j" },
-    { code: "MQ", label: "Maqbul", short: "Mq", color: "--grade-mq" },
-    { code: "R", label: "Rasib", short: "R", color: "--grade-r" }
+    { code: "M", label: "Mumtaz", short: "M", stars: 5, color: "--grade-m" },
+    { code: "JJ", label: "Jayyid Jiddan", short: "JJ", stars: 4, color: "--grade-jj" },
+    { code: "J", label: "Jayyid", short: "J", stars: 3, color: "--grade-j" },
+    { code: "MQ", label: "Maqbul", short: "Mq", stars: 2, color: "--grade-mq" },
+    { code: "R", label: "Rasib", short: "R", stars: 1, color: "--grade-r" }
   ];
 
   function pgGradeByCode(code) {
@@ -4124,7 +4292,7 @@
           if (!c) return;
           var w = colW * c / gr.total;
           ctx.fillStyle = C.grades[grade.code]; ctx.fillRect(gx, gy + 36, w, 20);
-          if (w > 30) text(grade.short, gx + w / 2, gy + 53, "bold 16px", "#ffffff", "center", w);
+          if (w > 30) text(gradeShort(grade), gx + w / 2, gy + 53, "bold 16px", "#ffffff", "center", w);
           gx += w;
         });
         var parts = PG_GRADES.filter(function (grade) { return gr.counts[grade.code]; }).map(function (grade) { return gr.counts[grade.code] + " " + grade.label; });
@@ -4337,7 +4505,7 @@
     if (hasGrades) PG_GRADES.forEach(function (grade) {
       var item = document.createElement("span");
       item.innerHTML = '<i class="grade-swatch" style="--grade-color:var(' + grade.color + ')"></i>';
-      item.appendChild(document.createTextNode(grade.short + " = " + grade.label));
+      item.appendChild(document.createTextNode(gradeShort(grade) + " = " + grade.label));
       gradeLegend.appendChild(item);
     });
 
@@ -4429,6 +4597,7 @@
   });
 
   // ---------------- Init ----------------
+  syncGradeButtons();
   renderWaliTpl();
 
   function renderAll() {

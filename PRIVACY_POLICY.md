@@ -22,7 +22,8 @@ setoran, nilai, dan pengaturan) disimpan **hanya di perangkat Anda sendiri**,
 menggunakan penyimpanan lokal WebView (`localStorage`). Data tersebut:
 
 - Tidak pernah dikirim ke server dan tidak dapat diakses oleh pengembang aplikasi.
-- Tidak ikut dicadangkan otomatis oleh Android (cadangan otomatis dimatikan).
+- Tidak ikut dicadangkan otomatis oleh Android ke akun Google (cadangan Android dimatikan).
+- Bila fitur cadangan otomatis menyala, salinan data juga ditulis ke folder di perangkat Anda sendiri (bawaan: Documents/CatatanTahfidz, atau folder yang Anda pilih). Salinan itu tetap berada di perangkat dan tidak dikirim ke mana pun.
 - Akan terhapus jika Anda menghapus data aplikasi (clear app data) atau
   meng-uninstall aplikasi.
 
