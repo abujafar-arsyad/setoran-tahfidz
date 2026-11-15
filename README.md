@@ -74,6 +74,8 @@ Semua nama dan catatan pada gambar ini fiktif.
 **Setelan dan data**
 - Mode terang, gelap, atau otomatis; lima warna tema; empat ukuran teks; halaman awal saat aplikasi dibuka.
 - Ekspor dan impor cadangan data (file JSON), plus pengingat cadangan berkala.
+- **Cadangan otomatis** (bisa dimatikan): setiap ada perubahan, salinan data ditulis ke folder di HP, bawaan `Documents/CatatanTahfidz` atau folder pilihan sendiri (mis. kartu SD). Tujuh hari terakhir disimpan.
+- **Tampilan nilai** bisa dipilih: Mumtaz–Rasib atau bintang 1–5 (Mumtaz = 5 bintang). Di tabel Laporan nilai tampil sebagai pita di dasar sel.
 
 ## Cara pakai singkat
 
